@@ -1,0 +1,6 @@
+v 3
+d Stata Networks Package
+d Author: Necmi TALAY
+d Distribution-Date: 20260207
+d
+p stata-networks Stata package for calculating network edge weights from node-level data
