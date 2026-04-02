@@ -1,21 +1,86 @@
-MIT License
+Academic and Research Use License
 
-Copyright (c) 2026 Necmi TALAY, Hakan ACAROĞLU, Aslıhan GÜNAL, Fausto Pedro GARCÍA MÁRQUEZ
+Copyright (c) 2026 Necmi TALAY. All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This software and associated documentation files (the "Software") are the
+intellectual property of Necmi TALAY and are provided under the following terms.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. DEFINITIONS
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+   "Academic Use" means use of the Software solely for non-commercial academic
+   research, teaching, or educational purposes at a recognized educational or
+   research institution.
+
+   "Commercial Use" means any use of the Software, in whole or in part, that is
+   intended for or directed toward commercial advantage or monetary compensation.
+   This includes, but is not limited to, incorporation into commercial products
+   or services, use in consulting or contract work, and use by for-profit
+   organizations for internal operations.
+
+2. ACADEMIC AND RESEARCH USE
+
+   Permission is hereby granted, free of charge, to any person or institution
+   obtaining a copy of the Software for Academic Use, subject to the following
+   conditions:
+
+   a) The Software may be used, copied, and modified solely for Academic Use.
+
+   b) Any publication, presentation, or academic work that uses the Software or
+      results derived from the Software must include the following citation:
+
+      Talay, N., Acaroglu, H., Gunal, A., & Garcia Marquez, F.P. (2026).
+      "Algebraic Invariant Multilayer Network Edge Regression: Multi-Source
+      Data Fusion with Macro-Shock Immunity." [Journal/Conference details].
+
+   c) Redistributions of the Software, in source or binary form, for Academic
+      Use must retain this license notice in its entirety.
+
+   d) Modified versions of the Software used for Academic Use must be clearly
+      marked as modified and must not be misrepresented as the original Software.
+
+3. COMMERCIAL USE
+
+   Commercial Use of the Software is NOT permitted without a separate written
+   license agreement from the copyright holder. To obtain a commercial license,
+   please contact:
+
+   Necmi TALAY
+   Email: aggilitas@gmail.com
+
+4. RESTRICTIONS
+
+   a) The Software may not be sold, sublicensed, or distributed for Commercial
+      Use without prior written permission from the copyright holder.
+
+   b) The Software may not be used to create competing products or services
+      without prior written permission from the copyright holder.
+
+   c) No rights are granted to use the trade names, trademarks, or service marks
+      of the copyright holder.
+
+5. CONTRIBUTIONS
+
+   Any contributions submitted to this project shall be governed by the terms of
+   this license. Contributors grant the copyright holder a perpetual,
+   irrevocable, worldwide, royalty-free license to use, modify, and sublicense
+   their contributions.
+
+6. DISCLAIMER OF WARRANTY
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+   IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+7. TERMINATION
+
+   This license is effective until terminated. It will terminate automatically
+   if the licensee fails to comply with any of its terms. Upon termination, the
+   licensee must destroy all copies of the Software in their possession.
+
+8. GOVERNING LAW
+
+   This license shall be governed by and construed in accordance with the laws
+   of the Republic of Turkey.
