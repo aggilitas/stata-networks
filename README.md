@@ -64,19 +64,21 @@ year  [feature]  source  target  source_value  target_value
 ### Example 1: Interaction Network
 
 ```stata
-* Load your data first (File > Open or use command)
-network_calc, type(interaction) subnet(multi) feature(feature) name(birth_place)
+use "birthplace_data.dta", clear
+network_calc, type(interaction) subnet(multi) feature(birthplace) name(birth_place)
 ```
 
 ### Example 2: Flow Network
 
 ```stata
+use "migration_data.dta", clear
 network_calc, type(flow) subnet(single) direction(outflow) name(migration)
 ```
 
 ### Example 3: Attribute Network
 
 ```stata
+use "attributes_data.dta", clear
 network_calc, type(attribute) subnet(single) direction(outflow) name(gdp)
 ```
 
@@ -133,7 +135,7 @@ stata-networks/
 │       └── frame_manager.ado     # Frame management
 ├── examples/                      # Example datasets
 ├── tests/                         # Test scripts
-├── LICENSE                        # MIT License
+├── LICENSE                        # Academic and Research Use License
 └── README.md
 ```
 
@@ -149,7 +151,7 @@ GitHub repository: https://github.com/aggilitas/stata-networks
 
 ## License
 
-MIT License - See [LICENSE](LICENSE) file for details.
+Academic and Research Use License - Free for academic and research purposes with mandatory citation. Commercial use requires a separate license. See [LICENSE](LICENSE) file for details. For commercial licensing inquiries: aggilitas@gmail.com
 
 ## Authors
 
