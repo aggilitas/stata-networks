@@ -4,13 +4,7 @@
 
 program define _netcalc_interaction, rclass
     version 16.0
-    syntax, Feature(varname) Direction(string) [DEBUG]
-    
-    * Validate direction (for future use, currently not affecting interaction)
-    if !inlist("`direction'", "outflow", "inflow") {
-        di as error "direction() must be outflow or inflow"
-        exit 198
-    }
+    syntax, Feature(varname) [DEBUG]
     
     * Validate required variables
     local required_vars year `feature' source target source_value target_value
@@ -25,7 +19,6 @@ program define _netcalc_interaction, rclass
     if "`debug'" != "" {
         di as text "_netcalc_interaction: Starting calculation"
         di as text "  Feature variable: `feature'"
-        di as text "  Direction: `direction'"
         di as text "  Observations: " _N
     }
     

@@ -4,17 +4,11 @@
 
 program define _netcalc_flow, rclass
     version 16.0
-    syntax, Subnet(string) Direction(string) [Feature(varname) DEBUG]
+    syntax, Subnet(string) [Feature(varname) DEBUG]
     
     * Validate subnet type
     if !inlist("`subnet'", "single", "multi") {
         di as error "subnet() must be single or multi"
-        exit 198
-    }
-    
-    * Validate direction
-    if !inlist("`direction'", "outflow", "inflow") {
-        di as error "direction() must be outflow or inflow"
         exit 198
     }
     
@@ -44,7 +38,6 @@ program define _netcalc_flow, rclass
     if "`debug'" != "" {
         di as text "_netcalc_flow: Starting calculation"
         di as text "  Subnet: `subnet'"
-        di as text "  Direction: `direction'"
         if "`subnet'" == "multi" {
             di as text "  Feature variable: `feature'"
         }
@@ -61,13 +54,11 @@ program define _netcalc_flow, rclass
     * (year, feature, source) when the network has subnets
     
     qui {
-        * Select value variable based on direction
-        if "`direction'" == "outflow" {
-            local value_var source_value
-        }
-        else {
-            local value_var target_value
-        }
+        * The weight is built from the source side. An inflow network
+        * is produced by network_calc, which exchanges the node roles
+        * before calling this routine, so there is nothing to choose
+        * here.
+        local value_var source_value
         
         * Calculate T(y,s) or T(y,f,s) - total for the group
         * Take the group total from the last element of a running sum

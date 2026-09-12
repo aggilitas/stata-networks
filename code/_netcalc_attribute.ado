@@ -1,20 +1,14 @@
 *! _netcalc_attribute 2.0.0
 *! Helper function for calculating attribute network edge weights
-*! Formula: w_ij = ln(A_j / A_i) for outflow, ln(A_i / A_j) for inflow
+*! Formula: w_ij = ln(A_j / A_i)
 
 program define _netcalc_attribute, rclass
     version 16.0
-    syntax, Subnet(string) Direction(string) [Feature(varname) DEBUG]
+    syntax, Subnet(string) [Feature(varname) DEBUG]
     
     * Validate subnet type
     if !inlist("`subnet'", "single", "multi") {
         di as error "subnet() must be single or multi"
-        exit 198
-    }
-    
-    * Validate direction
-    if !inlist("`direction'", "outflow", "inflow") {
-        di as error "direction() must be outflow or inflow"
         exit 198
     }
     
@@ -44,7 +38,6 @@ program define _netcalc_attribute, rclass
     if "`debug'" != "" {
         di as text "_netcalc_attribute: Starting calculation"
         di as text "  Subnet: `subnet'"
-        di as text "  Direction: `direction'"
         if "`subnet'" == "multi" {
             di as text "  Feature variable: `feature'"
         }
@@ -56,20 +49,13 @@ program define _netcalc_attribute, rclass
     qui save `original'
     
     * Calculate attribute network weights
-    * Formula: w_ij = ln(A_j / A_i) for outflow
-    *          w_ij = ln(A_i / A_j) for inflow
+    * Formula: w_ij = ln(A_j / A_i). An inflow network is produced by
+    * network_calc, which exchanges the node roles before calling this
+    * routine, which is what flips the sign of the ratio.
     
     qui {
-        * Calculate log-ratio based on direction
         tempvar edge_weight
-        if "`direction'" == "outflow" {
-            * ln(target / source)
-            gen double `edge_weight' = ln(target_value / source_value)
-        }
-        else {
-            * ln(source / target)
-            gen double `edge_weight' = ln(source_value / target_value)
-        }
+        gen double `edge_weight' = ln(target_value / source_value)
         
         * Handle missing values (division by zero or negative values)
         * ln() returns missing for values <= 0

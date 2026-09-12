@@ -158,12 +158,10 @@ program define network_calc, rclass
     * roles exchanged. Swap the node columns and their value columns,
     * run the templates unchanged, and put the edge back in its
     * original orientation afterwards.
-    local passdir "`direction'"
     if "`direction'" == "inflow" {
         qui rename (source target) (target source)
         qui rename (source_value target_value) ///
                    (target_value source_value)
-        local passdir "outflow"
     }
     
     * The raw panel, in the orientation the templates will see. A
@@ -175,24 +173,22 @@ program define network_calc, rclass
     
     * Call calculation function based on type
     if "`type'" == "interaction" {
-        _netcalc_interaction, feature(`feature') direction(`passdir') `debug'
+        _netcalc_interaction, feature(`feature') `debug'
     }
     else if "`type'" == "flow" {
         if "`subnet'" == "multi" {
-            _netcalc_flow, subnet(multi) direction(`passdir') ///
-                feature(`feature') `debug'
+            _netcalc_flow, subnet(multi) feature(`feature') `debug'
         }
         else {
-            _netcalc_flow, subnet(single) direction(`passdir') `debug'
+            _netcalc_flow, subnet(single) `debug'
         }
     }
     else if "`type'" == "attribute" {
         if "`subnet'" == "multi" {
-            _netcalc_attribute, subnet(multi) direction(`passdir') ///
-                feature(`feature') `debug'
+            _netcalc_attribute, subnet(multi) feature(`feature') `debug'
         }
         else {
-            _netcalc_attribute, subnet(single) direction(`passdir') `debug'
+            _netcalc_attribute, subnet(single) `debug'
         }
     }
     
@@ -254,12 +250,10 @@ program define network_calc, rclass
             use `rawdata', clear
             _netcalc_pool, type(`type') feature(`feature')
             if "`type'" == "flow" {
-                _netcalc_flow, subnet(single) ///
-                    direction(`passdir') `debug'
+                _netcalc_flow, subnet(single) `debug'
             }
             else {
-                _netcalc_attribute, subnet(single) ///
-                    direction(`passdir') `debug'
+                _netcalc_attribute, subnet(single) `debug'
             }
             if "`direction'" == "inflow" {
                 qui rename (source target) (target source)
