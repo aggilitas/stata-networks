@@ -94,14 +94,16 @@ program define _netcalc_join
             * Verify merge was successful
             count if missing(`networkname')
             if r(N) > 0 & r(N) < _N {
-                di as text "  Warning: `networkname' has missing values in " r(N) " observations"
+                di as text "  Warning: `networkname' is missing" ///
+                           " in " r(N) " observations"
                 di as text "  This may indicate edge mismatch between networks"
             }
         }
     }
     
     if "`debug'" != "" {
-        frame `framename': di as text "  Frame `framename' now has " _N " observations"
+        frame `framename': di as text ///
+            "  Frame `framename' now has " _N " observations"
         frame `framename': describe, short
     }
 end

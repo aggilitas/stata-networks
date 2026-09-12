@@ -99,7 +99,8 @@ program define network_calc, rclass
     
     * Check required variables based on subnet type
     if "`subnet'" == "multi" {
-        local required_vars year `feature' source target source_value target_value
+        local required_vars year `feature' source target ///
+                            source_value target_value
     }
     else {
         local required_vars year source target source_value target_value
@@ -112,7 +113,8 @@ program define network_calc, rclass
             di as error ""
             di as error "Expected format for `subnet'-subnet:"
             if "`subnet'" == "multi" {
-                di as error "  year feature source target source_value target_value"
+                di as error "  year feature source target" ///
+                            " source_value target_value"
             }
             else {
                 di as error "  year source target source_value target_value"
@@ -317,8 +319,9 @@ program define network_calc, rclass
             qui describe, short
             local n_vars = r(k)
         }
-        di as text "  - Frame 'networks_single': " as result %8.0f `n_single' ///
-           as text " obs, " as result `n_vars' as text " variables (aggregated)"
+        di as text "  - Frame 'networks_single': " ///
+           as result %8.0f `n_single' as text " obs, " ///
+           as result `n_vars' as text " variables (aggregated)"
     }
     else {
         frame networks_single {
@@ -326,15 +329,18 @@ program define network_calc, rclass
             qui describe, short
             local n_vars = r(k)
         }
-        di as text "  - Frame 'networks_single': " as result %8.0f `n_single' ///
-           as text " obs, " as result `n_vars' as text " variables"
+        di as text "  - Frame 'networks_single': " ///
+           as result %8.0f `n_single' as text " obs, " ///
+           as result `n_vars' as text " variables"
     }
     
     di as text ""
     di as text "To view the networks:"
-    di as text "  {stata frame change networks_single:frame change networks_single}"
+    di as text "  {stata frame change networks_single:" ///
+               "frame change networks_single}"
     if "`subnet'" == "multi" {
-        di as text "  {stata frame change networks_multi:frame change networks_multi}"
+        di as text "  {stata frame change networks_multi:" ///
+                   "frame change networks_multi}"
     }
     di as text "{hline 78}"
     di as text ""

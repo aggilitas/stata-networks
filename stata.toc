@@ -1,6 +1,6 @@
 v 3
-d Stata Networks Package
+d netcalc
 d Author: Necmi TALAY
-d Distribution-Date: 20260207
+d Distribution-Date: 20260912
 d
-p stata-networks Stata package for calculating network edge weights from node-level data
+p netcalc directed edge weights from node-level panel data

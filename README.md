@@ -38,7 +38,18 @@ A Stata package for calculating network edge weights from node-level data. Suppo
 Latest version:
 
 ```stata
-net install stata-networks, from("https://raw.githubusercontent.com/aggilitas/stata-networks/main/")
+net install netcalc, from("https://raw.githubusercontent.com/aggilitas/stata-networks/main/")
+```
+
+The package is named `netcalc`; the repository keeps its original name so
+that the link printed in the article stays valid.
+
+**If you installed a version before 2.0.0**, it was distributed under the
+package name `stata-networks`. Remove it first, or both will sit in your
+ado directory and shadow each other:
+
+```stata
+ado uninstall stata-networks
 ```
 
 **Note:** If you encounter SSL certificate errors, use Method 2.
@@ -52,6 +63,9 @@ to the repository:
 ```stata
 net install stata-networks, from("https://raw.githubusercontent.com/aggilitas/stata-networks/v1.0.0-kbs/")
 ```
+
+The package name is `stata-networks` here, not `netcalc`: that tag predates
+the rename and carries its own package descriptor.
 
 Browse or download that version directly:
 
@@ -68,7 +82,6 @@ Browse or download that version directly:
 
 ```stata
 adopath + "C:/path/to/stata-networks/code"
-adopath + "C:/path/to/stata-networks/code/helpers"
 ```
 
 ## Usage
@@ -146,17 +159,26 @@ year  feature  edge_id  network1  network2  ...
 ```
 stata-networks/
 ├── code/
-│   ├── network_calc.ado          # Main command
-│   └── helpers/
-│       ├── calc_interaction.ado  # Interaction network calculations
-│       ├── calc_flow.ado         # Flow network calculations
-│       ├── calc_attribute.ado    # Attribute network calculations
-│       └── frame_manager.ado     # Frame management
-├── examples/                      # Example datasets
-├── tests/                         # Test scripts
+│   ├── network_calc.ado          # the command, the only public name
+│   ├── network_calc.sthlp        # help file
+│   ├── _netcalc_interaction.ado  # interaction template
+│   ├── _netcalc_flow.ado         # flow template
+│   ├── _netcalc_attribute.ado    # attribute template
+│   ├── _netcalc_pool.ado         # combines raw data over the feature
+│   ├── _netcalc_frames.ado       # frame subcommand dispatch
+│   ├── _netcalc_join.ado         # creates a frame or joins to it
+│   └── _netcalc_aggregate.ado    # sums subnet weights (interaction)
+├── examples/                      # example datasets
+├── tests/
+│   └── network_calc_cert.do      # certification script
+├── netcalc.pkg                    # package descriptor
+├── stata.toc                      # net install index
 ├── LICENSE                        # Academic and Research Use License
 └── README.md
 ```
+
+Names beginning with an underscore are internal routines. Only
+`network_calc` is meant to be called.
 
 ## Citation
 

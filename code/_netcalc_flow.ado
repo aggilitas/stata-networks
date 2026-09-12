@@ -26,7 +26,8 @@ program define _netcalc_flow, rclass
     
     * Validate required variables based on subnet type
     if "`subnet'" == "multi" {
-        local required_vars year `feature' source target source_value target_value
+        local required_vars year `feature' source target ///
+                            source_value target_value
     }
     else {
         local required_vars year source target source_value target_value
@@ -56,7 +57,8 @@ program define _netcalc_flow, rclass
     
     * Calculate flow network weights
     * Formula: w_i = v_i / T(y,s)
-    * where T(y,s) = sum of all values for same (year, source) or (year, feature, source)
+    * where T(y,s) sums the values sharing (year, source), or
+    * (year, feature, source) when the network has subnets
     
     qui {
         * Select value variable based on direction

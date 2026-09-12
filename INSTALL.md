@@ -5,7 +5,19 @@
 ### Latest version
 
 ```stata
-net install stata-networks, from("https://raw.githubusercontent.com/aggilitas/stata-networks/main/")
+net install netcalc, from("https://raw.githubusercontent.com/aggilitas/stata-networks/main/")
+```
+
+The package is named `netcalc`. The repository keeps its original name so
+that the link printed in the article stays valid; the name in the URL is
+just a directory and does not affect the installed package.
+
+**If you installed a version before 2.0.0**, it was distributed under the
+package name `stata-networks`. Remove it first, or both will sit in your
+ado directory and shadow each other:
+
+```stata
+ado uninstall stata-networks
 ```
 
 ### Published version (for replication)
@@ -18,6 +30,9 @@ to the repository:
 net install stata-networks, from("https://raw.githubusercontent.com/aggilitas/stata-networks/v1.0.0-kbs/")
 ```
 
+The package name is `stata-networks` here, not `netcalc`: that tag predates
+the rename and carries its own package descriptor.
+
 Browse or download that version directly:
 
 - Source: https://github.com/aggilitas/stata-networks/tree/v1.0.0-kbs
@@ -29,7 +44,7 @@ If you encounter SSL certificate errors (common in Stata 17 and earlier):
 
 ```stata
 set httpproxy off
-net install stata-networks, from("https://raw.githubusercontent.com/aggilitas/stata-networks/main/")
+net install netcalc, from("https://raw.githubusercontent.com/aggilitas/stata-networks/main/")
 ```
 
 If the error persists, use Method 2 (Manual Installation).
@@ -37,7 +52,7 @@ If the error persists, use Method 2 (Manual Installation).
 ### Uninstall
 
 ```stata
-ado uninstall stata-networks
+ado uninstall netcalc
 ```
 
 ---
@@ -54,7 +69,6 @@ ado uninstall stata-networks
 
 ```stata
 adopath + "C:/stata-packages/stata-networks/code"
-adopath + "C:/stata-packages/stata-networks/code/helpers"
 ```
 
 **Make it permanent** (add to profile.do):
@@ -63,10 +77,9 @@ adopath + "C:/stata-packages/stata-networks/code/helpers"
 doedit profile.do
 ```
 
-Add these lines to profile.do:
+Add this line to profile.do:
 ```stata
 adopath + "C:/stata-packages/stata-networks/code"
-adopath + "C:/stata-packages/stata-networks/code/helpers"
 ```
 
 ---
@@ -85,23 +98,23 @@ Look for `PLUS` or `PERSONAL` directory.
 
 Copy files to the appropriate subdirectories:
 
+Every file goes to the subdirectory named by its first character, and a
+leading underscore counts as that character.
+
 **Windows example:**
 ```
 C:/Users/YourName/ado/plus/n/network_calc.ado
-C:/Users/YourName/ado/plus/c/calc_interaction.ado
-C:/Users/YourName/ado/plus/c/calc_flow.ado
-C:/Users/YourName/ado/plus/c/calc_attribute.ado
-C:/Users/YourName/ado/plus/f/frame_manager.ado
+C:/Users/YourName/ado/plus/n/network_calc.sthlp
+C:/Users/YourName/ado/plus/_/_netcalc_interaction.ado
+C:/Users/YourName/ado/plus/_/_netcalc_flow.ado
+C:/Users/YourName/ado/plus/_/_netcalc_attribute.ado
+C:/Users/YourName/ado/plus/_/_netcalc_pool.ado
+C:/Users/YourName/ado/plus/_/_netcalc_frames.ado
+C:/Users/YourName/ado/plus/_/_netcalc_join.ado
+C:/Users/YourName/ado/plus/_/_netcalc_aggregate.ado
 ```
 
-**Mac/Linux example:**
-```
-~/ado/plus/n/network_calc.ado
-~/ado/plus/c/calc_interaction.ado
-~/ado/plus/c/calc_flow.ado
-~/ado/plus/c/calc_attribute.ado
-~/ado/plus/f/frame_manager.ado
-```
+**Mac/Linux example:** the same paths under `~/ado/plus/`.
 
 ---
 
@@ -109,19 +122,23 @@ C:/Users/YourName/ado/plus/f/frame_manager.ado
 
 ```stata
 which network_calc
+help network_calc
 ```
 
-Should return the location of `network_calc.ado`
+The first returns the location of `network_calc.ado`, the second opens the
+help file.
 
 ---
 
 ## Quick Start
 
 ```stata
-* Load your data first (File > Open or use command)
+* Load your data first
+use birthplace.dta, clear
 
 * Calculate interaction network
-network_calc, type(interaction) subnet(multi) feature(feature) name(birth_place)
+network_calc, type(interaction) subnet(multi) feature(birthplace) ///
+    name(birth_place)
 
 * View results
 frame change networks_single

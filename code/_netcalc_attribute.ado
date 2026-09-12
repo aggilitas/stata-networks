@@ -26,7 +26,8 @@ program define _netcalc_attribute, rclass
     
     * Validate required variables
     if "`subnet'" == "multi" {
-        local required_vars year `feature' source target source_value target_value
+        local required_vars year `feature' source target ///
+                            source_value target_value
     }
     else {
         local required_vars year source target source_value target_value
@@ -95,7 +96,8 @@ program define _netcalc_attribute, rclass
         count if missing(edge_value)
         local n_missing = r(N)
         if `n_missing' > 0 {
-            di as text "  Warning: `n_missing' observations with missing edge_value"
+            di as text "  Warning: `n_missing' edges have no" ///
+                       " defined weight"
             di as text "  (likely due to zero or negative attribute values)"
         }
     }
@@ -110,7 +112,9 @@ program define _netcalc_attribute, rclass
     sum edge_value, meanonly
     return scalar mean_weight = r(mean)
     return scalar n_edges = _N
-    count if !missing(edge_value)
+    qui count if !missing(edge_value)
+    di as text "  Edges with a defined weight: " ///
+       as result r(N) as text " of " as result _N
     return scalar n_valid = r(N)
     
 end
