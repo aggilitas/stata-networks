@@ -12,6 +12,7 @@ d
 d Requires: Stata version 16 or higher (for frame support)
 d
 f code/network_calc.ado
+f code/network_calc.sthlp
 f code/_netcalc_interaction.ado
 f code/_netcalc_flow.ado
 f code/_netcalc_attribute.ado
