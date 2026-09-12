@@ -79,10 +79,10 @@ are not restored.
 
 {phang}
 {opt s:ubnet(scope)} is required. {cmd:single} computes one weight per
-edge and period. {cmd:multi} computes one weight per edge, period and
-level of {cmd:feature()}, and additionally builds a single-subnet copy;
-see {help network_calc##output:Output frames} for how that copy is
-formed, which differs by template.
+edge and period from single-subnet data. {cmd:multi} computes one
+weight per edge, period and level of {cmd:feature()}, and for
+{cmd:interaction} and {cmd:flow} also a single-subnet copy; see
+{help network_calc##output:Output frames}.
 
 {phang}
 {opt n:ame(netname)} is required and names the network. The name
@@ -103,7 +103,8 @@ computed relative to that node. With {cmd:inflow} the two node roles
 are exchanged, so the weights of the edges entering a node are computed
 relative to it. For {cmd:interaction} and {cmd:flow} the choice decides
 which of the two sums equals one; for {cmd:attribute} it flips the sign
-of the log ratio.
+of the log ratio. Under {cmd:subnet(multi)} the size columns are
+exchanged along with the value columns.
 
 {phang}
 {opt debug} displays the intermediate quantities of the template and a
@@ -116,30 +117,50 @@ missing or unexpected.
 
 {pstd}
 The data in memory must be in long form, one observation per directed
-edge and period, and must contain these variables under these names:
+edge and period. Without a feature it must hold:
 
 {p2colset 9 30 32 2}{...}
 {p2col :{cmd:year}}period identifier{p_end}
 {p2col :{cmd:source}}node the edge leaves{p_end}
 {p2col :{cmd:target}}node the edge enters{p_end}
-{p2col :{cmd:source_value}}value attached to {cmd:source}{p_end}
-{p2col :{cmd:target_value}}value attached to {cmd:target}{p_end}
+{p2col :{cmd:source_value}}quantity measured at {cmd:source}{p_end}
+{p2col :{cmd:target_value}}quantity measured at {cmd:target}{p_end}
 {p2colreset}{...}
 
 {pstd}
-With {cmd:subnet(multi)} the variable named in {cmd:feature()} must be
-present as well, and the panel must hold one observation per period,
-feature and directed edge.
+With {cmd:subnet(multi)} the panel holds one observation per period,
+subnet and directed edge, and carries two columns more:
+
+{p2colset 9 30 32 2}{...}
+{p2col :{cmd:year}}period identifier{p_end}
+{p2col :{it:feature}}the variable named in {cmd:feature()}, which
+splits each node into subnets{p_end}
+{p2col :{cmd:source}}node the edge leaves{p_end}
+{p2col :{cmd:target}}node the edge enters{p_end}
+{p2col :{cmd:source_size}}weight of the subnet at {cmd:source}{p_end}
+{p2col :{cmd:source_value}}quantity measured at {cmd:source}{p_end}
+{p2col :{cmd:target_size}}weight of the subnet at {cmd:target}{p_end}
+{p2col :{cmd:target_value}}quantity measured at {cmd:target}{p_end}
+{p2colreset}{...}
+
+{pstd}
+{cmd:size} is what the subnet weighs at that node: the people born in
+a given province who live there, the passengers carried by a given mode,
+whatever the subnets are counted in. {cmd:value} is the quantity the
+network is about. What belongs in {cmd:value} follows from the feature:
+splitting an edge by transport mode makes a distance in kilometres
+meaningless and a fare or a tonnage meaningful.
+
+{pstd}
+{cmd:size} is constant within a period, subnet and node, because it
+describes the node rather than the edge. {cmd:value} is constant in the
+same way when it describes a node, as in {cmd:attribute}, and varies
+over the edge when it travels along it, as in {cmd:flow}.
 
 {pstd}
 {cmd:source} and {cmd:target} must be string variables, because the
 edge identifier is built by joining them. Choose node names that
 contain no underscore, so that the identifier stays unambiguous.
-
-{pstd}
-{cmd:source_value} is expected to be constant within a period, feature
-and source, because it describes the source node rather than the edge;
-{cmd:target_value} varies over targets in the same way.
 
 
 {marker templates}{...}
@@ -148,29 +169,39 @@ and source, because it describes the source node rather than the edge;
 {dlgtab:interaction}
 
 {pstd}
-{cmd:type(interaction)} requires {cmd:subnet(multi)}. The weight is the
-share of the feature at the source node, multiplied by the share of the
-same feature at the target node among all other nodes:
+{cmd:type(interaction)} requires {cmd:subnet(multi)}: it compares two
+subnets of two nodes and has no single-subnet form. The weight is the
+share of the subnet at the source node, multiplied by the share of the
+same subnet at the target node among all other nodes. Both shares are
+read from {cmd:size}:
 
 {p 8 8 2}
-e(ij,X) = [N(i,X) / N(i)] * [n(j,X) / sum over k != i of N(k,X)]
+e(ij,X) = [S(i,X) / S(i)] * [S(j,X) / sum over k != i of S(k,X)]
 
 {pstd}
-The weights leaving a node sum to one in every period, so over a
-complete grid of n nodes the mean weight is 1/(n-1).
+How much of the source node is this subnet, times how much of that
+subnet, outside the source node, sits at the target. {cmd:value} is not
+used.
 
 {dlgtab:flow}
 
 {pstd}
-{cmd:type(flow)} accepts either scope. The weight is the share of the
-edge in the total leaving its node in that period, and under
-{cmd:subnet(multi)} in the total within that feature as well:
+{cmd:type(flow)} accepts either scope. Under {cmd:subnet(single)} the
+weight is the share of the edge in what leaves its node in that period:
 
 {p 8 8 2}
-w(ij) = v(ij) / T(year, source)
+w(ij) = v(ij) / sum over j of v(ij)
 
 {pstd}
-Use it for quantities that move between nodes: migration, trade,
+Under {cmd:subnet(multi)} that share is taken within the subnet and
+scaled by the share of the subnet itself, so that the weights of a node
+add up to one over subnets and targets together:
+
+{p 8 8 2}
+w(ij,X) = [S(i,X) / S(i)] * [v(ij,X) / sum over j of v(ij,X)]
+
+{pstd}
+Use it for quantities that travel along the edge: migration, trade,
 capital.
 
 {dlgtab:attribute}
@@ -183,7 +214,12 @@ of the two node values:
 w(ij) = ln[A(j) / A(i)]     under {cmd:direction(outflow)}
 
 {pstd}
-Use it for levels that describe nodes rather than move between them:
+Under {cmd:subnet(multi)} the ratio is taken between the same subnet at
+the two nodes. {cmd:size} is not used, because a log ratio compares two
+specific subnets and nothing is being weighted.
+
+{pstd}
+Use it for levels that describe nodes rather than travel between them:
 GDP, unemployment, schooling. The log ratio is undefined when either
 value is zero or negative; such an edge is kept with a missing weight,
 and {cmd:r(n_valid)} reports how many weights are defined.
@@ -205,33 +241,38 @@ first call and merging into it on later calls:
 
 {pstd}
 {cmd:edge_id} is {cmd:source} and {cmd:target} joined by an underscore.
-Every call adds one variable, named by {cmd:name()}, to
-{cmd:networks_single}; a {cmd:subnet(multi)} call adds it to both
-frames.
+Every call adds one variable, named by {cmd:name()}, to the frame or
+frames it writes:
+
+{p2colset 9 34 36 2}{...}
+{p2col :{cmd:subnet(single)}}{cmd:networks_single}{p_end}
+{p2col :{cmd:interaction}, {cmd:subnet(multi)}}both{p_end}
+{p2col :{cmd:flow}, {cmd:subnet(multi)}}both{p_end}
+{p2col :{cmd:attribute}, {cmd:subnet(multi)}}{cmd:networks_multi}
+only{p_end}
+{p2colreset}{...}
 
 {pstd}
-How the single-subnet copy of a {cmd:subnet(multi)} network is built
-depends on the template, because a subnet weight is a share within its
-own subnet and adding such shares would count every subnet as a whole
-network:
-
-{phang2}
-{cmd:flow} and {cmd:attribute} have a single-subnet form of their own,
-so the raw data is combined over the feature first and the weight is
-then computed once from it. Counts are added, because every group
-moving from the source to the target is part of one flow. Levels are
-averaged over the subnets, weighted by the share of each subnet in the
-node total, because a level describes a node rather than moving between
-nodes.
-
-{phang2}
-{cmd:interaction} has no single-subnet form: its weight already carries
-the share of each subnet, so the subnet weights are added.
+The copy in {cmd:networks_single} is the sum of the subnet weights.
+That is what a subnet weight is built for in {cmd:interaction} and
+{cmd:flow}: it carries the share of its own subnet, the shares of a
+node add up over the subnets, and the sum is therefore the weight of
+the edge in the node as a whole.
 
 {pstd}
-The weight a subnet carries in that average is its share of the node
-total, A(i,X) / sum over X of A(i,X), so the weights of a node sum to
-one.
+An {cmd:attribute} weight is a log ratio, which does not work that way:
+adding log ratios over subnets multiplies the ratios, and the result
+grows with the number of subnets rather than describing the node. So an
+attribute network with subnets stays in {cmd:networks_multi}, and the
+command says so when it runs. For a single-subnet attribute network,
+reduce the node levels yourself and pass them with
+{cmd:subnet(single)}.
+
+{pstd}
+A network read at the two resolutions is not the same calculation. A
+single-subnet network computed from single-subnet data and the
+single-subnet copy of a {cmd:subnet(multi)} call answer different
+questions and will not agree in general.
 
 {pstd}
 Later calls merge one to one on the keys above, so a network whose
@@ -254,6 +295,11 @@ values. The command reports how many.
 {phang2}{cmd:. use birthplace.dta, clear}{p_end}
 {phang2}{cmd:. network_calc, type(interaction) subnet(multi)}{break}
 {cmd:          feature(birthplace) name(birth_place)}{p_end}
+
+{pstd}Migration split by the birthplace of the migrants{p_end}
+{phang2}{cmd:. use migration_by_birthplace.dta, clear}{p_end}
+{phang2}{cmd:. network_calc, type(flow) subnet(multi)}{break}
+{cmd:          feature(birthplace) name(mig_bp)}{p_end}
 
 {pstd}Income disparity between the two nodes of each edge{p_end}
 {phang2}{cmd:. use gdp.dta, clear}{p_end}

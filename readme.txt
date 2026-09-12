@@ -28,9 +28,17 @@ Three templates are available.
                 describe nodes rather than move between them: GDP,
                 unemployment, schooling.
 
-flow and attribute accept a feature as well, in which case a weight is
-computed for every subnet and a single-subnet copy is built from the
-combined raw data.
+flow and attribute accept a feature as well. A subnet weight carries the
+share of its own subnet, so the subnet weights of interaction and flow
+add up to the weight of the edge in the node as a whole, and that sum is
+written as the single-subnet copy. An attribute weight is a log ratio,
+which does not add up that way, so an attribute network with subnets
+stays in the multi-subnet frame.
+
+Input is a long panel. Without a feature it holds year, source, target,
+source_value and target_value. With a feature it holds the feature and
+two columns more on each side, source_size and target_size, which carry
+what the subnet weighs at that node.
 
 Results are written to the frames networks_single and networks_multi,
 keyed on year and edge_id, and on year, feature and edge_id.

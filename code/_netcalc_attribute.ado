@@ -21,7 +21,8 @@ program define _netcalc_attribute, rclass
     * Validate required variables
     if "`subnet'" == "multi" {
         local required_vars year `feature' source target ///
-                            source_value target_value
+                            source_size source_value ///
+                            target_size target_value
     }
     else {
         local required_vars year source target source_value target_value

@@ -21,6 +21,5 @@ f code/_netcalc_attribute.ado
 f code/_netcalc_frames.ado
 f code/_netcalc_join.ado
 f code/_netcalc_aggregate.ado
-f code/_netcalc_pool.ado
 f README.md
 f LICENSE

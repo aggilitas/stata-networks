@@ -88,10 +88,20 @@ adopath + "C:/path/to/stata-networks/code"
 
 ### Data Format
 
-All network types require standardized input format:
+Single-subnet input:
 ```
-year  [feature]  source  target  source_value  target_value
+year  source  target  source_value  target_value
 ```
+
+Multi-subnet input:
+```
+year  feature  source  target  source_size  source_value
+                               target_size  target_value
+```
+
+`size` is what the subnet weighs at that node (people born in a province
+who live there, passengers carried by a mode); `value` is the quantity
+the network is about.
 
 ### Example 1: Interaction Network
 

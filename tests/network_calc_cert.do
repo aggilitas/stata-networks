@@ -3,7 +3,7 @@
 *! against the published version, point a global at a checkout of the
 *! v1.0.0-kbs tag before running:
 *!
-*!     global NETCALC_KBS "/path/to/stata-networks-v1.0.0-kbs"
+*!     global NETCALC_KBS "/path/to/the/tag/checkout"
 *!     do network_calc_cert.do
 *!
 *! The script stops at the first failure.
@@ -21,10 +21,14 @@ which network_calc
 *==============================================================
 * Synthetic data
 *
-* Six nodes, three periods, three features, a complete directed
-* grid without self-loops. Two panels are needed because the two
-* kinds of input differ: a node level is repeated on every edge
-* of its node, while a flow belongs to the edge itself.
+* Six nodes, three periods, three subnets, a complete directed
+* grid without self-loops. size carries the weight of a subnet
+* at a node, value the quantity being measured.
+*
+* The single-subnet flow panel is the subnet panel added up over
+* the feature, and the single-subnet attribute panel is the
+* size-weighted mean of the subnet levels, so the two
+* resolutions describe the same network.
 *==============================================================
 
 local N 6
@@ -46,46 +50,76 @@ gen str4 source  = "n" + string(i)
 gen str4 target  = "n" + string(j)
 gen str4 feature = "f" + string(f)
 
-* node levels: constant within (year, feature, node)
-gen double lvl_i = 1000 + 100*i + 10*f + 5*(year - 2017)
-gen double lvl_j = 1000 + 100*j + 10*f + 5*(year - 2017)
+* subnet weights, constant within (year, feature, node)
+gen double src_size = 1000 + 130*i + 70*f + 40*(year - 2017)
+gen double tgt_size = 1000 + 130*j + 70*f + 40*(year - 2017)
 
-* edge quantities: vary over the edge
+* node levels, constant within (year, feature, node)
+gen double src_lvl = 6 + 0.4*i + 0.9*f + 0.3*(year - 2017)
+gen double tgt_lvl = 6 + 0.4*j + 0.9*f + 0.3*(year - 2017)
+
+* edge quantities, varying over the edge
 gen double qty_ij = 10 + 3*i + 2*j + f + (year - 2017)
 gen double qty_ji = 10 + 3*j + 2*i + f + (year - 2017)
 
-tempfile nodedat flowdat
+tempfile intdat flowdat flowsgl attrdat attrsgl
+
 preserve
-    keep year feature source target lvl_i lvl_j
-    rename lvl_i source_value
-    rename lvl_j target_value
+    keep year feature source target src_size tgt_size
+    rename src_size source_size
+    rename tgt_size target_size
+    gen double source_value = source_size
+    gen double target_value = target_size
+    order year feature source target source_size source_value ///
+          target_size target_value
     sort year feature source target
-    qui save `nodedat'
+    qui save `intdat'
 restore
-    keep year feature source target qty_ij qty_ji
-    rename qty_ij source_value
-    rename qty_ji target_value
+
+preserve
+    keep year feature source target src_size qty_ij tgt_size qty_ji
+    rename (src_size qty_ij tgt_size qty_ji) ///
+           (source_size source_value target_size target_value)
     sort year feature source target
     qui save `flowdat'
 
-di as txt "certification data: `N' nodes, `Y' periods, `F' features"
+    collapse (sum) source_value target_value, by(year source target)
+    sort year source target
+    qui save `flowsgl'
+restore
+
+preserve
+    keep year feature source target src_size src_lvl tgt_size tgt_lvl
+    rename (src_size src_lvl tgt_size tgt_lvl) ///
+           (source_size source_value target_size target_value)
+    sort year feature source target
+    qui save `attrdat'
+
+    gen double sw = source_size * source_value
+    gen double tw = target_size * target_value
+    collapse (sum) sw source_size tw target_size, ///
+        by(year source target)
+    gen double source_value = sw / source_size
+    gen double target_value = tw / target_size
+    keep year source target source_value target_value
+    sort year source target
+    qui save `attrsgl'
+restore
+
+di as txt "certification data: `N' nodes, `Y' periods, `F' subnets"
 
 *==============================================================
 * 1. Weights leaving a node
 *
-* flow: every subnet is a whole network of its own, so its
-* weights sum to one, and so do the weights of the combined
-* single-subnet copy.
-*
-* interaction: a subnet weight already carries the share of its
-* subnet, so a subnet sums to that share, and only the sum over
-* all subnets is one. The combined copy is one as well.
+* A subnet weight carries the share of its own subnet, so a
+* subnet adds up to that share and only the subnets together
+* add up to one. The single-subnet copy, being their sum, adds
+* up to one as well. A single-subnet network computed from
+* single-subnet data adds up to one directly.
 *==============================================================
 
-* --- flow, single subnet ---
 frames reset
-use `flowdat', clear
-collapse (sum) source_value target_value, by(year source target)
+use `flowsgl', clear
 network_calc, type(flow) subnet(single) name(w)
 frame networks_single {
     split edge_id, parse("_") gen(nd)
@@ -94,18 +128,19 @@ frame networks_single {
 }
 di as res "1a flow single: weights leaving a node sum to one"
 
-* --- flow, multi subnet, inside each subnet ---
 frames reset
 use `flowdat', clear
 network_calc, type(flow) subnet(multi) feature(feature) name(w)
 frame networks_multi {
     split edge_id, parse("_") gen(nd)
     collapse (sum) w, by(year feature nd1)
+    * a subnet adds up to its own share, which is below one
+    assert w > 0 & w < 1
+    collapse (sum) w, by(year nd1)
     assert reldif(w, 1) < 1e-12
 }
-di as res "1b flow multi: each subnet sums to one"
+di as res "1b flow multi: the subnets together sum to one"
 
-* --- flow, multi subnet, combined copy ---
 frame networks_single {
     split edge_id, parse("_") gen(nd)
     collapse (sum) w, by(year nd1)
@@ -113,15 +148,13 @@ frame networks_single {
 }
 di as res "1c flow multi: the combined copy sums to one"
 
-* --- interaction, subnet shares and their total ---
 frames reset
-use `nodedat', clear
+use `intdat', clear
 network_calc, type(interaction) subnet(multi) feature(feature) ///
     name(w)
 frame networks_multi {
     split edge_id, parse("_") gen(nd)
     collapse (sum) w, by(year feature nd1)
-    * a subnet sums to its own share, which is below one
     assert w > 0 & w < 1
     collapse (sum) w, by(year nd1)
     assert reldif(w, 1) < 1e-12
@@ -139,12 +172,12 @@ di as res "1e interaction: the combined copy sums to one"
 * 2. Attribute weights cancel along a reversed edge
 *
 * w_ij is a log ratio, so w_ij + w_ji is zero on a complete
-* two-way grid. This must hold for a subnet, for the combined
-* copy, and without a feature at all.
+* two-way grid. A log ratio does not add up over subnets, so an
+* attribute network with subnets writes no single-subnet copy.
 *==============================================================
 
 frames reset
-use `nodedat', clear
+use `attrdat', clear
 network_calc, type(attribute) subnet(multi) feature(feature) ///
     name(w)
 frame networks_multi {
@@ -156,18 +189,12 @@ frame networks_multi {
 }
 di as res "2a attribute multi: each subnet cancels"
 
-frame networks_single {
-    split edge_id, parse("_") gen(nd)
-    gen str12 pair = cond(nd1 < nd2, nd1 + "|" + nd2, ///
-                                     nd2 + "|" + nd1)
-    collapse (sum) w, by(year pair)
-    assert abs(w) < 1e-12
-}
-di as res "2b attribute multi: the combined copy cancels"
+capture frame networks_single: describe
+assert _rc != 0
+di as res "2b attribute multi: writes no single-subnet copy"
 
 frames reset
-use `nodedat', clear
-collapse (sum) source_value target_value, by(year source target)
+use `attrsgl', clear
 network_calc, type(attribute) subnet(single) name(w)
 frame networks_single {
     split edge_id, parse("_") gen(nd)
@@ -187,38 +214,47 @@ di as res "2c attribute single: cancels"
 *==============================================================
 
 foreach c in 1000 0.001 {
-    foreach spec in "flow single" "flow multi" ///
-                    "interaction multi" "attribute single" ///
-                    "attribute multi" {
+    foreach spec in "flow single flowsgl" "flow multi flowdat" ///
+                    "interaction multi intdat" ///
+                    "attribute single attrsgl" ///
+                    "attribute multi attrdat" {
         local typ : word 1 of `spec'
         local sub : word 2 of `spec'
-        local dat = cond("`typ'" == "flow", "`flowdat'", ///
-                                            "`nodedat'")
+        local src : word 3 of `spec'
+        if "`src'" == "flowsgl" local dat "`flowsgl'"
+        if "`src'" == "flowdat" local dat "`flowdat'"
+        if "`src'" == "intdat"  local dat "`intdat'"
+        if "`src'" == "attrsgl" local dat "`attrsgl'"
+        if "`src'" == "attrdat" local dat "`attrdat'"
         local opt = cond("`sub'" == "multi", "feature(feature)", "")
+        local frm = "networks_single"
+        if "`sub'" == "multi" & "`typ'" == "attribute" ///
+            local frm = "networks_multi"
 
-        frames reset
-        use "`dat'", clear
-        if "`sub'" == "single" {
-            collapse (sum) source_value target_value, ///
-                by(year source target)
-        }
         tempfile base
+        frames reset
+        use "`dat'", clear
         network_calc, type(`typ') subnet(`sub') `opt' name(w)
-        frame networks_single: qui save "`base'", replace
+        frame `frm': qui save "`base'", replace
 
         frames reset
         use "`dat'", clear
-        if "`sub'" == "single" {
-            collapse (sum) source_value target_value, ///
-                by(year source target)
-        }
         qui replace source_value = source_value * `c'
         qui replace target_value = target_value * `c'
+        if "`sub'" == "multi" {
+            qui replace source_size = source_size * `c'
+            qui replace target_size = target_size * `c'
+        }
         network_calc, type(`typ') subnet(`sub') `opt' name(w)
-        frame networks_single {
+        frame `frm' {
             rename w w_scaled
-            qui merge 1:1 year edge_id using "`base'", ///
-                nogenerate
+            if "`frm'" == "networks_multi" {
+                qui merge 1:1 year feature edge_id using "`base'", ///
+                    nogenerate
+            }
+            else {
+                qui merge 1:1 year edge_id using "`base'", nogenerate
+            }
             assert reldif(w_scaled, w) < 1e-12
         }
         di as res "3 `typ' `sub': unchanged when scaled by `c'"
@@ -228,16 +264,17 @@ foreach c in 1000 0.001 {
 *==============================================================
 * 4. Comparison with the published version
 *
-* Skipped unless a checkout of v1.0.0-kbs is pointed at. Three
-* results must reproduce it exactly. Three are expected to
-* differ, each for a reason recorded in the history:
+* Skipped unless a checkout of v1.0.0-kbs is pointed at. The
+* three configurations below must reproduce it exactly. The
+* certification data sets size equal to value for interaction,
+* which is what the published version read, so the comparison
+* stays meaningful after the input gained the size columns.
 *
-*   the interaction node total is now a double, so a node total
-*   above 16,777,216 no longer rounds; below that, nothing moves
-*
-*   the single-subnet copy of a multi-subnet flow or attribute
-*   network is now built from the data rather than by adding the
-*   subnet weights
+* The configurations expected to differ are not compared:
+* direction(inflow) was not applied by the published version, a
+* multi-subnet flow weight now carries the share of its subnet,
+* and an attribute network with subnets no longer writes a
+* single-subnet copy.
 *==============================================================
 
 if "`kbs'" == "" {
@@ -245,14 +282,15 @@ if "`kbs'" == "" {
               "against v1.0.0-kbs"
 }
 else {
-    foreach spec in "interaction multi nodedat" ///
-                    "flow single flowdat" ///
-                    "attribute single nodedat" {
+    foreach spec in "interaction multi intdat" ///
+                    "flow single flowsgl" ///
+                    "attribute single attrsgl" {
         local typ : word 1 of `spec'
         local sub : word 2 of `spec'
         local src : word 3 of `spec'
-        local dat = cond("`src'" == "flowdat", "`flowdat'", ///
-                                               "`nodedat'")
+        if "`src'" == "flowsgl" local dat "`flowsgl'"
+        if "`src'" == "intdat"  local dat "`intdat'"
+        if "`src'" == "attrsgl" local dat "`attrsgl'"
         local opt = cond("`sub'" == "multi", "feature(feature)", "")
 
         tempfile kbsout
@@ -261,10 +299,6 @@ else {
         adopath ++ "`kbs'/code"
         adopath ++ "`kbs'/code/helpers"
         use "`dat'", clear
-        if "`sub'" == "single" {
-            collapse (sum) source_value target_value, ///
-                by(year source target)
-        }
         network_calc, type(`typ') subnet(`sub') `opt' name(w)
         frame networks_single: qui save "`kbsout'", replace
 
@@ -276,10 +310,6 @@ else {
         frames reset
         discard
         use "`dat'", clear
-        if "`sub'" == "single" {
-            collapse (sum) source_value target_value, ///
-                by(year source target)
-        }
         network_calc, type(`typ') subnet(`sub') `opt' name(w)
         frame networks_single {
             rename w w_now

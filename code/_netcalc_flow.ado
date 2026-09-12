@@ -21,7 +21,8 @@ program define _netcalc_flow, rclass
     * Validate required variables based on subnet type
     if "`subnet'" == "multi" {
         local required_vars year `feature' source target ///
-                            source_value target_value
+                            source_size source_value ///
+                            target_size target_value
     }
     else {
         local required_vars year source target source_value target_value
@@ -54,33 +55,37 @@ program define _netcalc_flow, rclass
     * (year, feature, source) when the network has subnets
     
     qui {
-        * The weight is built from the source side. An inflow network
-        * is produced by network_calc, which exchanges the node roles
-        * before calling this routine, so there is nothing to choose
-        * here.
-        local value_var source_value
-        
-        * Calculate T(y,s) or T(y,f,s) - total for the group
-        * Take the group total from the last element of a running sum
-        * rather than from egen total(), which rescans each group.
-        tempvar total_group runsum
+        * Within a subnet the weight is the share of the edge in
+        * what leaves its node. Across subnets that share is scaled by
+        * the share of the subnet itself, which is what size carries,
+        * so the weights of a node add up to one over subnets and
+        * targets together, and the single-subnet copy is their sum.
+        tempvar total_group runsum edge_weight
         if "`subnet'" == "multi" {
-            * Group by year, feature, source
             bysort year `feature' source: ///
-                gen double `runsum' = sum(`value_var')
+                gen double `runsum' = sum(source_value)
             by year `feature' source: ///
                 gen double `total_group' = `runsum'[_N]
+            drop `runsum'
+
+            tempvar sfirst runsize total_size
+            bysort year `feature' source (target): ///
+                gen byte `sfirst' = (_n == 1)
+            bysort year source: ///
+                gen double `runsize' = sum(source_size * `sfirst')
+            by year source: ///
+                gen double `total_size' = `runsize'[_N]
+            gen double `edge_weight' = (source_size / `total_size') ///
+                                     * (source_value / `total_group')
+            drop `runsize' `sfirst' `total_size'
         }
         else {
-            * Group by year, source
-            bysort year source: gen double `runsum' = sum(`value_var')
+            bysort year source: ///
+                gen double `runsum' = sum(source_value)
             by year source: gen double `total_group' = `runsum'[_N]
+            drop `runsum'
+            gen double `edge_weight' = source_value / `total_group'
         }
-        drop `runsum'
-        
-        * Calculate edge weight w_i = v_i / T(y,s)
-        tempvar edge_weight
-        gen double `edge_weight' = `value_var' / `total_group'
         
         * Handle division by zero
         replace `edge_weight' = 0 if missing(`edge_weight')

@@ -100,7 +100,8 @@ program define network_calc, rclass
     * Check required variables based on subnet type
     if "`subnet'" == "multi" {
         local required_vars year `feature' source target ///
-                            source_value target_value
+                            source_size source_value ///
+                            target_size target_value
     }
     else {
         local required_vars year source target source_value target_value
@@ -114,7 +115,8 @@ program define network_calc, rclass
             di as error "Expected format for `subnet'-subnet:"
             if "`subnet'" == "multi" {
                 di as error "  year feature source target" ///
-                            " source_value target_value"
+                            " source_size source_value" ///
+                            " target_size target_value"
             }
             else {
                 di as error "  year source target source_value target_value"
@@ -138,7 +140,8 @@ program define network_calc, rclass
         qui drop if missing(year) | missing(source) | missing(target) | ///
                     missing(source_value) | missing(target_value)
         if "`subnet'" == "multi" {
-            qui drop if missing(`feature')
+            qui drop if missing(`feature') | missing(source_size) ///
+                        | missing(target_size)
         }
         di as text "  Remaining observations: " _N
     }
@@ -162,14 +165,11 @@ program define network_calc, rclass
         qui rename (source target) (target source)
         qui rename (source_value target_value) ///
                    (target_value source_value)
+        if "`subnet'" == "multi" {
+            qui rename (source_size target_size) ///
+                       (target_size source_size)
+        }
     }
-    
-    * The raw panel, in the orientation the templates will see. A
-    * multi-subnet flow or attribute network needs it again later, to
-    * build its single-subnet copy from the data rather than from the
-    * subnet weights.
-    tempfile rawdata
-    qui save `rawdata'
     
     * Call calculation function based on type
     if "`type'" == "interaction" {
@@ -233,50 +233,44 @@ program define network_calc, rclass
             subnet(multi) ///
             `debug'
         
-        * Build the single-subnet copy. interaction has no
-        * single-subnet form, so its subnet weights already carry the
-        * share of each subnet and are summed. flow and attribute do
-        * have one, so their raw data is combined over the feature and
-        * the single-subnet weight is computed from it once.
-        di as text "  Aggregating to single-subnet..."
-        
-        if "`type'" == "interaction" {
+        * The single-subnet copy is the sum of the subnet weights.
+        * That works where a subnet weight is a share: the shares of a
+        * node add up over the subnets and the total is one. It does
+        * not work for attribute, whose weight is a log ratio, so a sum
+        * over subnets is a product of ratios and grows with their
+        * number. An attribute network therefore stays in
+        * networks_multi.
+        if "`type'" == "attribute" {
+            di as text "  Not aggregated to single-subnet: a log ratio"
+            di as text "  does not add up over subnets. Pass the node"
+            di as text "  level with subnet(single) for a single-subnet"
+            di as text "  attribute network."
+            local wrote_single = 0
+        }
+        else {
+            di as text "  Aggregating to single-subnet..."
             use `calcdata', clear
             rename edge_value `name'
             _netcalc_frames aggregate ///
                 networkname(`name') `debug'
-        }
-        else {
-            use `rawdata', clear
-            _netcalc_pool, type(`type') feature(`feature')
-            if "`type'" == "flow" {
-                _netcalc_flow, subnet(single) `debug'
-            }
-            else {
-                _netcalc_attribute, subnet(single) `debug'
-            }
-            if "`direction'" == "inflow" {
-                qui rename (source target) (target source)
-                qui replace edge_id = source + "_" + target
-            }
-            rename edge_value `name'
+            local wrote_single = 1
         }
         
-        * Save aggregated data
-        tempfile aggdata
-        qui save `aggdata'
-        
-        * Add aggregated to single frame
-        di as text "  Adding aggregated to frame: networks_single"
-        use `aggdata', clear
-        _netcalc_frames create_or_join ///
-            framename(networks_single) ///
-            networkname(`name') ///
-            subnet(single) ///
-            `debug'
+        if `wrote_single' {
+            tempfile aggdata
+            qui save `aggdata'
+            di as text "  Adding aggregated to frame: networks_single"
+            use `aggdata', clear
+            _netcalc_frames create_or_join ///
+                framename(networks_single) ///
+                networkname(`name') ///
+                subnet(single) ///
+                `debug'
+        }
     }
     else {
         * Single-subnet: just add to single frame
+        local wrote_single = 1
         di as text "  Adding to frame: networks_single"
         use `calcdata', clear
         _netcalc_frames create_or_join ///
@@ -308,14 +302,16 @@ program define network_calc, rclass
         di as text "  - Frame 'networks_multi':  " as result %8.0f `n_multi' ///
            as text " obs, " as result `n_vars' as text " variables"
         
-        frame networks_single {
-            local n_single = _N
-            qui describe, short
-            local n_vars = r(k)
+        if `wrote_single' {
+            frame networks_single {
+                local n_single = _N
+                qui describe, short
+                local n_vars = r(k)
+            }
+            di as text "  - Frame 'networks_single': " ///
+               as result %8.0f `n_single' as text " obs, " ///
+               as result `n_vars' as text " variables (aggregated)"
         }
-        di as text "  - Frame 'networks_single': " ///
-           as result %8.0f `n_single' as text " obs, " ///
-           as result `n_vars' as text " variables (aggregated)"
     }
     else {
         frame networks_single {
@@ -330,8 +326,10 @@ program define network_calc, rclass
     
     di as text ""
     di as text "To view the networks:"
-    di as text "  {stata frame change networks_single:" ///
-               "frame change networks_single}"
+    if "`subnet'" != "multi" | `wrote_single' {
+        di as text "  {stata frame change networks_single:" ///
+                   "frame change networks_single}"
+    }
     if "`subnet'" == "multi" {
         di as text "  {stata frame change networks_multi:" ///
                    "frame change networks_multi}"

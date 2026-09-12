@@ -1,13 +1,14 @@
 *! _netcalc_interaction 2.0.0
 *! Helper function for calculating interaction network edge weights
-*! Formula: e_ij^X = (N_i^X / N_i) * (n_j^X / sum_{k!=i} N_k^X)
+*! Formula: e_ij^X = (S_i^X / S_i) * (S_j^X / sum_{k!=i} S_k^X)
 
 program define _netcalc_interaction, rclass
     version 16.0
     syntax, Feature(varname) [DEBUG]
     
     * Validate required variables
-    local required_vars year `feature' source target source_value target_value
+    local required_vars year `feature' source target ///
+                        source_size target_size
     foreach var of local required_vars {
         capture confirm variable `var'
         if _rc {
@@ -42,20 +43,21 @@ program define _netcalc_interaction, rclass
         * last.
 
         * Step 1: Tag one row per (year, feature, source)
-        * source_value is constant within that group but repeated for
-        * each target, so without the tag each feature would be counted
+        * source_size is constant within that group but repeated for
+        * each target, so without the tag each subnet would be counted
         * once per edge.
         tempvar _tfirst
         bysort year `feature' source (target): ///
             gen byte `_tfirst' = (_n == 1)
 
         * Step 2: Calculate sum_{k!=i} N_k^X
-        * For a given (year, feature, source), the target_values are
-        * exactly the N_k^X for all k != source, so their sum is
-        * sum_{k!=i} N_k^X. Reuses the sort from step 1.
+        * For a given (year, feature, source), the target_size values
+        * are exactly the subnet sizes of every node other than the
+        * source, so their sum is the denominator. Reuses the sort
+        * from step 1.
         tempvar total_target_excl_source runtgt
         by year `feature' source: ///
-            gen double `runtgt' = sum(target_value)
+            gen double `runtgt' = sum(target_size)
         by year `feature' source: ///
             gen double `total_target_excl_source' = `runtgt'[_N]
         drop `runtgt'
@@ -69,17 +71,18 @@ program define _netcalc_interaction, rclass
         * p_source.
         tempvar total_source runsrc
         bysort year source: ///
-            gen double `runsrc' = sum(source_value * `_tfirst')
+            gen double `runsrc' = sum(source_size * `_tfirst')
         by year source: gen double `total_source' = `runsrc'[_N]
         drop `runsrc'
 
         * Step 3b: Calculate p_i^X = N_i^X / N_i
         tempvar p_source
-        gen double `p_source' = source_value / `total_source'
+        gen double `p_source' = source_size / `total_source'
 
         * Step 4: Calculate omega_j^X = n_j^X / sum_{k!=i} N_k^X
         tempvar omega_target
-        gen double `omega_target' = target_value / `total_target_excl_source'
+        gen double `omega_target' = target_size ///
+                                    / `total_target_excl_source'
         
         * Handle division by zero
         replace `omega_target' = 0 if missing(`omega_target')

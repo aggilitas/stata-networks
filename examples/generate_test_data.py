@@ -1,116 +1,132 @@
 """
-Test Data Generator for Networks ADO Package
-Generates sample datasets for testing network_calc command
+Builds the example datasets for netcalc.
+
+Layout, multi-subnet:
+
+    year feature source target source_size source_value
+                               target_size target_value
+
+    size   the weight of the subnet at that node, a count
+    value  the quantity being measured on that edge or node
+
+Layout, single-subnet:
+
+    year source target source_value target_value
+
+The flow files are consistent with each other: the single-subnet flow
+between two nodes is the sum of the subnet flows between them, so the
+same network can be read at either resolution. The attribute files are
+consistent in the same sense: the node level is the size-weighted mean
+of its subnet levels.
 """
 
-import pandas as pd
-import numpy as np
+import csv
+import random
 
-test_provinces = ['ankara', 'istanbul', 'izmir', 'kars', 'adana']
-years = [2018, 2019, 2020]
-features = ['ankara', 'istanbul', 'izmir', 'kars', 'adana']
+NODES = ["ankara", "istanbul", "izmir", "kars", "adana"]
+BIRTHPLACES = ["ankara", "istanbul", "izmir", "kars", "adana"]
+YEARS = [2018, 2019, 2020]
 
-np.random.seed(42)
+random.seed(20260912)
 
-def generate_interaction_data():
-    """
-    Generate interaction network test data (multi-subnet)
-    source_value = N_i^X, constant per (year, feature, source)
-    target_value = N_j^X, constant per (year, feature, target)
-    """
-    data = []
-    for year in years:
-        node_values = {}
-        for feature in features:
-            for node in test_provinces:
-                node_values[(year, feature, node)] = np.random.randint(1000, 50000)
-        for feature in features:
-            for source in test_provinces:
-                for target in test_provinces:
-                    if source != target:
-                        data.append({
-                            'year': year,
-                            'feature': feature,
-                            'source': source,
-                            'target': target,
-                            'source_value': node_values[(year, feature, source)],
-                            'target_value': node_values[(year, feature, target)],
-                        })
-    df = pd.DataFrame(data)
-    check = df.groupby(['year', 'feature', 'source'])['source_value'].nunique()
-    assert (check == 1).all(), "source_value not constant per (year, feature, source)!"
-    print(f"Interaction: {len(df)} rows, consistency OK")
-    return df
+# population of each birthplace group in each node and year
+size = {}
+for y in YEARS:
+    for b in BIRTHPLACES:
+        for n in NODES:
+            base = 40000 if b == n else random.randint(1500, 45000)
+            size[(y, b, n)] = base + (y - 2018) * random.randint(50, 900)
 
-def generate_flow_multi_data():
-    data = []
-    for year in years:
-        for feature in features:
-            for source in test_provinces:
-                for target in test_provinces:
-                    if source != target:
-                        flow_value = np.random.randint(100, 5000)
-                        data.append({
-                            'year': year, 'feature': feature,
-                            'source': source, 'target': target,
-                            'source_value': flow_value, 'target_value': flow_value,
-                        })
-    df = pd.DataFrame(data)
-    print(f"Flow Multi: {len(df)} rows")
-    return df
+# years of schooling of each birthplace group in each node and year
+schooling = {}
+for y in YEARS:
+    for b in BIRTHPLACES:
+        for n in NODES:
+            schooling[(y, b, n)] = round(random.uniform(5.0, 13.0), 2)
 
-def generate_flow_single_data():
-    data = []
-    for year in years:
-        for source in test_provinces:
-            for target in test_provinces:
-                if source != target:
-                    flow_value = np.random.randint(500, 20000)
-                    data.append({
-                        'year': year, 'source': source, 'target': target,
-                        'source_value': flow_value, 'target_value': flow_value,
-                    })
-    df = pd.DataFrame(data)
-    print(f"Flow Single: {len(df)} rows")
-    return df
+# migrants of each birthplace group along each edge and year
+flow = {}
+for y in YEARS:
+    for b in BIRTHPLACES:
+        for i in NODES:
+            for j in NODES:
+                if i != j:
+                    flow[(y, b, i, j)] = random.randint(20, 3000)
 
-def generate_attribute_single_data():
-    data = []
-    for year in years:
-        node_attr = {n: np.random.uniform(10000, 50000) for n in test_provinces}
-        for source in test_provinces:
-            for target in test_provinces:
-                if source != target:
-                    data.append({
-                        'year': year, 'source': source, 'target': target,
-                        'source_value': node_attr[source], 'target_value': node_attr[target],
-                    })
-    df = pd.DataFrame(data)
-    print(f"Attribute Single: {len(df)} rows")
-    return df
+MULTI = ["year", "feature", "source", "target",
+         "source_size", "source_value", "target_size", "target_value"]
+SINGLE = ["year", "source", "target", "source_value", "target_value"]
 
-def generate_attribute_multi_data():
-    sectors = ['agriculture', 'manufacturing', 'services']
-    data = []
-    for year in years:
-        for sector in sectors:
-            node_attr = {n: np.random.uniform(1000, 10000) for n in test_provinces}
-            for source in test_provinces:
-                for target in test_provinces:
-                    if source != target:
-                        data.append({
-                            'year': year, 'feature': sector,
-                            'source': source, 'target': target,
-                            'source_value': node_attr[source], 'target_value': node_attr[target],
-                        })
-    df = pd.DataFrame(data)
-    print(f"Attribute Multi: {len(df)} rows")
-    return df
 
-if __name__ == "__main__":
-    generate_interaction_data().to_csv('test_interaction_multi.csv', index=False)
-    generate_flow_multi_data().to_csv('test_flow_multi.csv', index=False)
-    generate_flow_single_data().to_csv('test_flow_single.csv', index=False)
-    generate_attribute_single_data().to_csv('test_attribute_single.csv', index=False)
-    generate_attribute_multi_data().to_csv('test_attribute_multi.csv', index=False)
-    print("Done.")
+def write(name, header, rows):
+    with open(name, "w", newline="", encoding="utf-8") as fh:
+        w = csv.writer(fh)
+        w.writerow(header)
+        w.writerows(rows)
+    print("%-32s %d rows" % (name, len(rows)))
+
+
+# --- interaction: the measured quantity is the group itself ---------
+rows = []
+for y in YEARS:
+    for b in BIRTHPLACES:
+        for i in NODES:
+            for j in NODES:
+                if i == j:
+                    continue
+                s, t = size[(y, b, i)], size[(y, b, j)]
+                rows.append([y, b, i, j, s, s, t, t])
+write("test_interaction_multi.csv", MULTI, rows)
+
+# --- flow: the measured quantity travels along the edge -------------
+rows = []
+for y in YEARS:
+    for b in BIRTHPLACES:
+        for i in NODES:
+            for j in NODES:
+                if i == j:
+                    continue
+                rows.append([y, b, i, j,
+                             size[(y, b, i)], flow[(y, b, i, j)],
+                             size[(y, b, j)], flow[(y, b, j, i)]])
+write("test_flow_multi.csv", MULTI, rows)
+
+rows = []
+for y in YEARS:
+    for i in NODES:
+        for j in NODES:
+            if i == j:
+                continue
+            out = sum(flow[(y, b, i, j)] for b in BIRTHPLACES)
+            back = sum(flow[(y, b, j, i)] for b in BIRTHPLACES)
+            rows.append([y, i, j, out, back])
+write("test_flow_single.csv", SINGLE, rows)
+
+# --- attribute: the measured quantity describes the node ------------
+rows = []
+for y in YEARS:
+    for b in BIRTHPLACES:
+        for i in NODES:
+            for j in NODES:
+                if i == j:
+                    continue
+                rows.append([y, b, i, j,
+                             size[(y, b, i)], schooling[(y, b, i)],
+                             size[(y, b, j)], schooling[(y, b, j)]])
+write("test_attribute_multi.csv", MULTI, rows)
+
+
+def node_level(y, n):
+    num = sum(size[(y, b, n)] * schooling[(y, b, n)] for b in BIRTHPLACES)
+    den = sum(size[(y, b, n)] for b in BIRTHPLACES)
+    return round(num / den, 4)
+
+
+rows = []
+for y in YEARS:
+    for i in NODES:
+        for j in NODES:
+            if i == j:
+                continue
+            rows.append([y, i, j, node_level(y, i), node_level(y, j)])
+write("test_attribute_single.csv", SINGLE, rows)
