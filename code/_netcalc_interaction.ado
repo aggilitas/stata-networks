@@ -46,12 +46,15 @@ program define _netcalc_interaction, rclass
         tempvar _tfirst total_source
         bysort year `feature' source (target): gen byte `_tfirst' = (_n == 1)
         * Running sum then last element, instead of egen total().
-        * The running sum is double but `total_source' keeps the default
-        * float type egen produced, so the stored value is unchanged.
+        * Stored as double, like the matching denominator below. The
+        * original egen call left this one at the default float, whose
+        * integers stop being exact above 16,777,216; a node total past
+        * that silently rounded, and the error reached every weight
+        * through p_source.
         tempvar runsrc
         bysort year source: ///
             gen double `runsrc' = sum(source_value * `_tfirst')
-        by year source: gen `total_source' = `runsrc'[_N]
+        by year source: gen double `total_source' = `runsrc'[_N]
         drop `runsrc'
         
         * Step 2: Calculate p_i^X = N_i^X / N_i
