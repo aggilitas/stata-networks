@@ -1,4 +1,4 @@
-*! _netcalc_flow v1.0.0
+*! _netcalc_flow 2.0.0
 *! Helper function for calculating flow network edge weights
 *! Formula: w_i = v_i / T(y,s) or T(y,f,s) for multi-subnet
 

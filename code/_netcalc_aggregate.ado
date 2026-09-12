@@ -1,4 +1,4 @@
-*! _netcalc_aggregate v1.0.0
+*! _netcalc_aggregate 2.0.0
 *! Aggregates a multi-subnet network to single-subnet
 *! Internal routine of network_calc; not for direct use
 

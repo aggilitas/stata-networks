@@ -1,7 +1,7 @@
-*! network_calc v1.0.0
+*! network_calc 2.0.0
 *! Main command for calculating network edge weights
 *! Author: Necmi TALAY
-*! Date: 2026-02-07
+*! Date: 2026-09-12
 
 program define network_calc, rclass
     version 16.0

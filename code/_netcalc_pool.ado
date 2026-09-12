@@ -1,4 +1,4 @@
-*! _netcalc_pool v1.0.0
+*! _netcalc_pool 2.0.0
 *! Collapses multi-subnet raw data over the feature
 *! Internal routine of network_calc; not for direct use
 

@@ -1,4 +1,4 @@
-*! _netcalc_join v1.0.0
+*! _netcalc_join 2.0.0
 *! Creates a network frame or joins a network to it
 *! Internal routine of network_calc; not for direct use
 

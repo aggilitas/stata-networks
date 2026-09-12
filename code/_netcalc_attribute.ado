@@ -1,4 +1,4 @@
-*! _netcalc_attribute v1.0.0
+*! _netcalc_attribute 2.0.0
 *! Helper function for calculating attribute network edge weights
 *! Formula: w_ij = ln(A_j / A_i) for outflow, ln(A_i / A_j) for inflow
 

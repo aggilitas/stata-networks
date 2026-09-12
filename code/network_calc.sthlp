@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.0.0  12sep2026}{...}
+{* *! version 2.0.0  12sep2026}{...}
 {viewerjumpto "Syntax" "network_calc##syntax"}{...}
 {viewerjumpto "Description" "network_calc##description"}{...}
 {viewerjumpto "Options" "network_calc##options"}{...}
@@ -80,8 +80,9 @@ are not restored.
 {phang}
 {opt s:ubnet(scope)} is required. {cmd:single} computes one weight per
 edge and period. {cmd:multi} computes one weight per edge, period and
-level of {cmd:feature()}, and additionally aggregates those weights
-over the feature into a single-subnet network.
+level of {cmd:feature()}, and additionally builds a single-subnet copy;
+see {help network_calc##output:Output frames} for how that copy is
+formed, which differs by template.
 
 {phang}
 {opt n:ame(netname)} is required and names the network. The name
