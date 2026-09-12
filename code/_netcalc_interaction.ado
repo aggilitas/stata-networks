@@ -40,38 +40,50 @@ program define _netcalc_interaction, rclass
     *   omega_j^X = n_j^X / (sum_{k!=i} N_k^X)  (target interaction strength)
     
     qui {
-        * Step 1: Calculate N_i (total population in source node)
-        * source_value is constant per (year, feature, source) but repeated for each target
-        * Tag first occurrence per (year, feature, source) to avoid counting each feature 80 times
-        tempvar _tfirst total_source
-        bysort year `feature' source (target): gen byte `_tfirst' = (_n == 1)
-        * Running sum then last element, instead of egen total().
-        * Stored as double, like the matching denominator below. The
-        * original egen call left this one at the default float, whose
-        * integers stop being exact above 16,777,216; a node total past
-        * that silently rounded, and the error reached every weight
-        * through p_source.
-        tempvar runsrc
-        bysort year source: ///
-            gen double `runsrc' = sum(source_value * `_tfirst')
-        by year source: gen double `total_source' = `runsrc'[_N]
-        drop `runsrc'
-        
-        * Step 2: Calculate p_i^X = N_i^X / N_i
-        tempvar p_source
-        gen double `p_source' = source_value / `total_source'
-        
-        * Step 3: Calculate sum_{k!=i} N_k^X
-        * For a given (year, feature, source), the target_values are exactly
-        * the N_k^X for all k != source, so their sum is sum_{k!=i} N_k^X
-        tempvar total_target_excl_source
-        tempvar runtgt
-        bysort year `feature' source: ///
+        * The three groupings below are ordered so that only one of
+        * them costs a re-sort. Tagging runs on
+        * (year, feature, source, target); the subnet denominator groups
+        * on (year, feature, source), a leading subset of that order, so
+        * it reuses the sort; the node total groups on (year, source),
+        * which is the single unavoidable re-sort and therefore comes
+        * last.
+
+        * Step 1: Tag one row per (year, feature, source)
+        * source_value is constant within that group but repeated for
+        * each target, so without the tag each feature would be counted
+        * once per edge.
+        tempvar _tfirst
+        bysort year `feature' source (target): ///
+            gen byte `_tfirst' = (_n == 1)
+
+        * Step 2: Calculate sum_{k!=i} N_k^X
+        * For a given (year, feature, source), the target_values are
+        * exactly the N_k^X for all k != source, so their sum is
+        * sum_{k!=i} N_k^X. Reuses the sort from step 1.
+        tempvar total_target_excl_source runtgt
+        by year `feature' source: ///
             gen double `runtgt' = sum(target_value)
         by year `feature' source: ///
             gen double `total_target_excl_source' = `runtgt'[_N]
         drop `runtgt'
-        
+
+        * Step 3: Calculate N_i (total population in source node)
+        * Running sum then last element, instead of egen total().
+        * Stored as double, like the denominator above. The original
+        * egen call left this one at the default float, whose integers
+        * stop being exact above 16,777,216; a node total past that
+        * silently rounded, and the error reached every weight through
+        * p_source.
+        tempvar total_source runsrc
+        bysort year source: ///
+            gen double `runsrc' = sum(source_value * `_tfirst')
+        by year source: gen double `total_source' = `runsrc'[_N]
+        drop `runsrc'
+
+        * Step 3b: Calculate p_i^X = N_i^X / N_i
+        tempvar p_source
+        gen double `p_source' = source_value / `total_source'
+
         * Step 4: Calculate omega_j^X = n_j^X / sum_{k!=i} N_k^X
         tempvar omega_target
         gen double `omega_target' = target_value / `total_target_excl_source'
