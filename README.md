@@ -38,11 +38,8 @@ A Stata package for calculating network edge weights from node-level data. Suppo
 Latest version:
 
 ```stata
-net install netcalc, from("https://raw.githubusercontent.com/aggilitas/stata-networks/main/")
+net install stata-networks, from("https://raw.githubusercontent.com/aggilitas/stata-networks/main/")
 ```
-
-The current package is named `netcalc`. This tagged version is named
-`stata-networks`, which is what Method 1b below installs.
 
 **Note:** If you encounter SSL certificate errors, use Method 2.
 

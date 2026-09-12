@@ -152,30 +152,50 @@ program define network_calc, rclass
     tempfile original
     qui save `original'
     
+    * An inflow network is the outflow computation with the two node
+    * roles exchanged. Swap the node columns and their value columns,
+    * run the templates unchanged, and put the edge back in its
+    * original orientation afterwards.
+    local passdir "`direction'"
+    if "`direction'" == "inflow" {
+        qui rename (source target) (target source)
+        qui rename (source_value target_value) ///
+                   (target_value source_value)
+        local passdir "outflow"
+    }
+    
     * Call calculation function based on type
     if "`type'" == "interaction" {
-        calc_interaction, feature(`feature') direction(`direction') `debug'
+        calc_interaction, feature(`feature') direction(`passdir') `debug'
     }
     else if "`type'" == "flow" {
         if "`subnet'" == "multi" {
-            calc_flow, subnet(multi) direction(`direction') feature(`feature') `debug'
+            calc_flow, subnet(multi) direction(`passdir') ///
+                feature(`feature') `debug'
         }
         else {
-            calc_flow, subnet(single) direction(`direction') `debug'
+            calc_flow, subnet(single) direction(`passdir') `debug'
         }
     }
     else if "`type'" == "attribute" {
         if "`subnet'" == "multi" {
-            calc_attribute, subnet(multi) direction(`direction') feature(`feature') `debug'
+            calc_attribute, subnet(multi) direction(`passdir') ///
+                feature(`feature') `debug'
         }
         else {
-            calc_attribute, subnet(single) direction(`direction') `debug'
+            calc_attribute, subnet(single) direction(`passdir') `debug'
         }
     }
     
     * Store calculation results
     local calc_n_edges = r(n_edges)
     local calc_mean_weight = r(mean_weight)
+    
+    * Undo the role swap so the edge keeps its original orientation
+    if "`direction'" == "inflow" {
+        qui rename (source target) (target source)
+        qui replace edge_id = source + "_" + target
+    }
     
     di as text "  Calculated " as result `calc_n_edges' as text " edges"
     di as text "  Mean weight: " as result %9.6f `calc_mean_weight'
