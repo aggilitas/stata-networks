@@ -1,8 +1,8 @@
-*! calc_flow v1.0.0
+*! _netcalc_flow v1.0.0
 *! Helper function for calculating flow network edge weights
 *! Formula: w_i = v_i / T(y,s) or T(y,f,s) for multi-subnet
 
-program define calc_flow, rclass
+program define _netcalc_flow, rclass
     version 16.0
     syntax, Subnet(string) Direction(string) [Feature(varname) DEBUG]
     
@@ -41,7 +41,7 @@ program define calc_flow, rclass
     }
     
     if "`debug'" != "" {
-        di as text "calc_flow: Starting calculation"
+        di as text "_netcalc_flow: Starting calculation"
         di as text "  Subnet: `subnet'"
         di as text "  Direction: `direction'"
         if "`subnet'" == "multi" {
@@ -104,7 +104,7 @@ program define calc_flow, rclass
     }
     
     if "`debug'" != "" {
-        di as text "calc_flow: Calculation completed"
+        di as text "_netcalc_flow: Calculation completed"
         di as text "  Output observations: " _N
         sum edge_value, detail
     }

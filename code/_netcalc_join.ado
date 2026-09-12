@@ -1,29 +1,8 @@
-*! frame_manager v1.0.0
-*! Helper functions for managing network frames (create, join, aggregate)
+*! _netcalc_join v1.0.0
+*! Creates a network frame or joins a network to it
+*! Internal routine of network_calc; not for direct use
 
-program define frame_manager
-    version 16.0
-    
-    * Parse subcommand
-    gettoken subcmd 0 : 0 , parse(" ")
-    
-    if "`subcmd'" == "create_or_join" {
-        create_or_join , `0'
-    }
-    else if "`subcmd'" == "aggregate" {
-        aggregate_multi_to_single , `0'
-    }
-    else {
-        di as error "Unknown frame_manager subcommand: `subcmd'"
-        exit 198
-    }
-end
-
-*===============================================================================
-* SUBPROGRAM: create_or_join
-* Purpose: Create new frame or join data to existing frame
-*===============================================================================
-program define create_or_join
+program define _netcalc_join
     syntax , Framename(string) Networkname(string) Subnet(string) [DEBUG]
     
     * Validate subnet
@@ -33,7 +12,7 @@ program define create_or_join
     }
     
     if "`debug'" != "" {
-        di as text "frame_manager: create_or_join"
+        di as text "_netcalc_frames: _netcalc_join"
         di as text "  Frame: `framename'"
         di as text "  Network: `networkname'"
         di as text "  Subnet: `subnet'"
@@ -127,49 +106,3 @@ program define create_or_join
     }
 end
 
-*===============================================================================
-* SUBPROGRAM: aggregate_multi_to_single
-* Purpose: Aggregate multi-subnet network to single-subnet by summing over features
-*===============================================================================
-program define aggregate_multi_to_single
-    syntax , Networkname(string) [DEBUG]
-    
-    if "`debug'" != "" {
-        di as text "frame_manager: aggregate"
-        di as text "  Network: `networkname'"
-        di as text "  Aggregating from multi to single"
-    }
-    
-    * Current data should be multi-subnet format
-    * Check for feature variable
-    capture confirm variable feature
-    if _rc {
-        di as error "Feature variable not found. Cannot aggregate."
-        exit 111
-    }
-    
-    * Check for required variables
-    foreach var in year edge_id `networkname' {
-        capture confirm variable `var'
-        if _rc {
-            di as error "Variable `var' not found. Cannot aggregate."
-            exit 111
-        }
-    }
-    
-    * Save original multi data
-    tempfile multidata
-    qui save `multidata'
-    
-    * Aggregate by summing over features
-    qui {
-        collapse (sum) `networkname', by(year edge_id)
-    }
-    
-    if "`debug'" != "" {
-        di as text "  Aggregated to " _N " observations"
-        sum `networkname', detail
-    }
-    
-    * This aggregated data will be added to single frame by caller
-end

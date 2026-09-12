@@ -1,8 +1,8 @@
-*! calc_interaction v1.0.0
+*! _netcalc_interaction v1.0.0
 *! Helper function for calculating interaction network edge weights
 *! Formula: e_ij^X = (N_i^X / N_i) * (n_j^X / sum_{k!=i} N_k^X)
 
-program define calc_interaction, rclass
+program define _netcalc_interaction, rclass
     version 16.0
     syntax, Feature(varname) Direction(string) [DEBUG]
     
@@ -23,7 +23,7 @@ program define calc_interaction, rclass
     }
     
     if "`debug'" != "" {
-        di as text "calc_interaction: Starting calculation"
+        di as text "_netcalc_interaction: Starting calculation"
         di as text "  Feature variable: `feature'"
         di as text "  Direction: `direction'"
         di as text "  Observations: " _N
@@ -82,7 +82,7 @@ program define calc_interaction, rclass
     }
     
     if "`debug'" != "" {
-        di as text "calc_interaction: Calculation completed"
+        di as text "_netcalc_interaction: Calculation completed"
         di as text "  Output observations: " _N
         di as text "  Edge value range: " r(min) " to " r(max)
         sum edge_value, detail

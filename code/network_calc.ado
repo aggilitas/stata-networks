@@ -166,24 +166,24 @@ program define network_calc, rclass
     
     * Call calculation function based on type
     if "`type'" == "interaction" {
-        calc_interaction, feature(`feature') direction(`passdir') `debug'
+        _netcalc_interaction, feature(`feature') direction(`passdir') `debug'
     }
     else if "`type'" == "flow" {
         if "`subnet'" == "multi" {
-            calc_flow, subnet(multi) direction(`passdir') ///
+            _netcalc_flow, subnet(multi) direction(`passdir') ///
                 feature(`feature') `debug'
         }
         else {
-            calc_flow, subnet(single) direction(`passdir') `debug'
+            _netcalc_flow, subnet(single) direction(`passdir') `debug'
         }
     }
     else if "`type'" == "attribute" {
         if "`subnet'" == "multi" {
-            calc_attribute, subnet(multi) direction(`passdir') ///
+            _netcalc_attribute, subnet(multi) direction(`passdir') ///
                 feature(`feature') `debug'
         }
         else {
-            calc_attribute, subnet(single) direction(`passdir') `debug'
+            _netcalc_attribute, subnet(single) direction(`passdir') `debug'
         }
     }
     
@@ -222,7 +222,7 @@ program define network_calc, rclass
     if "`subnet'" == "multi" {
         di as text "  Adding to frame: networks_multi"
         use `calcdata', clear
-        frame_manager create_or_join ///
+        _netcalc_frames create_or_join ///
             framename(networks_multi) ///
             networkname(`name') ///
             subnet(multi) ///
@@ -235,7 +235,7 @@ program define network_calc, rclass
         * Rename edge_value to network name before aggregating
         rename edge_value `name'
         
-        frame_manager aggregate ///
+        _netcalc_frames aggregate ///
             networkname(`name') `debug'
         
         * Save aggregated data
@@ -245,7 +245,7 @@ program define network_calc, rclass
         * Add aggregated to single frame
         di as text "  Adding aggregated to frame: networks_single"
         use `aggdata', clear
-        frame_manager create_or_join ///
+        _netcalc_frames create_or_join ///
             framename(networks_single) ///
             networkname(`name') ///
             subnet(single) ///
@@ -255,7 +255,7 @@ program define network_calc, rclass
         * Single-subnet: just add to single frame
         di as text "  Adding to frame: networks_single"
         use `calcdata', clear
-        frame_manager create_or_join ///
+        _netcalc_frames create_or_join ///
             framename(networks_single) ///
             networkname(`name') ///
             subnet(single) ///

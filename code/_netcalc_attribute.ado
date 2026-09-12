@@ -1,8 +1,8 @@
-*! calc_attribute v1.0.0
+*! _netcalc_attribute v1.0.0
 *! Helper function for calculating attribute network edge weights
 *! Formula: w_ij = ln(A_j / A_i) for outflow, ln(A_i / A_j) for inflow
 
-program define calc_attribute, rclass
+program define _netcalc_attribute, rclass
     version 16.0
     syntax, Subnet(string) Direction(string) [Feature(varname) DEBUG]
     
@@ -41,7 +41,7 @@ program define calc_attribute, rclass
     }
     
     if "`debug'" != "" {
-        di as text "calc_attribute: Starting calculation"
+        di as text "_netcalc_attribute: Starting calculation"
         di as text "  Subnet: `subnet'"
         di as text "  Direction: `direction'"
         if "`subnet'" == "multi" {
@@ -101,7 +101,7 @@ program define calc_attribute, rclass
     }
     
     if "`debug'" != "" {
-        di as text "calc_attribute: Calculation completed"
+        di as text "_netcalc_attribute: Calculation completed"
         di as text "  Output observations: " _N
         sum edge_value, detail
     }
