@@ -58,10 +58,6 @@ program define _netcalc_attribute, rclass
         tempvar edge_weight
         gen double `edge_weight' = ln(target_value / source_value)
         
-        * Handle missing values (division by zero or negative values)
-        * ln() returns missing for values <= 0
-        replace `edge_weight' = . if missing(`edge_weight')
-        
         * Create edge_id (source_target format)
         tempvar edge_id
         gen `edge_id' = source + "_" + target

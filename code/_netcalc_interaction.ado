@@ -84,9 +84,6 @@ program define _netcalc_interaction, rclass
         gen double `omega_target' = target_size ///
                                     / `total_target_excl_source'
         
-        * Handle division by zero
-        replace `omega_target' = 0 if missing(`omega_target')
-        
         * Step 5: Calculate edge weight e_ij^X = p_i^X * omega_j^X
         tempvar edge_weight
         gen double `edge_weight' = `p_source' * `omega_target'

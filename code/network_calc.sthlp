@@ -65,9 +65,16 @@ multi-network edge panel side by side.
 The data in memory is not the output: the calculated weights are
 written to the frames described under
 {help network_calc##output:Output frames}, and the data in memory is
-restored when the command finishes. Observations with a missing value
-in any required variable are dropped before the calculation, and those
-are not restored.
+restored when the command finishes, unchanged.
+
+{pstd}
+A missing value in a required variable is reported and then left alone.
+It propagates to the weight it belongs to, where it stays visible.
+Dropping the edge instead would take it out of its own denominator, and
+the weights that remained would still add up to one, over a mesh quietly
+missing one of its alternatives. A weight whose denominator is zero is
+left missing for the same reason: the edge has no defined share, and a
+zero would read as a defined one.
 
 
 {marker options}{...}

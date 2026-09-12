@@ -125,25 +125,17 @@ program define network_calc, rclass
         }
     }
     
-    * Check for missing values in key variables
-    local has_missing = 0
+    * Report missing values without acting on them. Dropping an edge
+    * would take it out of its denominator as well, and the remaining
+    * weights would still add up to one, over a mesh quietly missing
+    * one of its alternatives. A missing input is left to propagate to
+    * the weight it belongs to, where it stays visible.
     foreach var of local required_vars {
         qui count if missing(`var')
         if r(N) > 0 {
-            di as text "  Warning: `var' has " r(N) " missing values"
-            local has_missing = 1
+            di as text "  Warning: `var' has " as result r(N) ///
+                       as text " missing values"
         }
-    }
-    
-    if `has_missing' {
-        di as text "  Observations with missing values will be dropped"
-        qui drop if missing(year) | missing(source) | missing(target) | ///
-                    missing(source_value) | missing(target_value)
-        if "`subnet'" == "multi" {
-            qui drop if missing(`feature') | missing(source_size) ///
-                        | missing(target_size)
-        }
-        di as text "  Remaining observations: " _N
     }
     
     *===========================================================================

@@ -87,9 +87,6 @@ program define _netcalc_flow, rclass
             gen double `edge_weight' = source_value / `total_group'
         }
         
-        * Handle division by zero
-        replace `edge_weight' = 0 if missing(`edge_weight')
-        
         * Create edge_id (source_target format)
         tempvar edge_id
         gen `edge_id' = source + "_" + target
