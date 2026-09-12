@@ -191,6 +191,13 @@ program define network_calc, rclass
     local calc_n_edges = r(n_edges)
     local calc_mean_weight = r(mean_weight)
     
+    * Only the attribute template reports how many edges have a defined
+    * log ratio, so pick it up while r() still holds the template result.
+    local calc_n_valid ""
+    if "`type'" == "attribute" {
+        local calc_n_valid = r(n_valid)
+    }
+    
     * Undo the role swap so the edge keeps its original orientation
     if "`direction'" == "inflow" {
         qui rename (source target) (target source)
@@ -307,6 +314,9 @@ program define network_calc, rclass
     * Return values
     return scalar n_edges = `calc_n_edges'
     return scalar mean_weight = `calc_mean_weight'
+    if "`calc_n_valid'" != "" {
+        return scalar n_valid = `calc_n_valid'
+    }
     return local network_name "`name'"
     return local network_type "`type'"
     return local subnet_type "`subnet'"
