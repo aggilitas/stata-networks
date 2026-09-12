@@ -1,0 +1,20 @@
+v 3
+d stata-networks: Stata package for calculating network edge weights
+d
+d Author: Necmi TALAY
+d Support: https://github.com/aggilitas/stata-networks/issues
+d
+d Distribution-Date: 20260207
+d
+d This package calculates network edge weights from node-level data.
+d Supports interaction, flow, and attribute networks with multi-subnet capabilities.
+d
+d Requires: Stata version 16 or higher (for frame support)
+d
+f code/network_calc.ado
+f code/helpers/calc_interaction.ado
+f code/helpers/calc_flow.ado
+f code/helpers/calc_attribute.ado
+f code/helpers/frame_manager.ado
+f README.md
+f LICENSE
