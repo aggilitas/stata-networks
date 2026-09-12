@@ -229,14 +229,9 @@ nodes.
 the share of each subnet, so the subnet weights are added.
 
 {pstd}
-Averaging the levels this way takes the subnet values to be quantities
-that add up to the node, so that the share of a subnet in their total is
-the weight it should carry. That holds for a level such as the payroll or
-the schooling years of a group counted in people. It does not hold for a
-value that is already a ratio, an unemployment rate by subnet say, whose
-shares are not sizes: the combined figure would then not be the rate of
-the node. Pass such a variable with {cmd:subnet(single)} on data you have
-combined yourself, or convert it to a level first.
+The weight a subnet carries in that average is its share of the node
+total, A(i,X) / sum over X of A(i,X), so the weights of a node sum to
+one.
 
 {pstd}
 Later calls merge one to one on the keys above, so a network whose
