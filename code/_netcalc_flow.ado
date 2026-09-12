@@ -68,15 +68,22 @@ program define _netcalc_flow, rclass
         }
         
         * Calculate T(y,s) or T(y,f,s) - total for the group
-        tempvar total_group
+        * Take the group total from the last element of a running sum
+        * rather than from egen total(), which rescans each group.
+        tempvar total_group runsum
         if "`subnet'" == "multi" {
             * Group by year, feature, source
-            bysort year `feature' source: egen double `total_group' = total(`value_var')
+            bysort year `feature' source: ///
+                gen double `runsum' = sum(`value_var')
+            by year `feature' source: ///
+                gen double `total_group' = `runsum'[_N]
         }
         else {
             * Group by year, source
-            bysort year source: egen double `total_group' = total(`value_var')
+            bysort year source: gen double `runsum' = sum(`value_var')
+            by year source: gen double `total_group' = `runsum'[_N]
         }
+        drop `runsum'
         
         * Calculate edge weight w_i = v_i / T(y,s)
         tempvar edge_weight

@@ -45,7 +45,14 @@ program define _netcalc_interaction, rclass
         * Tag first occurrence per (year, feature, source) to avoid counting each feature 80 times
         tempvar _tfirst total_source
         bysort year `feature' source (target): gen byte `_tfirst' = (_n == 1)
-        bysort year source: egen `total_source' = total(source_value * `_tfirst')
+        * Running sum then last element, instead of egen total().
+        * The running sum is double but `total_source' keeps the default
+        * float type egen produced, so the stored value is unchanged.
+        tempvar runsrc
+        bysort year source: ///
+            gen double `runsrc' = sum(source_value * `_tfirst')
+        by year source: gen `total_source' = `runsrc'[_N]
+        drop `runsrc'
         
         * Step 2: Calculate p_i^X = N_i^X / N_i
         tempvar p_source
@@ -55,7 +62,12 @@ program define _netcalc_interaction, rclass
         * For a given (year, feature, source), the target_values are exactly
         * the N_k^X for all k != source, so their sum is sum_{k!=i} N_k^X
         tempvar total_target_excl_source
-        bysort year `feature' source: egen double `total_target_excl_source' = total(target_value)
+        tempvar runtgt
+        bysort year `feature' source: ///
+            gen double `runtgt' = sum(target_value)
+        by year `feature' source: ///
+            gen double `total_target_excl_source' = `runtgt'[_N]
+        drop `runtgt'
         
         * Step 4: Calculate omega_j^X = n_j^X / sum_{k!=i} N_k^X
         tempvar omega_target
