@@ -206,7 +206,26 @@ first call and merging into it on later calls:
 {cmd:edge_id} is {cmd:source} and {cmd:target} joined by an underscore.
 Every call adds one variable, named by {cmd:name()}, to
 {cmd:networks_single}; a {cmd:subnet(multi)} call adds it to both
-frames, the single-subnet copy being the sum over the feature.
+frames.
+
+{pstd}
+How the single-subnet copy of a {cmd:subnet(multi)} network is built
+depends on the template, because a subnet weight is a share within its
+own subnet and adding such shares would count every subnet as a whole
+network:
+
+{phang2}
+{cmd:flow} and {cmd:attribute} have a single-subnet form of their own,
+so the raw data is combined over the feature first and the weight is
+then computed once from it. Counts are added, because every group
+moving from the source to the target is part of one flow. Levels are
+averaged over the subnets, weighted by the share of each subnet in the
+node total, because a level describes a node rather than moving between
+nodes.
+
+{phang2}
+{cmd:interaction} has no single-subnet form: its weight already carries
+the share of each subnet, so the subnet weights are added.
 
 {pstd}
 Later calls merge one to one on the keys above, so a network whose

@@ -164,6 +164,13 @@ program define network_calc, rclass
         local passdir "outflow"
     }
     
+    * The raw panel, in the orientation the templates will see. A
+    * multi-subnet flow or attribute network needs it again later, to
+    * build its single-subnet copy from the data rather than from the
+    * subnet weights.
+    tempfile rawdata
+    qui save `rawdata'
+    
     * Call calculation function based on type
     if "`type'" == "interaction" {
         _netcalc_interaction, feature(`feature') direction(`passdir') `debug'
@@ -228,15 +235,36 @@ program define network_calc, rclass
             subnet(multi) ///
             `debug'
         
-        * Aggregate to single
+        * Build the single-subnet copy. interaction has no
+        * single-subnet form, so its subnet weights already carry the
+        * share of each subnet and are summed. flow and attribute do
+        * have one, so their raw data is combined over the feature and
+        * the single-subnet weight is computed from it once.
         di as text "  Aggregating to single-subnet..."
-        use `calcdata', clear
         
-        * Rename edge_value to network name before aggregating
-        rename edge_value `name'
-        
-        _netcalc_frames aggregate ///
-            networkname(`name') `debug'
+        if "`type'" == "interaction" {
+            use `calcdata', clear
+            rename edge_value `name'
+            _netcalc_frames aggregate ///
+                networkname(`name') `debug'
+        }
+        else {
+            use `rawdata', clear
+            _netcalc_pool, type(`type') feature(`feature')
+            if "`type'" == "flow" {
+                _netcalc_flow, subnet(single) ///
+                    direction(`passdir') `debug'
+            }
+            else {
+                _netcalc_attribute, subnet(single) ///
+                    direction(`passdir') `debug'
+            }
+            if "`direction'" == "inflow" {
+                qui rename (source target) (target source)
+                qui replace edge_id = source + "_" + target
+            }
+            rename edge_value `name'
+        }
         
         * Save aggregated data
         tempfile aggdata
