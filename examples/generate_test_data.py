@@ -87,8 +87,8 @@ for y in YEARS:
                 if i == j:
                     continue
                 rows.append([y, b, i, j,
-                             size[(y, b, i)], flow[(y, b, i, j)],
-                             size[(y, b, j)], flow[(y, b, j, i)]])
+                             flow[(y, b, i, j)], flow[(y, b, i, j)],
+                             flow[(y, b, j, i)], flow[(y, b, j, i)]])
 write("test_flow_multi.csv", MULTI, rows)
 
 rows = []

@@ -93,14 +93,22 @@ program define _netcalc_flow, rclass
                 gen double `total_group' = `runsum'[_N]
             drop `runsum'
 
-            tempvar sfirst runsize total_size
-            bysort year `feature' `nsrc' (`ntgt'): ///
-                gen byte `sfirst' = (_n == 1)
+            * The share of the subnet is what the subnet weighs at
+            * the node over what the node weighs in total. Both are
+            * sums over the rows, because size belongs to the edge as
+            * readily as to the node: reading it from one row of the
+            * subnet would be right only while it stayed the same
+            * across that subnet's targets.
+            tempvar runsub total_sub runsize total_size
+            bysort year `feature' `nsrc': ///
+                gen double `runsub' = sum(`ssrc')
+            by year `feature' `nsrc': ///
+                gen double `total_sub' = `runsub'[_N]
             bysort year `nsrc': ///
-                gen double `runsize' = sum(`ssrc' * `sfirst')
+                gen double `runsize' = sum(`ssrc')
             by year `nsrc': ///
                 gen double `total_size' = `runsize'[_N]
-            gen double `edge_weight' = (`ssrc' / `total_size') ///
+            gen double `edge_weight' = (`total_sub' / `total_size') ///
                                      * (`vsrc' / `total_group')
 
             * Nothing to take a share of is no share, not an undefined
@@ -108,7 +116,7 @@ program define _netcalc_flow, rclass
             * out of which nothing travels, both weigh zero here.
             replace `edge_weight' = 0 if `total_size' == 0 ///
                                        | `total_group' == 0
-            drop `runsize' `sfirst' `total_size'
+            drop `runsub' `total_sub' `runsize' `total_size'
         }
         else {
             bysort year `nsrc': ///
