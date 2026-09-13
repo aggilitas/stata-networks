@@ -137,6 +137,12 @@ program define _netcalc_flow, rclass
         * Rename for output
         rename `edge_id' edge_id
         rename `edge_weight' edge_value
+        if "`subnet'" == "multi" {
+            order year feature source target edge_id edge_value
+        }
+        else {
+            order year source target edge_id edge_value
+        }
     }
     
     if "`debug'" != "" {

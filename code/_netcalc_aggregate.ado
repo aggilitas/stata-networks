@@ -36,6 +36,11 @@ program define _netcalc_aggregate
     * columns to use as they see fit.
     qui {
         collapse (sum) `networkname', by(year edge_id source target)
+
+        * collapse labels what it sums, which would leave the reduced
+        * copy of a network carrying a note that the same network
+        * computed directly does not have
+        label variable `networkname' ""
     }
     
     if "`debug'" != "" {

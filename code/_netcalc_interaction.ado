@@ -128,6 +128,7 @@ program define _netcalc_interaction, rclass
         rename `edge_id' edge_id
         rename `edge_weight' edge_value
         rename `feature' feature
+        order year feature source target edge_id edge_value
     }
     
     if "`debug'" != "" {
