@@ -15,8 +15,7 @@ several calls build a multi-network edge panel side by side.
 
 Three templates are available.
 
-  interaction   the share of a subnet at the source node multiplied by
-                the share of the target node in what that subnet holds
+  interaction   the share of the target node in what a subnet holds
                 outside the source. Requires the panel to be split into
                 subnets by a feature; it has no single-subnet form.
 
@@ -28,12 +27,12 @@ Three templates are available.
                 describe nodes rather than move between them: GDP,
                 unemployment, schooling.
 
-flow and attribute accept a feature as well. A subnet weight carries the
-share of its own subnet, so the subnet weights of interaction and flow
-add up to the weight of the edge in the node as a whole, and that sum is
-written as the single-subnet copy. An attribute weight is a log ratio,
-which does not add up that way, so an attribute network with subnets
-stays in the multi-subnet frame.
+flow and attribute accept a feature as well. A subnet is a network of
+its own, whose weights add up to one, and size gives it the share it
+takes when the subnets are put back together, so the single-subnet copy
+is the weight of the edge in the node as a whole. An attribute weight is
+a log ratio, which does not add up that way, so an attribute network
+with subnets stays in the multi-subnet frame.
 
 Input is a long panel. Without a feature it holds year, source, target,
 source_value and target_value. With a feature it holds the feature and
@@ -41,7 +40,10 @@ two columns more on each side, source_size and target_size, which carry
 what the subnet weighs at that node.
 
 Results are written to the frames networks_single and networks_multi,
-keyed on year and edge_id, and on year, feature and edge_id.
+keyed on year and edge_id, and on year, feature and edge_id. A
+multi-subnet call writes a second column beside the weights, named
+after the network with _ratio added, holding the share the subnet takes
+at its node.
 
 
 Requirements

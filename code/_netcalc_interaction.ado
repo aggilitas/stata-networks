@@ -1,6 +1,7 @@
 *! _netcalc_interaction 2.0.0
 *! Helper function for calculating interaction network edge weights
-*! Formula: e_ij^X = (S_i^X / S_i) * (v_j^X / sum_{k!=i} v_k^X)
+*! Formula: e_ij^X = v_j^X / sum_{k!=i} v_k^X, with S_i^X / S_i
+*! carried alongside for the reduction to a single subnet
 
 program define _netcalc_interaction, rclass
     version 16.0
@@ -52,11 +53,9 @@ program define _netcalc_interaction, rclass
     }
 
     * Calculate interaction network weights
-    * Formula: e_ij^X = p_i^X * omega_j^X
-    * where:
-    *   p_i^X = N_i^X / N_i  (source probability)
-    *   omega_j^X = n_j^X / (sum_{k!=i} N_k^X)  (target interaction strength)
     
+    tempvar netcalc_share
+
     qui {
         * The three groupings below are ordered so that only one of
         * them costs a re-sort. Tagging runs on
@@ -98,37 +97,37 @@ program define _netcalc_interaction, rclass
         by year `nsrc': gen double `total_source' = `runsrc'[_N]
         drop `runsrc'
 
-        * Step 3b: Calculate p_i^X = N_i^X / N_i
-        tempvar p_source
-        gen double `p_source' = `ssrc' / `total_source'
-
-        * Step 4: Calculate omega_j^X = n_j^X / sum_{k!=i} N_k^X
-        tempvar omega_target
-        gen double `omega_target' = `vtgt' ///
-                                    / `total_target_excl_source'
-        
-        * Step 5: Calculate edge weight e_ij^X = p_i^X * omega_j^X
+        * Step 3b: the weight itself is how the subnet divides what
+        * it holds outside the source. It is a network of its own and
+        * its weights add up to one, so size does not enter it.
         tempvar edge_weight
-        gen double `edge_weight' = `p_source' * `omega_target'
+        gen double `edge_weight' = `vtgt' ///
+                                   / `total_target_excl_source'
+        replace `edge_weight' = 0 if `total_target_excl_source' == 0
 
-        * Nothing to take a share of is no share, not an undefined
-        * one. A node that holds none of any subnet, and a subnet that
-        * is absent from every node but the source, both weigh zero.
-        replace `edge_weight' = 0 if `total_source' == 0 ///
-                                   | `total_target_excl_source' == 0
+        * Step 4: what size carries is the share of the subnet at the
+        * node, and that is where the subnets are put back together:
+        * the single-subnet copy adds the subnet weights up after each
+        * has been scaled by its own share. The column travels with
+        * the weights as far as the reduction and no further.
+        gen double `netcalc_share' = `ssrc' / `total_source'
+        replace `netcalc_share' = 0 if `total_source' == 0
         
         * Step 6: Create edge_id (source_target format)
         tempvar edge_id
         gen `edge_id' = source + "_" + target
         
         * Keep only necessary variables
-        keep year `feature' source target `edge_id' `edge_weight'
+        keep year `feature' source target `edge_id' ///
+             `edge_weight' `netcalc_share'
         
         * Rename for output
         rename `edge_id' edge_id
         rename `edge_weight' edge_value
+        rename `netcalc_share' netcalc_share
         rename `feature' feature
-        order year feature source target edge_id edge_value
+        order year feature source target edge_id edge_value ///
+              netcalc_share
     }
     
     if "`debug'" != "" {

@@ -187,19 +187,18 @@ contain no underscore, so that the identifier stays unambiguous.
 {pstd}
 {cmd:type(interaction)} requires {cmd:subnet(multi)}: it compares two
 subnets of two nodes and has no single-subnet form. The weight is the
-share of the subnet at the source node, multiplied by the share of the
-target node in what the subnet holds outside the source. The first
-share is read from {cmd:size}, the second from {cmd:value}:
+share of the target node in what the subnet holds outside the source,
+read from {cmd:value}:
 
 {p 8 8 2}
-e(ij,X) = [S(i,X) / S(i)] * [v(j,X) / sum over k != i of v(k,X)]
+e(ij,X) = v(j,X) / sum over k != i of v(k,X)
 
 {pstd}
-How much of the source node is this subnet, times how much of the
-quantity the subnet carries, outside the source node, sits at the
-target. Where the subnet is itself what is being measured, as with
-people grouped by birthplace, {cmd:size} and {cmd:value} hold the same
-number.
+How much of the quantity the subnet carries, outside the source node,
+sits at the target. A subnet is a network of its own and its weights
+add up to one. {cmd:size} does not enter that weight; it enters where
+the subnets are put back together, giving each the share it takes in
+the copy written to {cmd:networks_single}.
 
 {dlgtab:flow}
 
@@ -211,12 +210,17 @@ weight is the share of the edge in what leaves its node in that period:
 w(ij) = v(ij) / sum over j of v(ij)
 
 {pstd}
-Under {cmd:subnet(multi)} that share is taken within the subnet and
-scaled by the share of the subnet itself, so that the weights of a node
-add up to one over subnets and targets together:
+Under {cmd:subnet(multi)} the same share is taken inside the subnet, so
+a subnet is a network in its own right and its weights add up to one on
+their own:
 
 {p 8 8 2}
-w(ij,X) = [S(i,X) / S(i)] * [v(ij,X) / sum over j of v(ij,X)]
+w(ij,X) = v(ij,X) / sum over j of v(ij,X)
+
+{pstd}
+{cmd:size} does not enter that weight. It enters where the subnets are
+put back together: each subnet is scaled by its share of the node before
+the copy in {cmd:networks_single} is added up.
 
 {pstd}
 Use it for quantities that travel along the edge: migration, trade,
@@ -294,11 +298,20 @@ split by different features, whose labels cannot meet, or when the
 node names differ between the input files.
 
 {pstd}
-The copy in {cmd:networks_single} is the sum of the subnet weights.
-That is what a subnet weight is built for in {cmd:interaction} and
-{cmd:flow}: it carries the share of its own subnet, the shares of a
-node add up over the subnets, and the sum is therefore the weight of
-the edge in the node as a whole.
+A {cmd:subnet(multi)} call writes a second column into
+{cmd:networks_multi}, named after the network with {cmd:_ratio} added:
+the share the subnet holds at its node, which is what the {cmd:size}
+columns are read as. It is a number between zero and one and the shares
+of a node add up to one over the subnets, so a regression run one
+subnet at a time has both the weights of that subnet and the weight of
+the subnet itself.
+
+{pstd}
+The copy in {cmd:networks_single} adds the subnet weights up after each
+has been scaled by the share its {cmd:size} gives it at the node. A
+subnet of {cmd:interaction} or {cmd:flow} is a network of its own,
+whose weights add up to one; the shares of a node add up to one as
+well, so the copy is the weight of the edge in the node as a whole.
 
 {pstd}
 An {cmd:attribute} weight is a log ratio, which does not work that way:

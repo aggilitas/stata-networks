@@ -9,8 +9,8 @@ clear all
 * The input: a long node-level panel split into subnets
 *
 * Five provinces, three years, and the migrants grouped by the
-* province they were born in. size is what the subnet weighs at
-* the node and value is the quantity being measured.
+* province they were born in. size gives the subnet its ratio and
+* value is the quantity being measured.
 *--------------------------------------------------------------
 
 import delimited test_interaction_multi.csv, clear varnames(1)

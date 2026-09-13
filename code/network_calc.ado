@@ -236,6 +236,17 @@ program define network_calc, rclass
     if "`subnet'" == "multi" {
         di as text "  Adding to frame: networks_multi"
         use `calcdata', clear
+
+        * A template that reduces to a single subnet leaves the share
+        * of each subnet beside the weights: the raw size columns
+        * turned into the ratio the subnet holds at its node. It is
+        * written into the panel under the network's own name, so that
+        * two networks can each carry their own.
+        capture confirm variable netcalc_share
+        if _rc == 0 {
+            qui rename netcalc_share `name'_ratio
+        }
+
         _netcalc_join, ///
             framename(networks_multi) ///
             networkname(`name') ///
@@ -261,6 +272,17 @@ program define network_calc, rclass
             di as text "  Aggregating to single-subnet..."
             use `calcdata', clear
             rename edge_value `name'
+
+            * The weights of a subnet add up to one on their own, so
+            * the copy is not their plain sum: each subnet enters it
+            * scaled by the share the size columns give it, and the
+            * shares of a node add up to one.
+            capture confirm variable netcalc_share
+            if _rc == 0 {
+                qui replace `name' = `name' * netcalc_share
+                qui drop netcalc_share
+            }
+
             _netcalc_aggregate, ///
                 networkname(`name') `debug'
             local wrote_single = 1

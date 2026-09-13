@@ -43,10 +43,16 @@ program define _netcalc_attribute, rclass
     * through these names. The edge keeps its own orientation, so
     * edge_id is built from source and target as they stand.
     if "`direction'" == "inflow" {
+        local nsrc target
+        local ntgt source
+        local ssrc target_size
         local vsrc target_value
         local vtgt source_value
     }
     else {
+        local nsrc source
+        local ntgt target
+        local ssrc source_size
         local vsrc source_value
         local vtgt target_value
     }
@@ -74,9 +80,30 @@ program define _netcalc_attribute, rclass
     * Formula: w_ij = ln(A_j / A_i). Under inflow the two values change
     * places, which is what flips the sign of the ratio.
     
+    tempvar netcalc_share
+
     qui {
         tempvar edge_weight
         gen double `edge_weight' = ln(`vtgt' / `vsrc')
+
+        * A log ratio does not add up over the subnets, so an
+        * attribute network is not reduced to a single one. The share
+        * the subnet holds at its node is still worth having beside
+        * the weights, and it is read from size as everywhere else.
+        if "`subnet'" == "multi" {
+            tempvar runsub total_sub runsize total_size
+            bysort year `feature' `nsrc': ///
+                gen double `runsub' = sum(`ssrc')
+            by year `feature' `nsrc': ///
+                gen double `total_sub' = `runsub'[_N]
+            bysort year `nsrc': ///
+                gen double `runsize' = sum(`ssrc')
+            by year `nsrc': ///
+                gen double `total_size' = `runsize'[_N]
+            gen double `netcalc_share' = `total_sub' / `total_size'
+            replace `netcalc_share' = 0 if `total_size' == 0
+            drop `runsub' `total_sub' `runsize' `total_size'
+        }
         
         * Create edge_id (source_target format)
         tempvar edge_id
@@ -84,8 +111,10 @@ program define _netcalc_attribute, rclass
         
         * Keep only necessary variables
         if "`subnet'" == "multi" {
-            keep year `feature' source target `edge_id' `edge_weight'
+            keep year `feature' source target `edge_id' ///
+                 `edge_weight' `netcalc_share'
             rename `feature' feature
+            rename `netcalc_share' netcalc_share
         }
         else {
             keep year source target `edge_id' `edge_weight'
@@ -95,7 +124,8 @@ program define _netcalc_attribute, rclass
         rename `edge_id' edge_id
         rename `edge_weight' edge_value
         if "`subnet'" == "multi" {
-            order year feature source target edge_id edge_value
+            order year feature source target edge_id edge_value ///
+                  netcalc_share
         }
         else {
             order year source target edge_id edge_value

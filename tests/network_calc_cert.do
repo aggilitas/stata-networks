@@ -124,20 +124,28 @@ use `flowdat', clear
 network_calc, type(flow) subnet(multi) feature(feature) name(w)
 frame networks_multi {
     split edge_id, parse("_") gen(nd)
+
+    * the share the subnet takes at its node travels beside the
+    * weights, one number per subnet, and the shares add up to one
+    assert w_ratio > 0 & w_ratio < 1
+    preserve
+        bysort year feature nd1: keep if _n == 1
+        collapse (sum) w_ratio, by(year nd1)
+        assert reldif(w_ratio, 1) < 1e-12
+    restore
+
+    * a flow subnet is a network in its own right
     collapse (sum) w, by(year feature nd1)
-    * a subnet adds up to its own share, which is below one
-    assert w > 0 & w < 1
-    collapse (sum) w, by(year nd1)
     assert reldif(w, 1) < 1e-12
 }
-di as res "1b flow multi: the subnets together sum to one"
+di as res "1b flow multi: each subnet sums to one, its share too"
 
 frame networks_single {
     split edge_id, parse("_") gen(nd)
     collapse (sum) w, by(year nd1)
     assert reldif(w, 1) < 1e-12
 }
-di as res "1c flow multi: the combined copy sums to one"
+di as res "1c flow multi: the copy, weighted by size, sums to one"
 
 frames reset
 use `intdat', clear
@@ -146,18 +154,16 @@ network_calc, type(interaction) subnet(multi) feature(feature) ///
 frame networks_multi {
     split edge_id, parse("_") gen(nd)
     collapse (sum) w, by(year feature nd1)
-    assert w > 0 & w < 1
-    collapse (sum) w, by(year nd1)
     assert reldif(w, 1) < 1e-12
 }
-di as res "1d interaction: the subnets together sum to one"
+di as res "1d interaction: each subnet sums to one on its own"
 
 frame networks_single {
     split edge_id, parse("_") gen(nd)
     collapse (sum) w, by(year nd1)
     assert reldif(w, 1) < 1e-12
 }
-di as res "1e interaction: the combined copy sums to one"
+di as res "1e interaction: the copy, weighted by size, sums to one"
 
 *==============================================================
 * 2. Attribute weights cancel along a reversed edge
@@ -279,11 +285,9 @@ network_calc, type(flow) subnet(multi) feature(feature) ///
 frame networks_multi {
     split edge_id, parse("_") gen(nd)
     collapse (sum) w, by(year feature nd2)
-    assert w > 0 & w < 1
-    collapse (sum) w, by(year nd2)
     assert reldif(w, 1) < 1e-12
 }
-di as res "4b inflow flow multi: the subnets together sum to one"
+di as res "4b inflow flow multi: each subnet sums to one on its own"
 
 frames reset
 use `intdat', clear
@@ -292,11 +296,9 @@ network_calc, type(interaction) subnet(multi) feature(feature) ///
 frame networks_multi {
     split edge_id, parse("_") gen(nd)
     collapse (sum) w, by(year feature nd2)
-    assert w > 0 & w < 1
-    collapse (sum) w, by(year nd2)
     assert reldif(w, 1) < 1e-12
 }
-di as res "4c inflow interaction: the subnets together sum to one"
+di as res "4c inflow interaction: each subnet sums to one on its own"
 
 * an attribute weight is a log ratio, so reading the edge from the
 * other end only changes its sign
@@ -513,6 +515,9 @@ frame networks_multi {
     assert r(N) == 0
     qui count if missing(w)
     assert r(N) == 0
+}
+frame networks_single {
+    split edge_id, parse("_") gen(nd)
     collapse (sum) w, by(year nd1)
     assert reldif(w, 1) < 1e-12
 }

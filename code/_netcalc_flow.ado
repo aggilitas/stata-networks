@@ -79,12 +79,13 @@ program define _netcalc_flow, rclass
     * where T(y,s) sums the values sharing (year, source), or
     * (year, feature, source) when the network has subnets
     
+    tempvar netcalc_share
+
     qui {
-        * Within a subnet the weight is the share of the edge in
-        * what leaves its node. Across subnets that share is scaled by
-        * the share of the subnet itself, which is what size carries,
-        * so the weights of a node add up to one over subnets and
-        * targets together, and the single-subnet copy is their sum.
+        * The weight is the share of the edge in what leaves its
+        * node. Under subnet(multi) that is read inside the subnet,
+        * so the weights of a subnet add up to one on their own and
+        * the subnet is a network in its own right.
         tempvar total_group runsum edge_weight
         if "`subnet'" == "multi" {
             bysort year `feature' `nsrc': ///
@@ -92,13 +93,15 @@ program define _netcalc_flow, rclass
             by year `feature' `nsrc': ///
                 gen double `total_group' = `runsum'[_N]
             drop `runsum'
+            gen double `edge_weight' = `vsrc' / `total_group'
+            replace `edge_weight' = 0 if `total_group' == 0
 
-            * The share of the subnet is what the subnet weighs at
-            * the node over what the node weighs in total. Both are
-            * sums over the rows, because size belongs to the edge as
-            * readily as to the node: reading it from one row of the
-            * subnet would be right only while it stayed the same
-            * across that subnet's targets.
+            * What size carries is the share of the subnet at the
+            * node, and that is where the subnets are put back
+            * together: the single-subnet copy adds up the subnet
+            * weights after each has been scaled by its own share.
+            * The column travels with the weights as far as the
+            * reduction and no further.
             tempvar runsub total_sub runsize total_size
             bysort year `feature' `nsrc': ///
                 gen double `runsub' = sum(`ssrc')
@@ -108,14 +111,8 @@ program define _netcalc_flow, rclass
                 gen double `runsize' = sum(`ssrc')
             by year `nsrc': ///
                 gen double `total_size' = `runsize'[_N]
-            gen double `edge_weight' = (`total_sub' / `total_size') ///
-                                     * (`vsrc' / `total_group')
-
-            * Nothing to take a share of is no share, not an undefined
-            * one. A node that holds none of any subnet, and a subnet
-            * out of which nothing travels, both weigh zero here.
-            replace `edge_weight' = 0 if `total_size' == 0 ///
-                                       | `total_group' == 0
+            gen double `netcalc_share' = `total_sub' / `total_size'
+            replace `netcalc_share' = 0 if `total_size' == 0
             drop `runsub' `total_sub' `runsize' `total_size'
         }
         else {
@@ -135,8 +132,10 @@ program define _netcalc_flow, rclass
         
         * Keep only necessary variables
         if "`subnet'" == "multi" {
-            keep year `feature' source target `edge_id' `edge_weight'
+            keep year `feature' source target `edge_id' ///
+                 `edge_weight' `netcalc_share'
             rename `feature' feature
+            rename `netcalc_share' netcalc_share
         }
         else {
             keep year source target `edge_id' `edge_weight'
@@ -146,7 +145,8 @@ program define _netcalc_flow, rclass
         rename `edge_id' edge_id
         rename `edge_weight' edge_value
         if "`subnet'" == "multi" {
-            order year feature source target edge_id edge_value
+            order year feature source target edge_id edge_value ///
+                  netcalc_share
         }
         else {
             order year source target edge_id edge_value
