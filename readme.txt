@@ -80,9 +80,11 @@ From the development repository:
 
 If a version before 2.0.0 is installed, it was distributed under the
 package name stata-networks. Remove it first, or both copies will sit
-in the ado directory and shadow each other:
+in the ado directory and shadow each other. ado uninstall takes the
+number ado dir prints in brackets beside the package, not its name:
 
-    ado uninstall stata-networks
+    ado dir
+    ado uninstall [n]
 
 
 Certification

@@ -46,10 +46,12 @@ that the link printed in the article stays valid.
 
 **If you installed a version before 2.0.0**, it was distributed under the
 package name `stata-networks`. Remove it first, or both will sit in your
-ado directory and shadow each other:
+ado directory and shadow each other. `ado uninstall` takes the number
+`ado dir` prints in brackets beside the package, not its name:
 
 ```stata
-ado uninstall stata-networks
+ado dir
+ado uninstall [n]
 ```
 
 **Note:** If you encounter SSL certificate errors, use Method 2.
