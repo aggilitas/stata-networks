@@ -37,7 +37,8 @@ with subnets stays in the multi-subnet frame.
 Input is a long panel. Without a feature it holds year, source, target,
 source_value and target_value. With a feature it holds the feature and
 two columns more on each side, source_size and target_size, which carry
-what the subnet weighs at that node.
+what the subnet weighs at that node and are read as a ratio of the
+subnet to the node.
 
 Results are written to the frames networks_single and networks_multi,
 keyed on year and edge_id, and on year, feature and edge_id. A

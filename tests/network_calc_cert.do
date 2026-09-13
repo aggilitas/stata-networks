@@ -13,13 +13,13 @@ which network_calc
 * Synthetic data
 *
 * Six nodes, three periods, three subnets, a complete directed
-* grid without self-loops. size carries the weight of a subnet
-* at a node, value the quantity being measured.
+* grid without self-loops. size gives the subnet its ratio at the
+* node, value is the quantity being measured.
 *
-* The single-subnet flow panel is the subnet panel added up over
-* the feature, and the single-subnet attribute panel is the
-* size-weighted mean of the subnet levels, so the two
-* resolutions describe the same network.
+* The single-subnet panels are built from the same numbers as the
+* subnet panels, added up over the feature for flow and averaged
+* over it for attribute, so that both resolutions can be computed
+* from one set of data.
 *==============================================================
 
 local N 6
@@ -501,10 +501,9 @@ frame networks_single {
 }
 di as res "6f refuses a name the frame already holds"
 
-* size is the share of the subnet in what leaves the node, so a
-* subnet out of which nothing travels carries a size of zero. Its
-* edges weigh zero, the share it would have held goes to the
-* subnets that did move, and the node still adds up to one
+* a subnet nobody left carries a ratio of zero, its edges weigh
+* zero, the ratio it would have held goes to the subnets that did
+* move, and the reduced copy still adds up to one
 frames reset
 use `flowdat', clear
 qui replace source_value = 0 if source == "n1" & feature == "f1"

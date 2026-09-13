@@ -102,8 +102,8 @@ year  feature  source  target  source_size  source_value
 ```
 
 `size` is what the subnet weighs at that node (people born in a province
-who live there, passengers carried by a mode); `value` is the quantity
-the network is about.
+who live there, passengers carried by a mode), read as a ratio of the
+subnet to the node; `value` is the quantity the network is about.
 
 ### Example 1: Interaction Network
 

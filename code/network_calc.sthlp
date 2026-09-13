@@ -153,19 +153,21 @@ subnet and directed edge, and carries two columns more:
 splits each node into subnets{p_end}
 {p2col :{cmd:source}}node the edge leaves{p_end}
 {p2col :{cmd:target}}node the edge enters{p_end}
-{p2col :{cmd:source_size}}weight of the subnet at {cmd:source}{p_end}
+{p2col :{cmd:source_size}}what the subnet weighs at {cmd:source}{p_end}
 {p2col :{cmd:source_value}}quantity measured at {cmd:source}{p_end}
-{p2col :{cmd:target_size}}weight of the subnet at {cmd:target}{p_end}
+{p2col :{cmd:target_size}}what the subnet weighs at {cmd:target}{p_end}
 {p2col :{cmd:target_value}}quantity measured at {cmd:target}{p_end}
 {p2colreset}{...}
 
 {pstd}
 {cmd:size} is what the subnet weighs at that node: the people born in
 a given province who live there, the passengers carried by a given mode,
-whatever the subnets are counted in. {cmd:value} is the quantity the
-network is about. What belongs in {cmd:value} follows from the feature:
-splitting an edge by transport mode makes a distance in kilometres
-meaningless and a fare or a tonnage meaningful.
+whatever the subnets are counted in. It is read as a ratio, the subnet
+over the node, so the units it is counted in do not matter and the
+command writes that ratio out beside the weights. {cmd:value} is the
+quantity the network is about. What belongs in {cmd:value} follows from
+the feature: splitting an edge by transport mode makes a distance in
+kilometres meaningless and a fare or a tonnage meaningful.
 
 {pstd}
 {cmd:size} is constant within a period, subnet and node, because it

@@ -5,6 +5,14 @@
 
 clear all
 
+* the listings below are laid out to this width, which is what the
+* Stata Journal asks of code and output alike
+set linesize 79
+
+* the session writes itself beside this file
+capture log close
+log using example_session.log, text replace
+
 *--------------------------------------------------------------
 * The input: a long node-level panel split into subnets
 *
@@ -22,9 +30,10 @@ list in 1/6, noobs abbreviate(16)
 *--------------------------------------------------------------
 * An interaction network
 *
-* The share of the subnet at the source node times the share of
-* the target node in what that subnet holds elsewhere. It has no
-* single-subnet form, so subnet(multi) is required.
+* The share of the target node in what the subnet holds outside
+* the source. A subnet is a network of its own, so its weights add
+* up to one. It has no single-subnet form, so subnet(multi) is
+* required.
 *--------------------------------------------------------------
 
 network_calc, type(interaction) subnet(multi) feature(feature) ///
@@ -33,9 +42,9 @@ network_calc, type(interaction) subnet(multi) feature(feature) ///
 *--------------------------------------------------------------
 * A flow network over the same subnets
 *
-* The share of the edge in what leaves its node, scaled by the
-* share of the subnet itself. Both frames are written: the subnet
-* weights and their sum.
+* The share of the edge in what the subnet sends from its node.
+* Both frames are written: the subnet weights, and beside them the
+* ratio size gives each subnet, which the reduced copy uses.
 *--------------------------------------------------------------
 
 import delimited test_flow_multi.csv, clear varnames(1)
@@ -124,3 +133,5 @@ preserve
 restore
 
 frame change default
+
+log close

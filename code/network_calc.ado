@@ -256,10 +256,11 @@ program define network_calc, rclass
             type(`type') ///
             `debug'
         
-        * The single-subnet copy is the sum of the subnet weights.
-        * That works where a subnet weight is a share: the shares of a
-        * node add up over the subnets and the total is one. It does
-        * not work for attribute, whose weight is a log ratio, so a sum
+        * The single-subnet copy adds the subnet weights up after
+        * each has been scaled by the ratio its subnet holds at the
+        * node. That works where a subnet weight is a share of what
+        * leaves the node, as in flow and interaction. It does not
+        * work for attribute, whose weight is a log ratio, so a sum
         * over subnets is a product of ratios and grows with their
         * number. An attribute network therefore stays in
         * networks_multi.
