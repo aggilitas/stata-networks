@@ -4,7 +4,8 @@
 
 program define _netcalc_attribute, rclass
     version 16.0
-    syntax, Subnet(string) [Feature(varname) DEBUG]
+    syntax, Subnet(string) Direction(string) ///
+            [Feature(varname) DEBUG]
     
     * Validate subnet type
     if !inlist("`subnet'", "single", "multi") {
@@ -36,6 +37,20 @@ program define _netcalc_attribute, rclass
         }
     }
     
+    * An inflow network is the same computation read from the other
+    * end of the edge. Nothing in the data moves: the roles are
+    * assigned to the other columns and the rest of the routine reads
+    * through these names. The edge keeps its own orientation, so
+    * edge_id is built from source and target as they stand.
+    if "`direction'" == "inflow" {
+        local vsrc target_value
+        local vtgt source_value
+    }
+    else {
+        local vsrc source_value
+        local vtgt target_value
+    }
+
     if "`debug'" != "" {
         di as text "_netcalc_attribute: Starting calculation"
         di as text "  Subnet: `subnet'"
@@ -45,18 +60,23 @@ program define _netcalc_attribute, rclass
         di as text "  Observations: " _N
     }
     
-    * Preserve original data
-    tempfile original
-    qui save `original'
+    * The log ratio is defined only for positive levels, which is the
+    * domain the template is for. A value outside it is a fault in the
+    * data, not an edge without a weight, so it stops the command
+    * rather than leaving a missing weight behind.
+    qui count if `vsrc' <= 0 | `vtgt' <= 0
+    if r(N) > 0 {
+        di as error "attributes can not be zero or negative"
+        exit 411
+    }
     
     * Calculate attribute network weights
-    * Formula: w_ij = ln(A_j / A_i). An inflow network is produced by
-    * network_calc, which exchanges the node roles before calling this
-    * routine, which is what flips the sign of the ratio.
+    * Formula: w_ij = ln(A_j / A_i). Under inflow the two values change
+    * places, which is what flips the sign of the ratio.
     
     qui {
         tempvar edge_weight
-        gen double `edge_weight' = ln(target_value / source_value)
+        gen double `edge_weight' = ln(`vtgt' / `vsrc')
         
         * Create edge_id (source_target format)
         tempvar edge_id
@@ -74,15 +94,6 @@ program define _netcalc_attribute, rclass
         * Rename for output
         rename `edge_id' edge_id
         rename `edge_weight' edge_value
-        
-        * Count missing values
-        count if missing(edge_value)
-        local n_missing = r(N)
-        if `n_missing' > 0 {
-            di as text "  Warning: `n_missing' edges have no" ///
-                       " defined weight"
-            di as text "  (likely due to zero or negative attribute values)"
-        }
     }
     
     if "`debug'" != "" {
@@ -95,9 +106,5 @@ program define _netcalc_attribute, rclass
     sum edge_value, meanonly
     return scalar mean_weight = r(mean)
     return scalar n_edges = _N
-    qui count if !missing(edge_value)
-    di as text "  Edges with a defined weight: " ///
-       as result r(N) as text " of " as result _N
-    return scalar n_valid = r(N)
     
 end

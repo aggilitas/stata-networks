@@ -321,4 +321,190 @@ else {
     }
 }
 
+*==============================================================
+* 5. direction(inflow)
+*
+* An inflow network is the same computation anchored at the
+* other end of the edge. Nothing in the data moves and the edge
+* keeps its orientation, so the weight on edge_id i_j is the
+* weight of that edge in what enters j. The share therefore adds
+* up over the sources of a node rather than its targets, and an
+* attribute weight, being a log ratio, simply changes sign.
+*==============================================================
+
+frames reset
+use `flowsgl', clear
+network_calc, type(flow) subnet(single) direction(inflow) name(w)
+frame networks_single {
+    split edge_id, parse("_") gen(nd)
+    collapse (sum) w, by(year nd2)
+    assert reldif(w, 1) < 1e-12
+}
+di as res "5a inflow flow single: weights entering a node sum to one"
+
+frames reset
+use `flowdat', clear
+network_calc, type(flow) subnet(multi) feature(feature) ///
+    direction(inflow) name(w)
+frame networks_multi {
+    split edge_id, parse("_") gen(nd)
+    collapse (sum) w, by(year feature nd2)
+    assert w > 0 & w < 1
+    collapse (sum) w, by(year nd2)
+    assert reldif(w, 1) < 1e-12
+}
+di as res "5b inflow flow multi: the subnets together sum to one"
+
+frames reset
+use `intdat', clear
+network_calc, type(interaction) subnet(multi) feature(feature) ///
+    direction(inflow) name(w)
+frame networks_multi {
+    split edge_id, parse("_") gen(nd)
+    collapse (sum) w, by(year feature nd2)
+    assert w > 0 & w < 1
+    collapse (sum) w, by(year nd2)
+    assert reldif(w, 1) < 1e-12
+}
+di as res "5c inflow interaction: the subnets together sum to one"
+
+* an attribute weight is a log ratio, so reading the edge from the
+* other end only changes its sign
+frames reset
+use `attrsgl', clear
+network_calc, type(attribute) subnet(single) name(out)
+use `attrsgl', clear
+network_calc, type(attribute) subnet(single) direction(inflow) ///
+    name(inw)
+frame networks_single {
+    assert reldif(inw, -out) < 1e-12
+}
+di as res "5d inflow attribute: the sign is the only difference"
+
+* the outflow weight of i_j and the inflow weight of j_i are the
+* same number: both divide the same edge by what leaves i
+tempfile outflow
+frames reset
+use `flowsgl', clear
+network_calc, type(flow) subnet(single) name(out)
+frame networks_single: qui save "`outflow'", replace
+
+frames reset
+use `flowsgl', clear
+network_calc, type(flow) subnet(single) direction(inflow) name(inw)
+frame networks_single {
+    split edge_id, parse("_") gen(nd)
+    gen str12 rev = nd2 + "_" + nd1
+    keep year rev inw
+    rename rev edge_id
+    qui merge 1:1 year edge_id using "`outflow'", ///
+        keepusing(out) nogenerate
+    assert reldif(inw, out) < 1e-12
+}
+di as res "5e inflow flow: the reversed edge carries the same weight"
+
+*==============================================================
+* 6. Joining a second network into a frame
+*
+* A frame is a panel of edges and every network in it is a
+* column. The networks need not reach the same edges: the merge
+* keeps the union, so no row is lost, and an edge a flow does
+* not reach weighs zero rather than nothing at all. Two networks
+* that share no edge are refused.
+*==============================================================
+
+frames reset
+use `flowsgl', clear
+qui count
+local n_full = r(N)
+network_calc, type(flow) subnet(single) name(wa)
+
+* second network on a subset: one edge taken out
+use `flowsgl', clear
+qui drop if source == "n1" & target == "n2"
+network_calc, type(flow) subnet(single) name(wb)
+
+frame networks_single {
+    qui count
+    assert r(N) == `n_full'
+    assert !missing(wa) & !missing(wb)
+    assert wb == 0 if edge_id == "n1_n2"
+    qui count if edge_id == "n1_n2"
+    assert r(N) == 3
+}
+di as res "6a join: a smaller second network keeps every row"
+
+* the other direction: the frame is built from the subset first
+frames reset
+use `flowsgl', clear
+qui drop if source == "n1" & target == "n2"
+network_calc, type(flow) subnet(single) name(wa)
+use `flowsgl', clear
+network_calc, type(flow) subnet(single) name(wb)
+
+frame networks_single {
+    qui count
+    assert r(N) == `n_full'
+    assert !missing(wa) & !missing(wb)
+    assert !missing(source) & !missing(target)
+    assert edge_id == source + "_" + target
+    assert wa == 0 if edge_id == "n1_n2"
+}
+di as res "6b join: a larger second network fills the older column"
+
+* both directions at once: each side reaches an edge the other
+* does not
+frames reset
+use `flowsgl', clear
+qui drop if source == "n1" & target == "n2"
+network_calc, type(flow) subnet(single) name(wa)
+use `flowsgl', clear
+qui drop if source == "n3" & target == "n4"
+network_calc, type(flow) subnet(single) name(wb)
+
+frame networks_single {
+    qui count
+    assert r(N) == `n_full'
+    assert !missing(wa) & !missing(wb)
+    assert !missing(source) & !missing(target)
+    assert edge_id == source + "_" + target
+    assert wa == 0 if edge_id == "n1_n2"
+    assert wb == 0 if edge_id == "n3_n4"
+}
+di as res "6c join: both sides filled in the same call"
+
+* an attribute column is filled the same way
+frames reset
+use `attrsgl', clear
+network_calc, type(attribute) subnet(single) name(ga)
+use `attrsgl', clear
+qui drop if source == "n1" & target == "n2"
+network_calc, type(attribute) subnet(single) name(gb)
+
+frame networks_single {
+    assert !missing(ga) & !missing(gb)
+    assert gb == 0 if edge_id == "n1_n2"
+}
+di as res "6d join: an attribute column is filled too"
+
+* no shared edge at all: the frame becomes the two blocks stacked
+frames reset
+use `flowsgl', clear
+network_calc, type(flow) subnet(single) name(wa)
+frame networks_single {
+    qui count
+    local n_before = r(N)
+}
+use `flowsgl', clear
+qui replace source = "z" + source
+qui replace target = "z" + target
+network_calc, type(flow) subnet(single) name(wb)
+frame networks_single {
+    qui count
+    assert r(N) == 2 * `n_before'
+    qui count if wa != 0 & wb != 0
+    assert r(N) == 0
+}
+di as res "6e join: a disjoint network stacks, nothing overlaps"
+
 di as res _n "all network_calc certification tests passed"

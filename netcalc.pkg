@@ -4,7 +4,7 @@ d
 d Author: Necmi TALAY
 d Support: https://github.com/aggilitas/stata-networks/issues
 d
-d Distribution-Date: 20260912
+d Distribution-Date: 20260913
 d
 d Turns a long node-level panel into a panel of directed edge
 d weights, ready for a fixed-effects estimator. Three templates:
@@ -18,8 +18,8 @@ f code/network_calc.sthlp
 f code/_netcalc_interaction.ado
 f code/_netcalc_flow.ado
 f code/_netcalc_attribute.ado
-f code/_netcalc_frames.ado
 f code/_netcalc_join.ado
 f code/_netcalc_aggregate.ado
+f tests/network_calc_cert.do
 f README.md
 f LICENSE

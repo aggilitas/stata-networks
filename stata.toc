@@ -1,6 +1,6 @@
 v 3
 d netcalc
 d Author: Necmi TALAY
-d Distribution-Date: 20260912
+d Distribution-Date: 20260913
 d
 p netcalc directed edge weights from node-level panel data

@@ -3,7 +3,9 @@
 *! Internal routine of network_calc; not for direct use
 
 program define _netcalc_join
-    syntax , Framename(string) Networkname(string) Subnet(string) [DEBUG]
+    version 16.0
+    syntax , Framename(string) Networkname(string) Subnet(string) ///
+              Type(string) [DEBUG]
     
     * Validate subnet
     if !inlist("`subnet'", "single", "multi") {
@@ -12,22 +14,16 @@ program define _netcalc_join
     }
     
     if "`debug'" != "" {
-        di as text "_netcalc_frames: _netcalc_join"
+        di as text "_netcalc_join"
         di as text "  Frame: `framename'"
         di as text "  Network: `networkname'"
         di as text "  Subnet: `subnet'"
     }
     
-    * Check if frame exists
-    capture frame dir
-    local frame_exists = 0
-    if _rc == 0 {
-        qui frame dir
-        local all_frames `r(frames)'
-        if strpos(" `all_frames' ", " `framename' ") > 0 {
-            local frame_exists = 1
-        }
-    }
+    * Ask the frame itself rather than listing every frame and
+    * searching the list for its name.
+    capture frame `framename': qui describe
+    local frame_exists = (_rc == 0)
     
     * Temp file for current data
     tempfile newdata
@@ -49,6 +45,11 @@ program define _netcalc_join
                 rename edge_value `networkname'
             }
             * Otherwise, data already has the network name (from aggregation)
+
+            * Record the template the column came from. A later join
+            * needs it to know whether an edge the column does not
+            * reach weighs zero or is unknown.
+            char `networkname'[netcalc_type] "`type'"
         }
     }
     else {
@@ -69,9 +70,6 @@ program define _netcalc_join
         
         * Merge with existing frame
         frame `framename' {
-            tempfile framedata
-            qui save `framedata'
-            
             * Determine merge keys
             if "`subnet'" == "multi" {
                 local merge_keys year feature edge_id
@@ -80,23 +78,63 @@ program define _netcalc_join
                 local merge_keys year edge_id
             }
             
-            * Merge
-            qui merge 1:1 `merge_keys' using `newdata', nogenerate
-            
-            * Check for missing values in key variables
-            foreach key of local merge_keys {
-                count if missing(`key')
-                if r(N) > 0 {
-                    di as error "  Error: Missing values in merge key `key'"
+            * Every network in a frame is a column of the same edge
+            * panel, so the frame is only a panel while the networks
+            * agree on the edges. The merge keeps the union, which
+            * means the network computed first sets the skeleton and
+            * anything the later one adds arrives with the earlier
+            * columns empty. Report both sides of the difference
+            * rather than let it pass as a successful call.
+            qui merge 1:1 `merge_keys' using `newdata'
+            qui count if _merge == 3
+            local n_both = r(N)
+            qui count if _merge == 1
+            local n_frame = r(N)
+            qui count if _merge == 2
+            local n_new = r(N)
+
+            char `networkname'[netcalc_type] "`type'"
+
+            * An edge a network does not reach is not a gap in that
+            * network: the weight there is zero. For interaction and
+            * flow the total the weights were divided by never counted
+            * that edge, so nothing already in the frame moves. An
+            * attribute weight is a log ratio and is part of no total
+            * at all; an edge the network does not reach holds no
+            * value at either end, so the two carry no difference and
+            * the log of their ratio is zero.
+            *
+            * Only the rows the merge itself introduced are filled,
+            * and only the columns network_calc wrote, which is what
+            * the characteristic marks.
+            if `n_frame' > 0 {
+                qui replace `networkname' = 0 if _merge == 1
+            }
+            if `n_new' > 0 {
+                qui ds
+                local allvars `r(varlist)'
+                foreach v of local allvars {
+                    if "`v'" == "`networkname'" continue
+                    local vtype : char `v'[netcalc_type]
+                    if "`vtype'" != "" {
+                        qui replace `v' = 0 if _merge == 2
+                    }
                 }
             }
-            
-            * Verify merge was successful
-            count if missing(`networkname')
-            if r(N) > 0 & r(N) < _N {
-                di as text "  Warning: `networkname' is missing" ///
-                           " in " r(N) " observations"
-                di as text "  This may indicate edge mismatch between networks"
+            qui drop _merge
+
+            if `n_both' == 0 {
+                di as error "  `networkname' shares no edge with the" ///
+                            " networks already in `framename'"
+            }
+            if `n_frame' > 0 | `n_new' > 0 {
+                di as text "  Note: the networks in `framename' do not" ///
+                           " cover the same edges"
+                di as text "    matched:        " as result %8.0f `n_both'
+                di as text "    only in frame:  " as result %8.0f `n_frame'
+                di as text "    only in new:    " as result %8.0f `n_new'
+                di as text "  A network weighs zero on the edges it" ///
+                           " does not reach."
             }
         }
     }

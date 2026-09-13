@@ -68,13 +68,20 @@ written to the frames described under
 restored when the command finishes, unchanged.
 
 {pstd}
-A missing value in a required variable is reported and then left alone.
-It propagates to the weight it belongs to, where it stays visible.
-Dropping the edge instead would take it out of its own denominator, and
-the weights that remained would still add up to one, over a mesh quietly
-missing one of its alternatives. A weight whose denominator is zero is
-left missing for the same reason: the edge has no defined share, and a
-zero would read as a defined one.
+The command refuses data it cannot make a network of, rather than
+returning a weight that reads as defined. It stops on a missing value
+in any required variable; on a negative size or a negative flow; on an
+{cmd:attribute} value that is zero or negative, the log ratio being
+undefined there; and on a zero denominator, which is a node holding
+none of any subnet, a node whose edges are all zero, or a subnet
+absent from every node but its source. A subnet the node does not hold
+at all is the one zero that is allowed: its share is zero, so its
+edges weigh nothing whatever the flows say.
+
+{pstd}
+Dropping the offending edge instead would take it out of its own
+denominator, and the weights that remained would still add up to one,
+over a mesh quietly missing one of its alternatives.
 
 
 {marker options}{...}
@@ -106,17 +113,19 @@ ignored, and a note says so.
 {phang}
 {opt d:irection(direction)} chooses which node anchors the weight. With
 {cmd:outflow}, the default, the weights of the edges leaving a node are
-computed relative to that node. With {cmd:inflow} the two node roles
-are exchanged, so the weights of the edges entering a node are computed
-relative to it. For {cmd:interaction} and {cmd:flow} the choice decides
-which of the two sums equals one; for {cmd:attribute} it flips the sign
-of the log ratio. Under {cmd:subnet(multi)} the size columns are
-exchanged along with the value columns.
+computed relative to that node. {cmd:inflow} exchanges the two indices
+and nothing else: the weight written on edge i,j is the weight the same
+formula gives to edge j,i. For {cmd:interaction} and {cmd:flow} that
+decides which of the two sums equals one, so the weights of a node add
+up over the edges entering it rather than those leaving it; for
+{cmd:attribute} it flips the sign of the log ratio. Nothing in the data
+moves either way and the edge keeps its own orientation: only which
+columns are read as the source changes.
 
 {phang}
 {opt debug} displays the intermediate quantities of the template and a
-summary of the calculated weights. Use it to see why a weight is
-missing or unexpected.
+summary of the calculated weights. Use it to see why a weight is not
+what you expected.
 
 
 {marker input}{...}
@@ -179,16 +188,18 @@ contain no underscore, so that the identifier stays unambiguous.
 {cmd:type(interaction)} requires {cmd:subnet(multi)}: it compares two
 subnets of two nodes and has no single-subnet form. The weight is the
 share of the subnet at the source node, multiplied by the share of the
-same subnet at the target node among all other nodes. Both shares are
-read from {cmd:size}:
+target node in what the subnet holds outside the source. The first
+share is read from {cmd:size}, the second from {cmd:value}:
 
 {p 8 8 2}
-e(ij,X) = [S(i,X) / S(i)] * [S(j,X) / sum over k != i of S(k,X)]
+e(ij,X) = [S(i,X) / S(i)] * [v(j,X) / sum over k != i of v(k,X)]
 
 {pstd}
-How much of the source node is this subnet, times how much of that
-subnet, outside the source node, sits at the target. {cmd:value} is not
-used.
+How much of the source node is this subnet, times how much of the
+quantity the subnet carries, outside the source node, sits at the
+target. Where the subnet is itself what is being measured, as with
+people grouped by birthplace, {cmd:size} and {cmd:value} hold the same
+number.
 
 {dlgtab:flow}
 
@@ -228,8 +239,8 @@ specific subnets and nothing is being weighted.
 {pstd}
 Use it for levels that describe nodes rather than travel between them:
 GDP, unemployment, schooling. The log ratio is undefined when either
-value is zero or negative; such an edge is kept with a missing weight,
-and {cmd:r(n_valid)} reports how many weights are defined.
+value is zero or negative, so both values must be positive; an input
+that is not is refused.
 
 
 {marker output}{...}
@@ -260,6 +271,31 @@ only{p_end}
 {p2colreset}{...}
 
 {pstd}
+A frame is a panel of edges, and every network in it is a column of
+that panel, so the networks must be computed over the same edges. The
+merge keeps the union of the two edge sets, so no row is ever lost,
+and the call reports how many edges matched and how many were on one
+side only.
+
+{pstd}
+An edge a network does not reach is not a gap in that network: the
+weight there is zero, and those cells are filled with zero so that no
+row is lost to an estimator. Nothing already in the frame moves. For
+{cmd:interaction} and {cmd:flow} the total the weights were divided by
+never counted that edge; an {cmd:attribute} weight is a log ratio and
+is part of no total at all, and an edge the network does not reach
+holds no value at either end, so the two carry no difference and the
+log of their ratio is zero. Only the cells the merge itself introduced
+are filled.
+
+{pstd}
+A network that shares no edge at all with the frame is reported as
+such, and the frame then holds the two of them stacked rather than
+side by side. That is what happens when two multi-subnet networks are
+split by different features, whose labels cannot meet, or when the
+node names differ between the input files.
+
+{pstd}
 The copy in {cmd:networks_single} is the sum of the subnet weights.
 That is what a subnet weight is built for in {cmd:interaction} and
 {cmd:flow}: it carries the share of its own subnet, the shares of a
@@ -280,11 +316,6 @@ A network read at the two resolutions is not the same calculation. A
 single-subnet network computed from single-subnet data and the
 single-subnet copy of a {cmd:subnet(multi)} call answer different
 questions and will not agree in general.
-
-{pstd}
-Later calls merge one to one on the keys above, so a network whose
-edges do not match those already in the frame contributes missing
-values. The command reports how many.
 
 
 {marker examples}{...}
@@ -311,7 +342,6 @@ values. The command reports how many.
 {pstd}Income disparity between the two nodes of each edge{p_end}
 {phang2}{cmd:. use gdp.dta, clear}{p_end}
 {phang2}{cmd:. network_calc, type(attribute) subnet(single) name(gdp)}{p_end}
-{phang2}{cmd:. display r(n_valid) " of " r(n_edges) " weights defined"}{p_end}
 
 {pstd}Estimating on the edge panel the calls have built{p_end}
 {phang2}{cmd:. frame change networks_single}{p_end}
@@ -333,8 +363,6 @@ dimension{p_end}
 {p2col 5 24 28 2: Scalars}{p_end}
 {synopt:{cmd:r(n_edges)}}number of edge weights calculated{p_end}
 {synopt:{cmd:r(mean_weight)}}mean of the calculated weights{p_end}
-{synopt:{cmd:r(n_valid)}}number of weights that are not missing;
-{cmd:type(attribute)} only{p_end}
 
 {p2col 5 24 28 2: Macros}{p_end}
 {synopt:{cmd:r(network_name)}}name given in {cmd:name()}{p_end}

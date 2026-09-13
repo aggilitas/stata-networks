@@ -15,9 +15,9 @@ several calls build a multi-network edge panel side by side.
 
 Three templates are available.
 
-  interaction   the share of a feature at the source node multiplied by
-                the share of the same feature at the target node among
-                all other nodes. Requires the panel to be split into
+  interaction   the share of a subnet at the source node multiplied by
+                the share of the target node in what that subnet holds
+                outside the source. Requires the panel to be split into
                 subnets by a feature; it has no single-subnet form.
 
   flow          the share of an edge in the total leaving its node in
@@ -58,10 +58,8 @@ Files
   _netcalc_interaction.ado   interaction template
   _netcalc_flow.ado          flow template
   _netcalc_attribute.ado     attribute template
-  _netcalc_pool.ado          combines the raw panel over the feature
-  _netcalc_frames.ado        dispatches the frame subcommands
   _netcalc_join.ado          creates an output frame or joins to it
-  _netcalc_aggregate.ado     sums subnet weights (interaction only)
+  _netcalc_aggregate.ado     sums subnet weights over the feature
 
 Names beginning with an underscore are internal routines and are not
 meant to be called directly.

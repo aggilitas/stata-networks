@@ -3,10 +3,11 @@
 *! Internal routine of network_calc; not for direct use
 
 program define _netcalc_aggregate
+    version 16.0
     syntax , Networkname(string) [DEBUG]
     
     if "`debug'" != "" {
-        di as text "_netcalc_frames: aggregate"
+        di as text "_netcalc_aggregate"
         di as text "  Network: `networkname'"
         di as text "  Aggregating from multi to single"
     }
@@ -28,13 +29,13 @@ program define _netcalc_aggregate
         }
     }
     
-    * Save original multi data
-    tempfile multidata
-    qui save `multidata'
-    
-    * Aggregate by summing over features
+    * Aggregate by summing over features. source and target are
+    * carried through the by() list rather than dropped: edge_id is
+    * built from them, so they are constant within a group and the
+    * grouping does not change, and the caller keeps the two node
+    * columns to use as they see fit.
     qui {
-        collapse (sum) `networkname', by(year edge_id)
+        collapse (sum) `networkname', by(year edge_id source target)
     }
     
     if "`debug'" != "" {

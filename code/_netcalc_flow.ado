@@ -4,7 +4,8 @@
 
 program define _netcalc_flow, rclass
     version 16.0
-    syntax, Subnet(string) [Feature(varname) DEBUG]
+    syntax, Subnet(string) Direction(string) ///
+            [Feature(varname) DEBUG]
     
     * Validate subnet type
     if !inlist("`subnet'", "single", "multi") {
@@ -36,6 +37,24 @@ program define _netcalc_flow, rclass
         }
     }
     
+    * An inflow network is the same computation read from the other
+    * end of the edge. Nothing in the data moves: the roles are
+    * assigned to the other columns and the rest of the routine reads
+    * through these names. The edge keeps its own orientation, so
+    * edge_id is built from source and target as they stand.
+    if "`direction'" == "inflow" {
+        local nsrc target
+        local ntgt source
+        local vsrc target_value
+        local ssrc target_size
+    }
+    else {
+        local nsrc source
+        local ntgt target
+        local vsrc source_value
+        local ssrc source_size
+    }
+
     if "`debug'" != "" {
         di as text "_netcalc_flow: Starting calculation"
         di as text "  Subnet: `subnet'"
@@ -45,9 +64,15 @@ program define _netcalc_flow, rclass
         di as text "  Observations: " _N
     }
     
-    * Preserve original data
-    tempfile original
-    qui save `original'
+    * A flow can be zero, meaning nothing travelled along that edge,
+    * but it cannot be negative. A negative value is a fault in the
+    * data, and a share taken over a total that mixes signs would mean
+    * nothing.
+    qui count if `vsrc' < 0
+    if r(N) > 0 {
+        di as error "flows can not be negative"
+        exit 411
+    }
     
     * Calculate flow network weights
     * Formula: w_i = v_i / T(y,s)
@@ -62,29 +87,38 @@ program define _netcalc_flow, rclass
         * targets together, and the single-subnet copy is their sum.
         tempvar total_group runsum edge_weight
         if "`subnet'" == "multi" {
-            bysort year `feature' source: ///
-                gen double `runsum' = sum(source_value)
-            by year `feature' source: ///
+            bysort year `feature' `nsrc': ///
+                gen double `runsum' = sum(`vsrc')
+            by year `feature' `nsrc': ///
                 gen double `total_group' = `runsum'[_N]
             drop `runsum'
 
             tempvar sfirst runsize total_size
-            bysort year `feature' source (target): ///
+            bysort year `feature' `nsrc' (`ntgt'): ///
                 gen byte `sfirst' = (_n == 1)
-            bysort year source: ///
-                gen double `runsize' = sum(source_size * `sfirst')
-            by year source: ///
+            bysort year `nsrc': ///
+                gen double `runsize' = sum(`ssrc' * `sfirst')
+            by year `nsrc': ///
                 gen double `total_size' = `runsize'[_N]
-            gen double `edge_weight' = (source_size / `total_size') ///
-                                     * (source_value / `total_group')
+            gen double `edge_weight' = (`ssrc' / `total_size') ///
+                                     * (`vsrc' / `total_group')
+
+            * Nothing to take a share of is no share, not an undefined
+            * one. A node that holds none of any subnet, and a subnet
+            * out of which nothing travels, both weigh zero here.
+            replace `edge_weight' = 0 if `total_size' == 0 ///
+                                       | `total_group' == 0
             drop `runsize' `sfirst' `total_size'
         }
         else {
-            bysort year source: ///
-                gen double `runsum' = sum(source_value)
-            by year source: gen double `total_group' = `runsum'[_N]
+            bysort year `nsrc': ///
+                gen double `runsum' = sum(`vsrc')
+            by year `nsrc': gen double `total_group' = `runsum'[_N]
             drop `runsum'
-            gen double `edge_weight' = source_value / `total_group'
+            gen double `edge_weight' = `vsrc' / `total_group'
+
+            * A node out of which nothing travels weighs zero.
+            replace `edge_weight' = 0 if `total_group' == 0
         }
         
         * Create edge_id (source_target format)
