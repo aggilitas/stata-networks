@@ -23,8 +23,8 @@ of its subnet levels.
 import csv
 import random
 
-NODES = ["ankara", "istanbul", "izmir", "kars", "adana"]
-BIRTHPLACES = ["ankara", "istanbul", "izmir", "kars", "adana"]
+NODES = ["van", "kars", "bolu", "rize", "ordu"]
+BIRTHPLACES = ["van", "kars", "bolu", "rize", "ordu"]
 YEARS = [2018, 2019, 2020]
 
 random.seed(20260912)

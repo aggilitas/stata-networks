@@ -15,7 +15,9 @@ clear all
 
 import delimited test_interaction_multi.csv, clear varnames(1)
 describe
-list in 1/6, noobs abbreviate(12)
+format feature source target %4s
+format source_size source_value target_size target_value %8.0g
+list in 1/6, noobs abbreviate(7)
 
 *--------------------------------------------------------------
 * An interaction network
@@ -46,7 +48,7 @@ network_calc, type(flow) subnet(multi) feature(feature) ///
 
 import delimited test_flow_multi.csv, clear varnames(1)
 network_calc, type(flow) subnet(multi) feature(feature) ///
-    direction(inflow) name(mig_bp_in)
+    direction(inflow) name(mig_in)
 
 *--------------------------------------------------------------
 * A single-subnet attribute network
@@ -56,6 +58,8 @@ network_calc, type(flow) subnet(multi) feature(feature) ///
 *--------------------------------------------------------------
 
 import delimited test_attribute_single.csv, clear varnames(1)
+format source target %4s
+format source_value target_value %8.4f
 list in 1/6, noobs abbreviate(12)
 
 network_calc, type(attribute) subnet(single) name(sch)
@@ -66,6 +70,8 @@ network_calc, type(attribute) subnet(single) name(sch)
 
 frame change networks_single
 describe
+format source target %4s
+format int_bp mig_bp mig_in sch %8.4f
 list in 1/8, noobs abbreviate(12)
 
 * a flow weight is a share, so the weights leaving a node add up
@@ -73,6 +79,7 @@ list in 1/8, noobs abbreviate(12)
 preserve
     split edge_id, parse("_") gen(nd)
     collapse (sum) mig_bp, by(year nd1)
+    format mig_bp %8.4f
     list, noobs
 restore
 
@@ -92,6 +99,8 @@ restore
 
 frame change networks_multi
 describe
+format feature source target %4s
+format int_bp mig_bp mig_in %8.4f
 list in 1/9, noobs abbreviate(12)
 
 * within one subnet the weights add up to the share of that
@@ -99,7 +108,8 @@ list in 1/9, noobs abbreviate(12)
 preserve
     split edge_id, parse("_") gen(nd)
     collapse (sum) mig_bp, by(year feature nd1)
-    list if year == 2018 & nd1 == "ankara", noobs
+    format mig_bp %8.4f
+    list if year == 2018 & nd1 == "van", noobs
 restore
 
 frame change default
