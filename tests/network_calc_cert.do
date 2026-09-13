@@ -102,11 +102,12 @@ di as txt "certification data: `N' nodes, `Y' periods, `F' subnets"
 *==============================================================
 * 1. Weights leaving a node
 *
-* A subnet weight carries the share of its own subnet, so a
-* subnet adds up to that share and only the subnets together
-* add up to one. The single-subnet copy, being their sum, adds
-* up to one as well. A single-subnet network computed from
-* single-subnet data adds up to one directly.
+* A subnet is a network of its own, so its weights add up to
+* one. Beside them stands the share the subnet takes at its
+* node, read from size, and those shares add up to one as well.
+* The single-subnet copy scales each subnet by its share before
+* adding up, so it adds up to one too, as does a single-subnet
+* network computed from single-subnet data.
 *==============================================================
 
 frames reset
@@ -127,11 +128,11 @@ frame networks_multi {
 
     * the share the subnet takes at its node travels beside the
     * weights, one number per subnet, and the shares add up to one
-    assert w_ratio > 0 & w_ratio < 1
+    assert w_fratio > 0 & w_fratio < 1
     preserve
         bysort year feature nd1: keep if _n == 1
-        collapse (sum) w_ratio, by(year nd1)
-        assert reldif(w_ratio, 1) < 1e-12
+        collapse (sum) w_fratio, by(year nd1)
+        assert reldif(w_fratio, 1) < 1e-12
     restore
 
     * a flow subnet is a network in its own right

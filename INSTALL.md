@@ -144,7 +144,7 @@ use birthplace.dta, clear
 
 * Calculate interaction network
 network_calc, type(interaction) subnet(multi) feature(birthplace) ///
-    name(birth_place)
+    name(bplace)
 
 * View results
 frame change networks_single

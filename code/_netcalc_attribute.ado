@@ -80,7 +80,7 @@ program define _netcalc_attribute, rclass
     * Formula: w_ij = ln(A_j / A_i). Under inflow the two values change
     * places, which is what flips the sign of the ratio.
     
-    tempvar netcalc_share
+    tempvar netcalc_fratio
 
     qui {
         tempvar edge_weight
@@ -100,8 +100,8 @@ program define _netcalc_attribute, rclass
                 gen double `runsize' = sum(`ssrc')
             by year `nsrc': ///
                 gen double `total_size' = `runsize'[_N]
-            gen double `netcalc_share' = `total_sub' / `total_size'
-            replace `netcalc_share' = 0 if `total_size' == 0
+            gen double `netcalc_fratio' = `total_sub' / `total_size'
+            replace `netcalc_fratio' = 0 if `total_size' == 0
             drop `runsub' `total_sub' `runsize' `total_size'
         }
         
@@ -112,9 +112,9 @@ program define _netcalc_attribute, rclass
         * Keep only necessary variables
         if "`subnet'" == "multi" {
             keep year `feature' source target `edge_id' ///
-                 `edge_weight' `netcalc_share'
+                 `edge_weight' `netcalc_fratio'
             rename `feature' feature
-            rename `netcalc_share' netcalc_share
+            rename `netcalc_fratio' netcalc_fratio
         }
         else {
             keep year source target `edge_id' `edge_weight'
@@ -125,7 +125,7 @@ program define _netcalc_attribute, rclass
         rename `edge_weight' edge_value
         if "`subnet'" == "multi" {
             order year feature source target edge_id edge_value ///
-                  netcalc_share
+                  netcalc_fratio
         }
         else {
             order year source target edge_id edge_value

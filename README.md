@@ -109,7 +109,8 @@ the network is about.
 
 ```stata
 use "birthplace_data.dta", clear
-network_calc, type(interaction) subnet(multi) feature(birthplace) name(birth_place)
+network_calc, type(interaction) subnet(multi) feature(birthplace) ///
+    name(bplace)
 ```
 
 ### Example 2: Flow Network
@@ -131,11 +132,12 @@ network_calc, type(attribute) subnet(single) direction(outflow) name(gdp)
 ```stata
 * Single-subnet regression
 frame change networks_single
-ivreghdfe migration birth_place gdp, absorb(edge_id)
+ivreghdfe migration bplace gdp, absorb(edge_id)
 
-* Multi-subnet regression
+* Multi-subnet regression: bplace_fratio is the share the subnet takes
+* at its node, which a multi-subnet call writes beside the weights
 frame change networks_multi
-ivreghdfe migration birth_place, absorb(edge_id feature)
+ivreghdfe migration bplace bplace_fratio, absorb(edge_id feature)
 ```
 
 ## Command Syntax

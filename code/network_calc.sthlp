@@ -299,12 +299,14 @@ node names differ between the input files.
 
 {pstd}
 A {cmd:subnet(multi)} call writes a second column into
-{cmd:networks_multi}, named after the network with {cmd:_ratio} added:
-the share the subnet holds at its node, which is what the {cmd:size}
-columns are read as. It is a number between zero and one and the shares
-of a node add up to one over the subnets, so a regression run one
-subnet at a time has both the weights of that subnet and the weight of
-the subnet itself.
+{cmd:networks_multi}, named after the network with {cmd:_fratio}
+added: the share the subnet holds at its node, which is what the
+{cmd:size} columns are read as. It is a number between zero and one and
+the shares of a node add up to one over the subnets, so a regression
+run one subnet at a time has both the weights of that subnet and the
+weight of the subnet itself. Each call reads the sizes of its own
+input, so two networks split the same way carry a column each and need
+not weigh their subnets alike.
 
 {pstd}
 The copy in {cmd:networks_single} adds the subnet weights up after each
@@ -343,12 +345,13 @@ questions and will not agree in general.
 {pstd}Social connection by birthplace, one subnet per birthplace{p_end}
 {phang2}{cmd:. use birthplace.dta, clear}{p_end}
 {phang2}{cmd:. network_calc, type(interaction) subnet(multi)}{break}
-{cmd:          feature(birthplace) name(birth_place)}{p_end}
+{cmd:          feature(birthplace) name(bplace)}{p_end}
 
-{pstd}Migration split by the birthplace of the migrants{p_end}
+{pstd}Migration split by the same subnets, and the share each subnet
+takes at its node, which the call leaves in {cmd:mig_fratio}{p_end}
 {phang2}{cmd:. use migration_by_birthplace.dta, clear}{p_end}
 {phang2}{cmd:. network_calc, type(flow) subnet(multi)}{break}
-{cmd:          feature(birthplace) name(mig_bp)}{p_end}
+{cmd:          feature(birthplace) name(mig)}{p_end}
 
 {pstd}Income disparity between the two nodes of each edge{p_end}
 {phang2}{cmd:. use gdp.dta, clear}{p_end}
@@ -356,12 +359,13 @@ questions and will not agree in general.
 
 {pstd}Estimating on the edge panel the calls have built{p_end}
 {phang2}{cmd:. frame change networks_single}{p_end}
-{phang2}{cmd:. reghdfe migration birth_place gdp, absorb(edge_id)}{p_end}
+{phang2}{cmd:. reghdfe migration bplace gdp, absorb(edge_id)}{p_end}
 
 {pstd}The multi-subnet panel, with the feature as a second
 dimension{p_end}
 {phang2}{cmd:. frame change networks_multi}{p_end}
-{phang2}{cmd:. reghdfe migration birth_place, absorb(edge_id feature)}{p_end}
+{phang2}{cmd:. reghdfe migration bplace mig_fratio,}{break}
+{cmd:          absorb(edge_id feature)}{p_end}
 
 
 {marker results}{...}

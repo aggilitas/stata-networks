@@ -54,7 +54,7 @@ program define _netcalc_interaction, rclass
 
     * Calculate interaction network weights
     
-    tempvar netcalc_share
+    tempvar netcalc_fratio
 
     qui {
         * The three groupings below are ordered so that only one of
@@ -110,8 +110,8 @@ program define _netcalc_interaction, rclass
         * the single-subnet copy adds the subnet weights up after each
         * has been scaled by its own share. The column travels with
         * the weights as far as the reduction and no further.
-        gen double `netcalc_share' = `ssrc' / `total_source'
-        replace `netcalc_share' = 0 if `total_source' == 0
+        gen double `netcalc_fratio' = `ssrc' / `total_source'
+        replace `netcalc_fratio' = 0 if `total_source' == 0
         
         * Step 6: Create edge_id (source_target format)
         tempvar edge_id
@@ -119,15 +119,15 @@ program define _netcalc_interaction, rclass
         
         * Keep only necessary variables
         keep year `feature' source target `edge_id' ///
-             `edge_weight' `netcalc_share'
+             `edge_weight' `netcalc_fratio'
         
         * Rename for output
         rename `edge_id' edge_id
         rename `edge_weight' edge_value
-        rename `netcalc_share' netcalc_share
+        rename `netcalc_fratio' netcalc_fratio
         rename `feature' feature
         order year feature source target edge_id edge_value ///
-              netcalc_share
+              netcalc_fratio
     }
     
     if "`debug'" != "" {

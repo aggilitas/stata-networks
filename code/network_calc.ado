@@ -241,10 +241,12 @@ program define network_calc, rclass
         * of each subnet beside the weights: the raw size columns
         * turned into the ratio the subnet holds at its node. It is
         * written into the panel under the network's own name, so that
-        * two networks can each carry their own.
-        capture confirm variable netcalc_share
+        * two networks can each carry their own: a call reads the size
+        * columns of its own input, and two networks split the same
+        * way need not weigh their subnets the same.
+        capture confirm variable netcalc_fratio
         if _rc == 0 {
-            qui rename netcalc_share `name'_ratio
+            qui rename netcalc_fratio `name'_fratio
         }
 
         _netcalc_join, ///
@@ -277,10 +279,10 @@ program define network_calc, rclass
             * the copy is not their plain sum: each subnet enters it
             * scaled by the share the size columns give it, and the
             * shares of a node add up to one.
-            capture confirm variable netcalc_share
+            capture confirm variable netcalc_fratio
             if _rc == 0 {
-                qui replace `name' = `name' * netcalc_share
-                qui drop netcalc_share
+                qui replace `name' = `name' * netcalc_fratio
+                qui drop netcalc_fratio
             }
 
             _netcalc_aggregate, ///

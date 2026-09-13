@@ -42,8 +42,8 @@ what the subnet weighs at that node.
 Results are written to the frames networks_single and networks_multi,
 keyed on year and edge_id, and on year, feature and edge_id. A
 multi-subnet call writes a second column beside the weights, named
-after the network with _ratio added, holding the share the subnet takes
-at its node.
+after the network with _fratio added, holding the share the subnet
+takes at its node.
 
 
 Requirements
