@@ -6,18 +6,24 @@ Layout, multi-subnet:
     year feature source target source_size source_value
                                target_size target_value
 
-    size   the weight of the subnet at that node, a count
+    size   what the subnet weighs, read as a ratio of the subnet to the
+           node: for interaction and attribute the people of the group
+           living at the node, for flow the migrants of the group sent
+           along the edge, so that in the flow file size and value hold
+           the same numbers
     value  the quantity being measured on that edge or node
 
 Layout, single-subnet:
 
     year source target source_value target_value
 
-The flow files are consistent with each other: the single-subnet flow
-between two nodes is the sum of the subnet flows between them, so the
-same network can be read at either resolution. The attribute files are
-consistent in the same sense: the node level is the size-weighted mean
-of its subnet levels.
+The single-subnet files are built from the same numbers as the subnet
+files: the single-subnet flow between two nodes is the sum of the subnet
+flows between them, and the single-subnet attribute level is the
+size-weighted mean of the subnet levels. The two resolutions are not the
+same calculation. Here they happen to agree for flow, because size and
+value are the same numbers in the flow file, and that is a property of
+this data rather than of the command.
 """
 
 import csv

@@ -69,6 +69,14 @@ meant to be called directly.
 
   network_calc_cert.do       certification script
 
+  example_session.do         the session shown in the article
+  test_interaction_multi.csv
+  test_flow_multi.csv
+  test_flow_single.csv
+  test_attribute_multi.csv
+  test_attribute_single.csv  the data the session reads
+  generate_test_data.py      builds the five data files
+
 
 Installation
 ------------

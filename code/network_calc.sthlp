@@ -70,13 +70,12 @@ restored when the command finishes, unchanged.
 {pstd}
 The command refuses data it cannot make a network of, rather than
 returning a weight that reads as defined. It stops on a missing value
-in any required variable; on a negative size or a negative flow; on an
-{cmd:attribute} value that is zero or negative, the log ratio being
-undefined there; and on a zero denominator, which is a node holding
-none of any subnet, a node whose edges are all zero, or a subnet
-absent from every node but its source. A subnet the node does not hold
-at all is the one zero that is allowed: its share is zero, so its
-edges weigh nothing whatever the flows say.
+in any required variable; on a negative size, a negative flow or a
+negative {cmd:interaction} value; and on an {cmd:attribute} value that
+is zero or negative, the log ratio being undefined there. A zero
+denominator is not refused. A node out of which nothing travels, a
+subnet the node does not hold, and a subnet absent from every node but
+its source all take no share, and their weights are written as zero.
 
 {pstd}
 Dropping the offending edge instead would take it out of its own
@@ -170,10 +169,15 @@ the feature: splitting an edge by transport mode makes a distance in
 kilometres meaningless and a fare or a tonnage meaningful.
 
 {pstd}
-{cmd:size} is constant within a period, subnet and node, because it
-describes the node rather than the edge. {cmd:value} is constant in the
-same way when it describes a node, as in {cmd:attribute}, and varies
-over the edge when it travels along it, as in {cmd:flow}.
+Under {cmd:interaction}, {cmd:size} must be constant within a period,
+subnet and node: the template reads it once for each subnet, because it
+describes the node. Under {cmd:flow} and {cmd:attribute} it is added up
+over the rows of the subnet, so it may describe the node and be the
+same on every row, or describe the edge and change from one target to
+the next, as the migrants of one group sent along each edge would.
+{cmd:value} is constant within a period, subnet and node when it
+describes a node, as in {cmd:attribute}, and varies over the edge when
+it travels along it, as in {cmd:flow}.
 
 {pstd}
 {cmd:source} and {cmd:target} must be string variables, because the
