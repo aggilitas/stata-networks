@@ -126,8 +126,8 @@ program define _netcalc_interaction, rclass
         rename `edge_weight' edge_value
         rename `netcalc_fratio' netcalc_fratio
         rename `feature' feature
-        order year feature source target edge_id edge_value ///
-              netcalc_fratio
+        order year feature source target edge_id ///
+              netcalc_fratio edge_value
     }
     
     if "`debug'" != "" {

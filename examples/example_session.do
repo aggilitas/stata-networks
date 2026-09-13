@@ -76,18 +76,19 @@ list in 1/8, noobs abbreviate(16)
 * a flow weight is a share, so the weights leaving a node add up
 * to one in every year
 preserve
-    split edge_id, parse("_") gen(nd)
-    collapse (sum) mig_out, by(year nd1)
+    split edge_id, parse("_") gen(node)
+    collapse (sum) mig_out, by(year node1)
     format mig_out %8.4f
-    list, noobs
+    list, noobs abbreviate(16)
 restore
 
 * an attribute weight is a log ratio, so it cancels along the
 * reversed edge
 preserve
-    split edge_id, parse("_") gen(nd)
-    generate str24 pair = cond(nd1 < nd2, nd1 + "|" + nd2, ///
-                                          nd2 + "|" + nd1)
+    split edge_id, parse("_") gen(node)
+    generate str24 pair = cond(node1 < node2, ///
+                               node1 + "|" + node2, ///
+                               node2 + "|" + node1)
     collapse (sum) sch, by(year pair)
     summarize sch
 restore
@@ -98,27 +99,28 @@ restore
 
 frame change networks_multi
 format feature source target %4s
-format bplace mig_out mig_in %7.4f
-format bplace_fratio mig_out_fratio mig_in_fratio %7.4f
+format bplace_fratio bplace %7.4f
+format mig_out_fratio mig_out %7.4f
+format mig_in_fratio mig_in %7.4f
 * every network in the frame, and beside each the share its subnet
 * takes at the node
 list in 1/9, noobs abbreviate(16)
 
 * a subnet is a network of its own, so its weights add up to one
 preserve
-    split edge_id, parse("_") gen(nd)
-    collapse (sum) mig_out, by(year feature nd1)
+    split edge_id, parse("_") gen(node)
+    collapse (sum) mig_out, by(year feature node1)
     format mig_out %8.4f
-    list if year == 2018 & nd1 == "van", noobs
+    list if year == 2018 & node1 == "van", noobs abbreviate(16)
 restore
 
 * and the shares those subnets take at the node add up to one
 preserve
-    split edge_id, parse("_") gen(nd)
-    bysort year feature nd1: keep if _n == 1
-    collapse (sum) mig_out_fratio, by(year nd1)
+    split edge_id, parse("_") gen(node)
+    bysort year feature node1: keep if _n == 1
+    collapse (sum) mig_out_fratio, by(year node1)
     format mig_out_fratio %8.4f
-    list, noobs
+    list, noobs abbreviate(16)
 restore
 
 frame change default

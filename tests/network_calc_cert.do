@@ -114,8 +114,8 @@ frames reset
 use `flowsgl', clear
 network_calc, type(flow) subnet(single) name(w)
 frame networks_single {
-    split edge_id, parse("_") gen(nd)
-    collapse (sum) w, by(year nd1)
+    split edge_id, parse("_") gen(node)
+    collapse (sum) w, by(year node1)
     assert reldif(w, 1) < 1e-12
 }
 di as res "1a flow single: weights leaving a node sum to one"
@@ -124,26 +124,26 @@ frames reset
 use `flowdat', clear
 network_calc, type(flow) subnet(multi) feature(feature) name(w)
 frame networks_multi {
-    split edge_id, parse("_") gen(nd)
+    split edge_id, parse("_") gen(node)
 
     * the share the subnet takes at its node travels beside the
     * weights, one number per subnet, and the shares add up to one
     assert w_fratio > 0 & w_fratio < 1
     preserve
-        bysort year feature nd1: keep if _n == 1
-        collapse (sum) w_fratio, by(year nd1)
+        bysort year feature node1: keep if _n == 1
+        collapse (sum) w_fratio, by(year node1)
         assert reldif(w_fratio, 1) < 1e-12
     restore
 
     * a flow subnet is a network in its own right
-    collapse (sum) w, by(year feature nd1)
+    collapse (sum) w, by(year feature node1)
     assert reldif(w, 1) < 1e-12
 }
 di as res "1b flow multi: each subnet sums to one, its share too"
 
 frame networks_single {
-    split edge_id, parse("_") gen(nd)
-    collapse (sum) w, by(year nd1)
+    split edge_id, parse("_") gen(node)
+    collapse (sum) w, by(year node1)
     assert reldif(w, 1) < 1e-12
 }
 di as res "1c flow multi: the copy, weighted by size, sums to one"
@@ -153,15 +153,15 @@ use `intdat', clear
 network_calc, type(interaction) subnet(multi) feature(feature) ///
     name(w)
 frame networks_multi {
-    split edge_id, parse("_") gen(nd)
-    collapse (sum) w, by(year feature nd1)
+    split edge_id, parse("_") gen(node)
+    collapse (sum) w, by(year feature node1)
     assert reldif(w, 1) < 1e-12
 }
 di as res "1d interaction: each subnet sums to one on its own"
 
 frame networks_single {
-    split edge_id, parse("_") gen(nd)
-    collapse (sum) w, by(year nd1)
+    split edge_id, parse("_") gen(node)
+    collapse (sum) w, by(year node1)
     assert reldif(w, 1) < 1e-12
 }
 di as res "1e interaction: the copy, weighted by size, sums to one"
@@ -179,9 +179,9 @@ use `attrdat', clear
 network_calc, type(attribute) subnet(multi) feature(feature) ///
     name(w)
 frame networks_multi {
-    split edge_id, parse("_") gen(nd)
-    gen str12 pair = cond(nd1 < nd2, nd1 + "|" + nd2, ///
-                                     nd2 + "|" + nd1)
+    split edge_id, parse("_") gen(node)
+    gen str12 pair = cond(node1 < node2, node1 + "|" + node2, ///
+                                     node2 + "|" + node1)
     collapse (sum) w, by(year feature pair)
     assert abs(w) < 1e-12
 }
@@ -195,9 +195,9 @@ frames reset
 use `attrsgl', clear
 network_calc, type(attribute) subnet(single) name(w)
 frame networks_single {
-    split edge_id, parse("_") gen(nd)
-    gen str12 pair = cond(nd1 < nd2, nd1 + "|" + nd2, ///
-                                     nd2 + "|" + nd1)
+    split edge_id, parse("_") gen(node)
+    gen str12 pair = cond(node1 < node2, node1 + "|" + node2, ///
+                                     node2 + "|" + node1)
     collapse (sum) w, by(year pair)
     assert abs(w) < 1e-12
 }
@@ -273,8 +273,8 @@ frames reset
 use `flowsgl', clear
 network_calc, type(flow) subnet(single) direction(inflow) name(w)
 frame networks_single {
-    split edge_id, parse("_") gen(nd)
-    collapse (sum) w, by(year nd2)
+    split edge_id, parse("_") gen(node)
+    collapse (sum) w, by(year node2)
     assert reldif(w, 1) < 1e-12
 }
 di as res "4a inflow flow single: weights entering a node sum to one"
@@ -284,8 +284,8 @@ use `flowdat', clear
 network_calc, type(flow) subnet(multi) feature(feature) ///
     direction(inflow) name(w)
 frame networks_multi {
-    split edge_id, parse("_") gen(nd)
-    collapse (sum) w, by(year feature nd2)
+    split edge_id, parse("_") gen(node)
+    collapse (sum) w, by(year feature node2)
     assert reldif(w, 1) < 1e-12
 }
 di as res "4b inflow flow multi: each subnet sums to one on its own"
@@ -295,8 +295,8 @@ use `intdat', clear
 network_calc, type(interaction) subnet(multi) feature(feature) ///
     direction(inflow) name(w)
 frame networks_multi {
-    split edge_id, parse("_") gen(nd)
-    collapse (sum) w, by(year feature nd2)
+    split edge_id, parse("_") gen(node)
+    collapse (sum) w, by(year feature node2)
     assert reldif(w, 1) < 1e-12
 }
 di as res "4c inflow interaction: each subnet sums to one on its own"
@@ -326,8 +326,8 @@ frames reset
 use `flowsgl', clear
 network_calc, type(flow) subnet(single) direction(inflow) name(inw)
 frame networks_single {
-    split edge_id, parse("_") gen(nd)
-    gen str12 rev = nd2 + "_" + nd1
+    split edge_id, parse("_") gen(node)
+    gen str12 rev = node2 + "_" + node1
     keep year rev inw
     rename rev edge_id
     qui merge 1:1 year edge_id using "`outflow'", ///
@@ -511,15 +511,15 @@ qui replace source_value = 0 if source == "n1" & feature == "f1"
 qui replace source_size  = 0 if source == "n1" & feature == "f1"
 network_calc, type(flow) subnet(multi) feature(feature) name(w)
 frame networks_multi {
-    split edge_id, parse("_") gen(nd)
-    qui count if nd1 == "n1" & feature == "f1" & w != 0
+    split edge_id, parse("_") gen(node)
+    qui count if node1 == "n1" & feature == "f1" & w != 0
     assert r(N) == 0
     qui count if missing(w)
     assert r(N) == 0
 }
 frame networks_single {
-    split edge_id, parse("_") gen(nd)
-    collapse (sum) w, by(year nd1)
+    split edge_id, parse("_") gen(node)
+    collapse (sum) w, by(year node1)
     assert reldif(w, 1) < 1e-12
 }
 di as res "6g an empty subnet weighs zero, the node still sums to one"
