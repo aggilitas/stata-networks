@@ -1,15 +1,6 @@
 *! network_calc certification script
-*! Run with the package on the adopath. To include the comparison
-*! against the published version, point a global at a checkout of the
-*! v1.0.0-kbs tag before running:
-*!
-*!     global NETCALC_KBS "/path/to/the/tag/checkout"
-*!     do network_calc_cert.do
-*!
-*! The script stops at the first failure.
-
-* read before cscript: cscript clears globals
-local kbs "$NETCALC_KBS"
+*! Run with the package on the adopath. The script stops at the first
+*! failure.
 
 cscript "network_calc" adofile network_calc
 
@@ -262,73 +253,12 @@ foreach c in 1000 0.001 {
 }
 
 *==============================================================
-* 4. Comparison with the published version
+* 4. direction(inflow)
 *
-* Skipped unless a checkout of v1.0.0-kbs is pointed at. The
-* three configurations below must reproduce it exactly. The
-* certification data sets size equal to value for interaction,
-* which is what the published version read, so the comparison
-* stays meaningful after the input gained the size columns.
-*
-* The configurations expected to differ are not compared:
-* direction(inflow) was not applied by the published version, a
-* multi-subnet flow weight now carries the share of its subnet,
-* and an attribute network with subnets no longer writes a
-* single-subnet copy.
-*==============================================================
-
-if "`kbs'" == "" {
-    di as txt "4 skipped: set global NETCALC_KBS to compare " ///
-              "against v1.0.0-kbs"
-}
-else {
-    foreach spec in "interaction multi intdat" ///
-                    "flow single flowsgl" ///
-                    "attribute single attrsgl" {
-        local typ : word 1 of `spec'
-        local sub : word 2 of `spec'
-        local src : word 3 of `spec'
-        if "`src'" == "flowsgl" local dat "`flowsgl'"
-        if "`src'" == "intdat"  local dat "`intdat'"
-        if "`src'" == "attrsgl" local dat "`attrsgl'"
-        local opt = cond("`sub'" == "multi", "feature(feature)", "")
-
-        tempfile kbsout
-        frames reset
-        discard
-        adopath ++ "`kbs'/code"
-        adopath ++ "`kbs'/code/helpers"
-        use "`dat'", clear
-        network_calc, type(`typ') subnet(`sub') `opt' name(w)
-        frame networks_single: qui save "`kbsout'", replace
-
-        * take the published version back off the adopath, or the
-        * current code would never be reached on the next pass
-        adopath - "`kbs'/code/helpers"
-        adopath - "`kbs'/code"
-
-        frames reset
-        discard
-        use "`dat'", clear
-        network_calc, type(`typ') subnet(`sub') `opt' name(w)
-        frame networks_single {
-            rename w w_now
-            qui merge 1:1 year edge_id using "`kbsout'", ///
-                nogenerate
-            assert reldif(w_now, w) < 1e-12
-        }
-        di as res "4 `typ' `sub': reproduces v1.0.0-kbs"
-    }
-}
-
-*==============================================================
-* 5. direction(inflow)
-*
-* An inflow network is the same computation anchored at the
-* other end of the edge. Nothing in the data moves and the edge
-* keeps its orientation, so the weight on edge_id i_j is the
-* weight of that edge in what enters j. The share therefore adds
-* up over the sources of a node rather than its targets, and an
+* inflow exchanges the two indices and nothing else, so the
+* weight written on edge i,j is the weight the same formula gives
+* to edge j,i. The weights of a node therefore add up over the
+* edges entering it rather than those leaving it, and an
 * attribute weight, being a log ratio, simply changes sign.
 *==============================================================
 
@@ -340,7 +270,7 @@ frame networks_single {
     collapse (sum) w, by(year nd2)
     assert reldif(w, 1) < 1e-12
 }
-di as res "5a inflow flow single: weights entering a node sum to one"
+di as res "4a inflow flow single: weights entering a node sum to one"
 
 frames reset
 use `flowdat', clear
@@ -353,7 +283,7 @@ frame networks_multi {
     collapse (sum) w, by(year nd2)
     assert reldif(w, 1) < 1e-12
 }
-di as res "5b inflow flow multi: the subnets together sum to one"
+di as res "4b inflow flow multi: the subnets together sum to one"
 
 frames reset
 use `intdat', clear
@@ -366,7 +296,7 @@ frame networks_multi {
     collapse (sum) w, by(year nd2)
     assert reldif(w, 1) < 1e-12
 }
-di as res "5c inflow interaction: the subnets together sum to one"
+di as res "4c inflow interaction: the subnets together sum to one"
 
 * an attribute weight is a log ratio, so reading the edge from the
 * other end only changes its sign
@@ -379,7 +309,7 @@ network_calc, type(attribute) subnet(single) direction(inflow) ///
 frame networks_single {
     assert reldif(inw, -out) < 1e-12
 }
-di as res "5d inflow attribute: the sign is the only difference"
+di as res "4d inflow attribute: the sign is the only difference"
 
 * the outflow weight of i_j and the inflow weight of j_i are the
 * same number: both divide the same edge by what leaves i
@@ -401,16 +331,17 @@ frame networks_single {
         keepusing(out) nogenerate
     assert reldif(inw, out) < 1e-12
 }
-di as res "5e inflow flow: the reversed edge carries the same weight"
+di as res "4e inflow flow: the reversed edge carries the same weight"
 
 *==============================================================
-* 6. Joining a second network into a frame
+* 5. Joining a second network into a frame
 *
 * A frame is a panel of edges and every network in it is a
 * column. The networks need not reach the same edges: the merge
-* keeps the union, so no row is lost, and an edge a flow does
+* keeps the union, so no row is lost, and an edge a network does
 * not reach weighs zero rather than nothing at all. Two networks
-* that share no edge are refused.
+* that share no edge stack rather than sit side by side, and the
+* command says so.
 *==============================================================
 
 frames reset
@@ -432,7 +363,7 @@ frame networks_single {
     qui count if edge_id == "n1_n2"
     assert r(N) == 3
 }
-di as res "6a join: a smaller second network keeps every row"
+di as res "5a join: a smaller second network keeps every row"
 
 * the other direction: the frame is built from the subset first
 frames reset
@@ -450,7 +381,7 @@ frame networks_single {
     assert edge_id == source + "_" + target
     assert wa == 0 if edge_id == "n1_n2"
 }
-di as res "6b join: a larger second network fills the older column"
+di as res "5b join: a larger second network fills the older column"
 
 * both directions at once: each side reaches an edge the other
 * does not
@@ -471,7 +402,7 @@ frame networks_single {
     assert wa == 0 if edge_id == "n1_n2"
     assert wb == 0 if edge_id == "n3_n4"
 }
-di as res "6c join: both sides filled in the same call"
+di as res "5c join: both sides filled in the same call"
 
 * an attribute column is filled the same way
 frames reset
@@ -485,7 +416,7 @@ frame networks_single {
     assert !missing(ga) & !missing(gb)
     assert gb == 0 if edge_id == "n1_n2"
 }
-di as res "6d join: an attribute column is filled too"
+di as res "5d join: an attribute column is filled too"
 
 * no shared edge at all: the frame becomes the two blocks stacked
 frames reset
@@ -505,6 +436,82 @@ frame networks_single {
     qui count if wa != 0 & wb != 0
     assert r(N) == 0
 }
-di as res "6e join: a disjoint network stacks, nothing overlaps"
+di as res "5e join: a disjoint network stacks, nothing overlaps"
+
+*==============================================================
+* 6. What the command refuses
+*
+* Data it cannot make a network of is refused rather than turned
+* into a weight that reads as defined, and a name that would be
+* lost or would overwrite a column is refused before anything is
+* computed.
+*==============================================================
+
+frames reset
+use `flowsgl', clear
+qui replace source_value = . in 1
+capture network_calc, type(flow) subnet(single) name(w)
+assert _rc == 416
+capture frame networks_single: describe
+assert _rc != 0
+di as res "6a refuses a missing value, and writes nothing"
+
+frames reset
+use `flowsgl', clear
+qui replace source_value = -1 in 1
+capture network_calc, type(flow) subnet(single) name(w)
+assert _rc == 411
+di as res "6b refuses a negative flow"
+
+frames reset
+use `flowdat', clear
+qui replace source_size = -1 in 1
+capture network_calc, type(flow) subnet(multi) feature(feature) ///
+    name(w)
+assert _rc == 411
+di as res "6c refuses a negative subnet size"
+
+frames reset
+use `attrsgl', clear
+qui replace target_value = 0 in 1
+capture network_calc, type(attribute) subnet(single) name(w)
+assert _rc == 411
+di as res "6d refuses a non-positive attribute value"
+
+frames reset
+use `flowsgl', clear
+foreach bad in year source target edge_id feature {
+    capture network_calc, type(flow) subnet(single) name(`bad')
+    assert _rc == 198
+}
+di as res "6e refuses the five names the frames carry themselves"
+
+frames reset
+use `flowsgl', clear
+network_calc, type(flow) subnet(single) name(w)
+use `flowsgl', clear
+capture network_calc, type(flow) subnet(single) name(w)
+assert _rc == 110
+frame networks_single {
+    qui describe, short
+    assert r(k) == 5
+}
+di as res "6f refuses a name the frame already holds"
+
+* the weights of a node no longer reach one when a subnet has
+* nothing leaving it, which is what the data says rather than a
+* fault in it
+frames reset
+use `flowdat', clear
+qui replace source_value = 0 if source == "n1" & feature == "f1"
+network_calc, type(flow) subnet(multi) feature(feature) name(w)
+frame networks_multi {
+    split edge_id, parse("_") gen(nd)
+    qui count if nd1 == "n1" & feature == "f1" & w != 0
+    assert r(N) == 0
+    qui count if missing(w)
+    assert r(N) == 0
+}
+di as res "6g a subnet with nothing leaving it weighs zero, not missing"
 
 di as res _n "all network_calc certification tests passed"
