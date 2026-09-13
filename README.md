@@ -117,14 +117,15 @@ network_calc, type(interaction) subnet(multi) feature(birthplace) ///
 
 ```stata
 use "migration_data.dta", clear
-network_calc, type(flow) subnet(single) direction(outflow) name(migration)
+network_calc, type(flow) subnet(single) name(mig_out)
+network_calc, type(flow) subnet(single) direction(inflow) name(mig_in)
 ```
 
 ### Example 3: Attribute Network
 
 ```stata
-use "attributes_data.dta", clear
-network_calc, type(attribute) subnet(single) direction(outflow) name(gdp)
+use "schooling_data.dta", clear
+network_calc, type(attribute) subnet(single) name(sch)
 ```
 
 ### Example 4: Regression Analysis
@@ -132,12 +133,12 @@ network_calc, type(attribute) subnet(single) direction(outflow) name(gdp)
 ```stata
 * Single-subnet regression
 frame change networks_single
-ivreghdfe migration bplace gdp, absorb(edge_id)
+ivreghdfe y mig_out mig_in bplace sch, absorb(edge_id)
 
 * Multi-subnet regression: bplace_fratio is the share the subnet takes
 * at its node, which a multi-subnet call writes beside the weights
 frame change networks_multi
-ivreghdfe migration bplace bplace_fratio, absorb(edge_id feature)
+ivreghdfe y bplace bplace_fratio, absorb(edge_id feature)
 ```
 
 ## Command Syntax

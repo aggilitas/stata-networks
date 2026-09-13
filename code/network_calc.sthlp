@@ -336,7 +336,7 @@ questions and will not agree in general.
 
 {pstd}One network from migration flows{p_end}
 {phang2}{cmd:. use migration.dta, clear}{p_end}
-{phang2}{cmd:. network_calc, type(flow) subnet(single) name(migration)}{p_end}
+{phang2}{cmd:. network_calc, type(flow) subnet(single) name(mig_out)}{p_end}
 
 {pstd}The same flows seen from the receiving node{p_end}
 {phang2}{cmd:. network_calc, type(flow) subnet(single) name(mig_in)}{break}
@@ -348,23 +348,23 @@ questions and will not agree in general.
 {cmd:          feature(birthplace) name(bplace)}{p_end}
 
 {pstd}Migration split by the same subnets, and the share each subnet
-takes at its node, which the call leaves in {cmd:mig_fratio}{p_end}
+takes at its node, which the call leaves in {cmd:mig_out_fratio}{p_end}
 {phang2}{cmd:. use migration_by_birthplace.dta, clear}{p_end}
 {phang2}{cmd:. network_calc, type(flow) subnet(multi)}{break}
-{cmd:          feature(birthplace) name(mig)}{p_end}
+{cmd:          feature(birthplace) name(mig_out)}{p_end}
 
-{pstd}Income disparity between the two nodes of each edge{p_end}
-{phang2}{cmd:. use gdp.dta, clear}{p_end}
-{phang2}{cmd:. network_calc, type(attribute) subnet(single) name(gdp)}{p_end}
+{pstd}The schooling gap between the two nodes of each edge{p_end}
+{phang2}{cmd:. use schooling.dta, clear}{p_end}
+{phang2}{cmd:. network_calc, type(attribute) subnet(single) name(sch)}{p_end}
 
 {pstd}Estimating on the edge panel the calls have built{p_end}
 {phang2}{cmd:. frame change networks_single}{p_end}
-{phang2}{cmd:. reghdfe migration bplace gdp, absorb(edge_id)}{p_end}
+{phang2}{cmd:. reghdfe y mig_out bplace sch, absorb(edge_id)}{p_end}
 
 {pstd}The multi-subnet panel, with the feature as a second
 dimension{p_end}
 {phang2}{cmd:. frame change networks_multi}{p_end}
-{phang2}{cmd:. reghdfe migration bplace mig_fratio,}{break}
+{phang2}{cmd:. reghdfe y bplace mig_out_fratio,}{break}
 {cmd:          absorb(edge_id feature)}{p_end}
 
 

@@ -17,7 +17,7 @@ import delimited test_interaction_multi.csv, clear varnames(1)
 describe
 format feature source target %4s
 format source_size source_value target_size target_value %8.0g
-list in 1/6, noobs abbreviate(7)
+list in 1/6, noobs abbreviate(16)
 
 *--------------------------------------------------------------
 * An interaction network
@@ -40,7 +40,7 @@ network_calc, type(interaction) subnet(multi) feature(feature) ///
 
 import delimited test_flow_multi.csv, clear varnames(1)
 network_calc, type(flow) subnet(multi) feature(feature) ///
-    name(mig)
+    name(mig_out)
 
 *--------------------------------------------------------------
 * The same flow network read from the other end of the edge
@@ -60,7 +60,7 @@ network_calc, type(flow) subnet(multi) feature(feature) ///
 import delimited test_attribute_single.csv, clear varnames(1)
 format source target %4s
 format source_value target_value %8.4f
-list in 1/6, noobs abbreviate(12)
+list in 1/6, noobs abbreviate(16)
 
 network_calc, type(attribute) subnet(single) name(sch)
 
@@ -69,17 +69,16 @@ network_calc, type(attribute) subnet(single) name(sch)
 *--------------------------------------------------------------
 
 frame change networks_single
-describe
 format source target %4s
-format bplace mig mig_in sch %8.4f
-list in 1/8, noobs abbreviate(12)
+format bplace mig_out mig_in sch %8.4f
+list in 1/8, noobs abbreviate(16)
 
 * a flow weight is a share, so the weights leaving a node add up
 * to one in every year
 preserve
     split edge_id, parse("_") gen(nd)
-    collapse (sum) mig, by(year nd1)
-    format mig %8.4f
+    collapse (sum) mig_out, by(year nd1)
+    format mig_out %8.4f
     list, noobs
 restore
 
@@ -98,21 +97,18 @@ restore
 *--------------------------------------------------------------
 
 frame change networks_multi
-describe
 format feature source target %4s
-format bplace mig mig_in %7.4f
-format bplace_fratio mig_fratio mig_in_fratio %7.4f
-list year feature edge_id bplace mig mig_in in 1/9, noobs
-
-* beside every network stands the share its subnet takes at the node,
-* one number per subnet, and the shares of a node add up to one
-list year feature edge_id bplace_fratio mig_fratio in 1/9, noobs
+format bplace mig_out mig_in %7.4f
+format bplace_fratio mig_out_fratio mig_in_fratio %7.4f
+* every network in the frame, and beside each the share its subnet
+* takes at the node
+list in 1/9, noobs abbreviate(16)
 
 * a subnet is a network of its own, so its weights add up to one
 preserve
     split edge_id, parse("_") gen(nd)
-    collapse (sum) mig, by(year feature nd1)
-    format mig %8.4f
+    collapse (sum) mig_out, by(year feature nd1)
+    format mig_out %8.4f
     list if year == 2018 & nd1 == "van", noobs
 restore
 
@@ -120,8 +116,8 @@ restore
 preserve
     split edge_id, parse("_") gen(nd)
     bysort year feature nd1: keep if _n == 1
-    collapse (sum) mig_fratio, by(year nd1)
-    format mig_fratio %8.4f
+    collapse (sum) mig_out_fratio, by(year nd1)
+    format mig_out_fratio %8.4f
     list, noobs
 restore
 
