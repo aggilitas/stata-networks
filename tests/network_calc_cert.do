@@ -498,12 +498,14 @@ frame networks_single {
 }
 di as res "6f refuses a name the frame already holds"
 
-* the weights of a node no longer reach one when a subnet has
-* nothing leaving it, which is what the data says rather than a
-* fault in it
+* size is the share of the subnet in what leaves the node, so a
+* subnet out of which nothing travels carries a size of zero. Its
+* edges weigh zero, the share it would have held goes to the
+* subnets that did move, and the node still adds up to one
 frames reset
 use `flowdat', clear
 qui replace source_value = 0 if source == "n1" & feature == "f1"
+qui replace source_size  = 0 if source == "n1" & feature == "f1"
 network_calc, type(flow) subnet(multi) feature(feature) name(w)
 frame networks_multi {
     split edge_id, parse("_") gen(nd)
@@ -511,7 +513,9 @@ frame networks_multi {
     assert r(N) == 0
     qui count if missing(w)
     assert r(N) == 0
+    collapse (sum) w, by(year nd1)
+    assert reldif(w, 1) < 1e-12
 }
-di as res "6g a subnet with nothing leaving it weighs zero, not missing"
+di as res "6g an empty subnet weighs zero, the node still sums to one"
 
 di as res _n "all network_calc certification tests passed"
