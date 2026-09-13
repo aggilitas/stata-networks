@@ -93,11 +93,20 @@ number ado dir prints in brackets beside the package, not its name:
 Certification
 -------------
 
-network_calc_cert.do builds its own data and asserts the properties that
-define the weights: that the weights leaving a node sum to one, that
-attribute weights cancel along a reversed edge, and that scaling the
-whole input by a positive constant moves no weight. It stops at the
-first failure.
+network_calc_cert.do builds its own data, six nodes over three periods
+and three subnets on a complete directed grid, and asserts the
+properties that define the weights rather than recorded numbers. It
+stops at the first failure. Its six sections check:
+
+  1. that a subnet's weights sum to one, that the shares of a node sum
+     to one, and that the single-subnet copy sums to one
+  2. that attribute weights cancel along a reversed edge
+  3. that scaling the whole input by a positive constant moves no weight
+  4. that direction(inflow) reads the edge from the other end, and that
+     an inflow weight equals the outflow weight of the reversed edge
+  5. that a second network joined into a frame loses no row and weighs
+     zero where it does not reach
+  6. that the command refuses each input it cannot make a network of
 
 
 Citation

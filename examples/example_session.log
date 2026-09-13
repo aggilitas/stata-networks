@@ -3,7 +3,7 @@
        log:  C:\Users\ntnta\gm\networks-ado-project\examples\example_session.lo
 > g
   log type:  text
- opened on:  13 Sep 2026, 15:21:35
+ opened on:  13 Sep 2026, 15:26:23
 
 . 
 . *--------------------------------------------------------------
@@ -97,9 +97,10 @@ Sorted by:
 . *--------------------------------------------------------------
 . * An interaction network
 . *
-. * The share of the subnet at the source node times the share of
-. * the target node in what that subnet holds elsewhere. It has no
-. * single-subnet form, so subnet(multi) is required.
+. * The share of the target node in what the subnet holds outside
+. * the source. A subnet is a network of its own, so its weights add
+. * up to one. It has no single-subnet form, so subnet(multi) is
+. * required.
 . *--------------------------------------------------------------
 . 
 . network_calc, type(interaction) subnet(multi) feature(feature) ///
@@ -142,9 +143,9 @@ To view the networks:
 . *--------------------------------------------------------------
 . * A flow network over the same subnets
 . *
-. * The share of the edge in what leaves its node, scaled by the
-. * share of the subnet itself. Both frames are written: the subnet
-. * weights and their sum.
+. * The share of the edge in what the subnet sends from its node.
+. * Both frames are written: the subnet weights, and beside them the
+. * ratio size gives each subnet, which the reduced copy uses.
 . *--------------------------------------------------------------
 . 
 . import delimited test_flow_multi.csv, clear varnames(1)
@@ -549,5 +550,5 @@ node1  node2
        log:  C:\Users\ntnta\gm\networks-ado-project\examples\example_session.lo
 > g
   log type:  text
- closed on:  13 Sep 2026, 15:21:36
+ closed on:  13 Sep 2026, 15:26:24
 -------------------------------------------------------------------------------
