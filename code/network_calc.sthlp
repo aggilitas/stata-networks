@@ -282,11 +282,9 @@ An edge a network does not reach is not a gap in that network: the
 weight there is zero, and those cells are filled with zero so that no
 row is lost to an estimator. Nothing already in the frame moves. For
 {cmd:interaction} and {cmd:flow} the total the weights were divided by
-never counted that edge; an {cmd:attribute} weight is a log ratio and
-is part of no total at all, and an edge the network does not reach
-holds no value at either end, so the two carry no difference and the
-log of their ratio is zero. Only the cells the merge itself introduced
-are filled.
+never counted that edge; an {cmd:attribute} weight is part of no total
+at all, so its cells are filled the same way and nothing moves there
+either. Only the cells the merge itself introduced are filled.
 
 {pstd}
 A network that shares no edge at all with the frame is reported as

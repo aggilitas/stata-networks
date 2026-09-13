@@ -99,10 +99,9 @@ program define _netcalc_join
             * network: the weight there is zero. For interaction and
             * flow the total the weights were divided by never counted
             * that edge, so nothing already in the frame moves. An
-            * attribute weight is a log ratio and is part of no total
-            * at all; an edge the network does not reach holds no
-            * value at either end, so the two carry no difference and
-            * the log of their ratio is zero.
+            * attribute weight is part of no total at all, so the
+            * cell is filled with zero like the others and nothing
+            * moves there either.
             *
             * Only the rows the merge itself introduced are filled,
             * and only the columns network_calc wrote, which is what
