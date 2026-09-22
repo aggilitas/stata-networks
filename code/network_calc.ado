@@ -175,10 +175,11 @@ program define network_calc, rclass
     tempfile original
     qui save `original'
     
-    * Under subnet(multi) a weight is the share of the subnet in its
-    * node multiplied by the network computed inside that subnet. A
-    * size of zero is a subnet the node does not hold, which the
-    * templates weigh as zero; a size below zero is not a size.
+    * Under subnet(multi) a weight is computed inside its subnet, and
+    * the ratio of the subnet within the feature at its node enters
+    * only where the subnets are put back together. A size of zero is
+    * a subnet the node does not hold, which the templates weigh as
+    * zero; a size below zero is not a size.
     if "`subnet'" == "multi" & "`type'" != "attribute" {
         local ssrc = cond("`direction'" == "inflow", ///
                           "target_size", "source_size")
@@ -237,7 +238,7 @@ program define network_calc, rclass
         di as text "  Adding to frame: networks_multi"
         use `calcdata', clear
 
-        * A template that reduces to a single subnet leaves the share
+        * A template that reduces to a single subnet leaves the ratio
         * of each subnet beside the weights: the raw size columns
         * turned into the ratio the subnet holds at its node. It is
         * written into the panel under the network's own name, so that
@@ -278,8 +279,8 @@ program define network_calc, rclass
 
             * The weights of a subnet add up to one on their own, so
             * the copy is not their plain sum: each subnet enters it
-            * scaled by the share the size columns give it, and the
-            * shares of a node add up to one.
+            * scaled by the ratio the size columns give it, and the
+            * ratios of a node add up to one.
             capture confirm variable netcalc_fratio
             if _rc == 0 {
                 qui replace `name' = `name' * netcalc_fratio

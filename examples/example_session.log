@@ -3,7 +3,7 @@
        log:  C:\Users\ntnta\gm\networks-ado-project\examples\example_session.lo
 > g
   log type:  text
- opened on:  13 Sep 2026, 15:26:23
+ opened on:  22 Sep 2026, 19:49:00
 
 . 
 . *--------------------------------------------------------------
@@ -398,7 +398,7 @@ node1  node2
 
 . format mig_in_fratio mig_in %7.4f
 
-. * every network in the frame, and beside each the share its subnet
+. * every network in the frame, and beside each the ratio its subnet
 . * takes at the node
 . list in 1/9, noobs abbreviate(16)
 
@@ -501,7 +501,7 @@ node1  node2
 . restore
 
 . 
-. * and the shares those subnets take at the node add up to one
+. * and the ratios those subnets hold at the node add up to one
 . preserve
 
 .     split edge_id, parse("_") gen(node)
@@ -550,5 +550,5 @@ node1  node2
        log:  C:\Users\ntnta\gm\networks-ado-project\examples\example_session.lo
 > g
   log type:  text
- closed on:  13 Sep 2026, 15:26:24
+ closed on:  22 Sep 2026, 19:49:00
 -------------------------------------------------------------------------------

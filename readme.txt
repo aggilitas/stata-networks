@@ -28,7 +28,7 @@ Three templates are available.
                 unemployment, schooling.
 
 flow and attribute accept a feature as well. A subnet is a network of
-its own, whose weights add up to one, and size gives it the share it
+its own, whose weights add up to one, and size gives it the ratio it
 takes when the subnets are put back together, so the single-subnet copy
 is the weight of the edge in the node as a whole. An attribute weight is
 a log ratio, which does not add up that way, so an attribute network
@@ -43,8 +43,8 @@ subnet to the node.
 Results are written to the frames networks_single and networks_multi,
 keyed on year and edge_id, and on year, feature and edge_id. A
 multi-subnet call writes a second column beside the weights, named
-after the network with _fratio added, holding the share the subnet
-takes at its node.
+after the network with _fratio added, holding the ratio of the subnet
+within the feature at its node.
 
 
 Requirements
@@ -106,7 +106,7 @@ and three subnets on a complete directed grid, and asserts the
 properties that define the weights rather than recorded numbers. It
 stops at the first failure. Its six sections check:
 
-  1. that a subnet's weights sum to one, that the shares of a node sum
+  1. that a subnet's weights sum to one, that the ratios of a node sum
      to one, and that the single-subnet copy sums to one
   2. that attribute weights cancel along a reversed edge
   3. that scaling the whole input by a positive constant moves no weight

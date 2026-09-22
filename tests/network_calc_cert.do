@@ -103,9 +103,9 @@ di as txt "certification data: `N' nodes, `Y' periods, `F' subnets"
 * 1. Weights leaving a node
 *
 * A subnet is a network of its own, so its weights add up to
-* one. Beside them stands the share the subnet takes at its
-* node, read from size, and those shares add up to one as well.
-* The single-subnet copy scales each subnet by its share before
+* one. Beside them stands the ratio the subnet holds at its
+* node, read from size, and those ratios add up to one as well.
+* The single-subnet copy scales each subnet by its ratio before
 * adding up, so it adds up to one too, as does a single-subnet
 * network computed from single-subnet data.
 *==============================================================
@@ -126,8 +126,8 @@ network_calc, type(flow) subnet(multi) feature(feature) name(w)
 frame networks_multi {
     split edge_id, parse("_") gen(node)
 
-    * the share the subnet takes at its node travels beside the
-    * weights, one number per subnet, and the shares add up to one
+    * the ratio the subnet holds at its node travels beside the
+    * weights, one number per subnet, and the ratios add up to one
     assert w_fratio > 0 & w_fratio < 1
     preserve
         bysort year feature node1: keep if _n == 1
@@ -139,7 +139,7 @@ frame networks_multi {
     collapse (sum) w, by(year feature node1)
     assert reldif(w, 1) < 1e-12
 }
-di as res "1b flow multi: each subnet sums to one, its share too"
+di as res "1b flow multi: each subnet sums to one, its ratio too"
 
 frame networks_single {
     split edge_id, parse("_") gen(node)
@@ -522,5 +522,13 @@ frame networks_single {
     assert reldif(w, 1) < 1e-12
 }
 di as res "6g an empty subnet weighs zero, the node still sums to one"
+
+frames reset
+use `intdat', clear
+qui replace target_value = -1 in 1
+capture network_calc, type(interaction) subnet(multi) ///
+    feature(feature) name(w)
+assert _rc == 411
+di as res "6h refuses a negative interaction value"
 
 di as res _n "all network_calc certification tests passed"

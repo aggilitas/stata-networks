@@ -111,7 +111,7 @@ format feature source target %4s
 format bplace_fratio bplace %7.4f
 format mig_out_fratio mig_out %7.4f
 format mig_in_fratio mig_in %7.4f
-* every network in the frame, and beside each the share its subnet
+* every network in the frame, and beside each the ratio its subnet
 * takes at the node
 list in 1/9, noobs abbreviate(16)
 
@@ -123,7 +123,7 @@ preserve
     list if year == 2018 & node1 == "van", noobs abbreviate(16)
 restore
 
-* and the shares those subnets take at the node add up to one
+* and the ratios those subnets hold at the node add up to one
 preserve
     split edge_id, parse("_") gen(node)
     bysort year feature node1: keep if _n == 1

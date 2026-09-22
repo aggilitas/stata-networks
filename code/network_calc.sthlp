@@ -75,7 +75,7 @@ negative {cmd:interaction} value; and on an {cmd:attribute} value that
 is zero or negative, the log ratio being undefined there. A zero
 denominator is not refused. A node out of which nothing travels, a
 subnet the node does not hold, and a subnet absent from every node but
-its source all take no share, and their weights are written as zero.
+its source all come to zero, and their weights are written as zero.
 
 {pstd}
 Dropping the offending edge instead would take it out of its own
@@ -203,7 +203,7 @@ e(ij,X) = v(j,X) / sum over k != i of v(k,X)
 How much of the quantity the subnet carries, outside the source node,
 sits at the target. A subnet is a network of its own and its weights
 add up to one. {cmd:size} does not enter that weight; it enters where
-the subnets are put back together, giving each the share it takes in
+the subnets are put back together, giving each its ratio in
 the copy written to {cmd:networks_single}.
 
 {dlgtab:flow}
@@ -225,7 +225,7 @@ w(ij,X) = v(ij,X) / sum over j of v(ij,X)
 
 {pstd}
 {cmd:size} does not enter that weight. It enters where the subnets are
-put back together: each subnet is scaled by its share of the node before
+put back together: each subnet is scaled by its ratio at the node before
 the copy in {cmd:networks_single} is added up.
 
 {pstd}
@@ -305,20 +305,20 @@ node names differ between the input files.
 
 {pstd}
 A {cmd:subnet(multi)} call writes a second column into
-{cmd:networks_multi}, named after the network with {cmd:_fratio}
-added: the share the subnet holds at its node, which is what the
-{cmd:size} columns are read as. It is a number between zero and one and
-the shares of a node add up to one over the subnets, so a regression
+{cmd:networks_multi}, named after the network with {cmd:_fratio} added:
+the ratio of the subnet within the feature at its node, which is what
+the {cmd:size} columns are read as. It is a number between zero and one
+and the ratios of a node add up to one over the subnets, so a regression
 run one subnet at a time has both the weights of that subnet and the
-weight of the subnet itself. Each call reads the sizes of its own
-input, so two networks split the same way carry a column each and need
-not weigh their subnets alike.
+weight of the subnet itself. Each call reads the sizes of its own input,
+so two networks split the same way carry a column each and need not
+weigh their subnets alike.
 
 {pstd}
 The copy in {cmd:networks_single} adds the subnet weights up after each
-has been scaled by the share its {cmd:size} gives it at the node. A
+has been scaled by the ratio its {cmd:size} gives it at the node. A
 subnet of {cmd:interaction} or {cmd:flow} is a network of its own,
-whose weights add up to one; the shares of a node add up to one as
+whose weights add up to one; the ratios of a node add up to one as
 well, so the copy is the weight of the edge in the node as a whole.
 
 {pstd}
@@ -353,8 +353,8 @@ questions and will not agree in general.
 {phang2}{cmd:. network_calc, type(interaction) subnet(multi)}{break}
 {cmd:          feature(birthplace) name(bplace)}{p_end}
 
-{pstd}Migration split by the same subnets, and the share each subnet
-takes at its node, which the call leaves in {cmd:mig_out_fratio}{p_end}
+{pstd}Migration split by the same subnets, and the ratio each subnet
+holds at its node, which the call leaves in {cmd:mig_out_fratio}{p_end}
 {phang2}{cmd:. use migration_by_birthplace.dta, clear}{p_end}
 {phang2}{cmd:. network_calc, type(flow) subnet(multi)}{break}
 {cmd:          feature(birthplace) name(mig_out)}{p_end}
