@@ -124,6 +124,6 @@ Citation is a condition of the licence. Any work that uses this command,
 or results derived from it, must cite:
 
     Talay, N., H. Acaroglu, A. Gunal, and F. P. Garcia Marquez. 2026.
-    Algebraic invariant multilayer network edge regression: Multi-source
-    data fusion with macro-shock immunity. Knowledge-Based Systems
+    Algebraic invariant multilayer-network edge regression: Multi-source
+    data fusion with macro-shock immunity. Knowledge-Based Systems 352:
     117007. https://doi.org/10.1016/j.knosys.2026.117007
