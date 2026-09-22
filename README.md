@@ -203,8 +203,8 @@ from it**, must cite the article:
 
 ```
 Talay, N., Acaroğlu, H., Günal, A., & García Márquez, F. P. (2026).
-Algebraic Invariant Multilayer Network Edge Regression: Multi-Source Data
-Fusion with Macro-Shock Immunity. Knowledge-Based Systems, 117007.
+Algebraic Invariant Multilayer-Network Edge Regression: Multi-Source Data
+Fusion with Macro-Shock Immunity. Knowledge-Based Systems, 352, 117007.
 https://doi.org/10.1016/j.knosys.2026.117007
 ```
 
