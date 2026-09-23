@@ -109,9 +109,10 @@ Certification
 -------------
 
 network_calc_cert.do builds its own data, six nodes over three periods
-and three subnets on a complete directed grid, and asserts the
-properties that define the weights rather than recorded numbers. It
-stops at the first failure. Its eight sections check:
+and three subnets on a complete directed grid, and asserts properties
+the weights must have, and values worked out by hand for one edge,
+rather than numbers recorded from an earlier run. It stops at the first
+failure. Its eight sections check:
 
   1. that a subnet's weights sum to one, that the ratios of a node sum
      to one, and that the single-subnet copy sums to one

@@ -421,7 +421,9 @@ dimension{p_end}
 {pstd}
 The two estimations take one derivation of each channel, not all of
 them: {cmd:mig_out_fratio} is there only when {cmd:mig_out} was
-computed with {cmd:subnet(multi)}.
+computed with {cmd:subnet(multi)}. {cmd:y} stands for the outcome, which
+{cmd:network_calc} does not write: the analyst merges it into the frame
+on the same key before estimating.
 
 
 {marker results}{...}
