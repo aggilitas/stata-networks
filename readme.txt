@@ -73,6 +73,7 @@ Names beginning with an underscore are internal routines and are not
 meant to be called directly.
 
   network_calc_cert.do       certification script
+  network_calc_cert.log      its log, run on Stata 17
 
   example_session.do         the session shown in the article
   test_interaction_multi.csv

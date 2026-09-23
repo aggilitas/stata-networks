@@ -1,0 +1,3655 @@
+-------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\Users\ntnta\OneDrive\Desktop\Untitled.smcl
+  log type:  smcl
+ opened on:  23 Sep 2026, 05:05:38
+
+. do C:/Users/ntnta/gm/networks-ado-project/tests/network_calc_cert.do
+
+. *! network_calc certification script
+. *! Run with the package on the adopath. The script stops at the first
+. *! failure.
+. 
+. cscript "network_calc" adofile network_calc
+-------------------------------------------------------------BEGIN network_calc
+
+-> which network_calc, usesysdir
+C:\Users\ntnta\ado\plus\n\network_calc.ado
+*! network_calc 2.0.0
+*! Main command for calculating network edge weights
+*! Author: Necmi TALAY
+*! Date: 2026-09-13
+
+. 
+. version 16.0
+
+. set more off
+
+. 
+. which network_calc
+C:\Users\ntnta\ado\plus\n\network_calc.ado
+*! network_calc 2.0.0
+*! Main command for calculating network edge weights
+*! Author: Necmi TALAY
+*! Date: 2026-09-13
+
+. 
+. *==============================================================
+. * Synthetic data
+. *
+. * Six nodes, three periods, three subnets, a complete directed
+. * grid without self-loops. size gives the subnet its ratio at the
+. * node, value is the quantity being measured.
+. *
+. * The single-subnet panels are built from the same numbers as the
+. * subnet panels, added up over the feature for flow and averaged
+. * over it for attribute, so that both resolutions can be computed
+. * from one set of data.
+. *==============================================================
+. 
+. local N 6
+
+. local Y 3
+
+. local F 3
+
+. 
+. clear
+
+. set obs `N'
+Number of observations (_N) was 0, now 6.
+
+. gen int i = _n
+
+. expand `N'
+(30 observations created)
+
+. bysort i: gen int j = _n
+
+. drop if i == j
+(6 observations deleted)
+
+. expand `Y'
+(60 observations created)
+
+. bysort i j: gen int year = 2017 + _n
+
+. expand `F'
+(180 observations created)
+
+. bysort i j year: gen int f = _n
+
+. 
+. gen str4 source  = "n" + string(i)
+
+. gen str4 target  = "n" + string(j)
+
+. gen str4 feature = "f" + string(f)
+
+. 
+. * subnet weights, constant within (year, feature, node)
+. gen double src_size = 1000 + 130*i + 70*f + 40*(year - 2017)
+
+. gen double tgt_size = 1000 + 130*j + 70*f + 40*(year - 2017)
+
+. 
+. * node levels, constant within (year, feature, node)
+. gen double src_lvl = 6 + 0.4*i + 0.9*f + 0.3*(year - 2017)
+
+. gen double tgt_lvl = 6 + 0.4*j + 0.9*f + 0.3*(year - 2017)
+
+. 
+. * edge quantities, varying over the edge
+. gen double qty_ij = 10 + 3*i + 2*j + f + (year - 2017)
+
+. gen double qty_ji = 10 + 3*j + 2*i + f + (year - 2017)
+
+. 
+. tempfile intdat flowdat flowsgl attrdat attrsgl
+
+. 
+. preserve
+
+.     keep year feature source target src_size tgt_size
+
+.     rename src_size source_size
+
+.     rename tgt_size target_size
+
+.     gen double source_value = source_size
+
+.     gen double target_value = target_size
+
+.     order year feature source target source_size source_value ///
+>           target_size target_value
+
+.     sort year feature source target
+
+.     qui save `intdat'
+
+. restore
+
+. 
+. preserve
+
+.     keep year feature source target src_size qty_ij tgt_size qty_ji
+
+.     rename (src_size qty_ij tgt_size qty_ji) ///
+>            (source_size source_value target_size target_value)
+
+.     sort year feature source target
+
+.     qui save `flowdat'
+
+. 
+.     collapse (sum) source_value target_value, by(year source target)
+
+.     sort year source target
+
+.     qui save `flowsgl'
+
+. restore
+
+. 
+. preserve
+
+.     keep year feature source target src_size src_lvl tgt_size tgt_lvl
+
+.     rename (src_size src_lvl tgt_size tgt_lvl) ///
+>            (source_size source_value target_size target_value)
+
+.     sort year feature source target
+
+.     qui save `attrdat'
+
+. 
+.     gen double sw = source_size * source_value
+
+.     gen double tw = target_size * target_value
+
+.     collapse (sum) sw source_size tw target_size, ///
+>         by(year source target)
+
+.     gen double source_value = sw / source_size
+
+.     gen double target_value = tw / target_size
+
+.     keep year source target source_value target_value
+
+.     sort year source target
+
+.     qui save `attrsgl'
+
+. restore
+
+. 
+. di as txt "certification data: `N' nodes, `Y' periods, `F' subnets"
+certification data: 6 nodes, 3 periods, 3 subnets
+
+. 
+. *==============================================================
+. * 1. Weights leaving a node
+. *
+. * A subnet is a network of its own, so its weights add up to
+. * one. Beside them stands the ratio the subnet holds at its
+. * node, read from size, and those ratios add up to one as well.
+. * The single-subnet copy scales each subnet by its ratio before
+. * adding up, so it adds up to one too, as does a single-subnet
+. * network computed from single-subnet data.
+. *==============================================================
+. 
+. frames reset
+
+. use `flowsgl', clear
+
+. network_calc, type(flow) subnet(single) name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      w
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. frame networks_single {
+.     split edge_id, parse("_") gen(node)
+variables created as string: 
+node1  node2
+.     collapse (sum) w, by(year node1)
+.     assert reldif(w, 1) < 1e-12
+. }
+
+. di as res "1a flow single: weights leaving a node sum to one"
+1a flow single: weights leaving a node sum to one
+
+. 
+. frames reset
+
+. use `flowdat', clear
+
+. network_calc, type(flow) subnet(multi) feature(feature) name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. frame networks_multi {
+.     split edge_id, parse("_") gen(node)
+variables created as string: 
+node1  node2
+. 
+.     * the ratio the subnet holds at its node travels beside the
+.     * weights, one number per subnet, and the ratios add up to one
+.     assert w_fratio > 0 & w_fratio < 1
+.     preserve
+.         bysort year feature node1: keep if _n == 1
+(216 observations deleted)
+.         collapse (sum) w_fratio, by(year node1)
+.         assert reldif(w_fratio, 1) < 1e-12
+.     restore
+. 
+.     * a flow subnet is a network in its own right
+.     collapse (sum) w, by(year feature node1)
+.     assert reldif(w, 1) < 1e-12
+. }
+
+. di as res "1b flow multi: each subnet sums to one, its ratio too"
+1b flow multi: each subnet sums to one, its ratio too
+
+. 
+. frame networks_single {
+.     split edge_id, parse("_") gen(node)
+variables created as string: 
+node1  node2
+.     collapse (sum) w, by(year node1)
+.     assert reldif(w, 1) < 1e-12
+. }
+
+. di as res "1c flow multi: the copy, weighted by size, sums to one"
+1c flow multi: the copy, weighted by size, sums to one
+
+. 
+. frames reset
+
+. use `intdat', clear
+
+. network_calc, type(interaction) subnet(multi) feature(feature) ///
+>     name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating interaction network
+------------------------------------------------------------------------------
+  Type:      interaction
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. frame networks_multi {
+.     split edge_id, parse("_") gen(node)
+variables created as string: 
+node1  node2
+.     collapse (sum) w, by(year feature node1)
+.     assert reldif(w, 1) < 1e-12
+. }
+
+. di as res "1d interaction: each subnet sums to one on its own"
+1d interaction: each subnet sums to one on its own
+
+. 
+. frame networks_single {
+.     split edge_id, parse("_") gen(node)
+variables created as string: 
+node1  node2
+.     collapse (sum) w, by(year node1)
+.     assert reldif(w, 1) < 1e-12
+. }
+
+. di as res "1e interaction: the copy, weighted by size, sums to one"
+1e interaction: the copy, weighted by size, sums to one
+
+. 
+. * under interaction size describes the node, so it is read once for
+. * each subnet and node rather than once for each edge: the ratio is
+. * one number whichever target the row names, and the ratios of a
+. * node add up to one
+. frames reset
+
+. use `intdat', clear
+
+. network_calc, type(interaction) subnet(multi) feature(feature) ///
+>     name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating interaction network
+------------------------------------------------------------------------------
+  Type:      interaction
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. frame networks_multi {
+.     split edge_id, parse("_") gen(node)
+variables created as string: 
+node1  node2
+.     bysort year feature node1 (w_fratio): ///
+>         gen byte same = w_fratio[1] == w_fratio[_N]
+.     assert same
+.     by year feature node1: keep if _n == 1
+(216 observations deleted)
+.     collapse (sum) w_fratio, by(year node1)
+.     assert reldif(w_fratio, 1) < 1e-12
+. }
+
+. di as res "1f interaction: size read once per subnet, the ratios sum to one"
+1f interaction: size read once per subnet, the ratios sum to one
+
+. 
+. *==============================================================
+. * 2. Attribute weights cancel along a reversed edge
+. *
+. * w_ij is a log ratio, so w_ij + w_ji is zero on a complete
+. * two-way grid. A copy reduced over the subnets would weigh them by
+. * the ratios at the node the value is anchored on, which differ
+. * between an edge and its reverse, so the copy would not cancel: an
+. * attribute network with subnets writes no single-subnet copy.
+. *==============================================================
+. 
+. frames reset
+
+. use `attrdat', clear
+
+. network_calc, type(attribute) subnet(multi) feature(feature) ///
+>     name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.000000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Not aggregated to single-subnet: the ratios
+  that would weigh the subnets differ at the two
+  ends of an edge, so the copy would not cancel
+  along the reversed edge. Pass the node level
+  with subnet(single) for a single-subnet
+  attribute network.
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+
+To view the networks:
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. frame networks_multi {
+.     split edge_id, parse("_") gen(node)
+variables created as string: 
+node1  node2
+.     gen str12 pair = cond(node1 < node2, node1 + "|" + node2, ///
+>                                      node2 + "|" + node1)
+.     collapse (sum) w, by(year feature pair)
+.     assert abs(w) < 1e-12
+. }
+
+. di as res "2a attribute multi: each subnet cancels"
+2a attribute multi: each subnet cancels
+
+. 
+. capture frame networks_single: describe
+
+. assert _rc != 0
+
+. di as res "2b attribute multi: writes no single-subnet copy"
+2b attribute multi: writes no single-subnet copy
+
+. 
+. frames reset
+
+. use `attrsgl', clear
+
+. network_calc, type(attribute) subnet(single) name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    single
+  Direction: outflow
+  Name:      w
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight: -0.000000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. frame networks_single {
+.     split edge_id, parse("_") gen(node)
+variables created as string: 
+node1  node2
+.     gen str12 pair = cond(node1 < node2, node1 + "|" + node2, ///
+>                                      node2 + "|" + node1)
+.     collapse (sum) w, by(year pair)
+.     assert abs(w) < 1e-12
+. }
+
+. di as res "2c attribute single: cancels"
+2c attribute single: cancels
+
+. 
+. *==============================================================
+. * 3. Scaling the input leaves every weight alone
+. *
+. * Each template is built from ratios, so multiplying the whole
+. * input by a positive constant must not move a single weight.
+. * One constant above one and one below. Every total is also taken
+. * within a period, so a factor that changes from one period to the
+. * next, and is the same for every node within a period, moves
+. * nothing either.
+. *==============================================================
+. 
+. foreach c in 1000 0.001 period {
+  2.     foreach spec in "flow single flowsgl" "flow multi flowdat" ///
+>                     "interaction multi intdat" ///
+>                     "attribute single attrsgl" ///
+>                     "attribute multi attrdat" {
+  3.         local typ : word 1 of `spec'
+  4.         local sub : word 2 of `spec'
+  5.         local src : word 3 of `spec'
+  6.         if "`src'" == "flowsgl" local dat "`flowsgl'"
+  7.         if "`src'" == "flowdat" local dat "`flowdat'"
+  8.         if "`src'" == "intdat"  local dat "`intdat'"
+  9.         if "`src'" == "attrsgl" local dat "`attrsgl'"
+ 10.         if "`src'" == "attrdat" local dat "`attrdat'"
+ 11.         local opt = cond("`sub'" == "multi", "feature(feature)", "")
+ 12.         local frm = "networks_single"
+ 13.         if "`sub'" == "multi" & "`typ'" == "attribute" ///
+>             local frm = "networks_multi"
+ 14. 
+.         tempfile base
+ 15.         frames reset
+ 16.         use "`dat'", clear
+ 17.         network_calc, type(`typ') subnet(`sub') `opt' name(w)
+ 18.         frame `frm': qui save "`base'", replace
+ 19. 
+.         frames reset
+ 20.         use "`dat'", clear
+ 21.         if "`c'" == "period" {
+ 22.             qui gen double k = cond(year == 2018, 1000, ///
+>                                cond(year == 2019, 0.001, 7))
+ 23.         }
+ 24.         else {
+ 25.             qui gen double k = `c'
+ 26.         }
+ 27.         qui replace source_value = source_value * k
+ 28.         qui replace target_value = target_value * k
+ 29.         if "`sub'" == "multi" {
+ 30.             qui replace source_size = source_size * k
+ 31.             qui replace target_size = target_size * k
+ 32.         }
+ 33.         drop k
+ 34.         network_calc, type(`typ') subnet(`sub') `opt' name(w)
+ 35.         frame `frm' {
+ 36.             rename w w_scaled
+ 37.             if "`frm'" == "networks_multi" {
+ 38.                 qui merge 1:1 year feature edge_id using "`base'", ///
+>                     nogenerate
+ 39.             }
+ 40.             else {
+ 41.                 qui merge 1:1 year edge_id using "`base'", nogenerate
+ 42.             }
+ 43.             assert reldif(w_scaled, w) < 1e-12
+ 44.         }
+ 45.         local by = cond("`c'" == "period", "a factor per period", "`c'")
+ 46.         di as res "3 `typ' `sub': unchanged when scaled by `by'"
+ 47.     }
+ 48. }
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      w
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      w
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+3 flow single: unchanged when scaled by 1000
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+3 flow multi: unchanged when scaled by 1000
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating interaction network
+------------------------------------------------------------------------------
+  Type:      interaction
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating interaction network
+------------------------------------------------------------------------------
+  Type:      interaction
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+3 interaction multi: unchanged when scaled by 1000
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    single
+  Direction: outflow
+  Name:      w
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight: -0.000000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    single
+  Direction: outflow
+  Name:      w
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight: -0.000000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+3 attribute single: unchanged when scaled by 1000
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.000000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Not aggregated to single-subnet: the ratios
+  that would weigh the subnets differ at the two
+  ends of an edge, so the copy would not cancel
+  along the reversed edge. Pass the node level
+  with subnet(single) for a single-subnet
+  attribute network.
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+
+To view the networks:
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.000000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Not aggregated to single-subnet: the ratios
+  that would weigh the subnets differ at the two
+  ends of an edge, so the copy would not cancel
+  along the reversed edge. Pass the node level
+  with subnet(single) for a single-subnet
+  attribute network.
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+
+To view the networks:
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+3 attribute multi: unchanged when scaled by 1000
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      w
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      w
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+3 flow single: unchanged when scaled by 0.001
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+3 flow multi: unchanged when scaled by 0.001
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating interaction network
+------------------------------------------------------------------------------
+  Type:      interaction
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating interaction network
+------------------------------------------------------------------------------
+  Type:      interaction
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+3 interaction multi: unchanged when scaled by 0.001
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    single
+  Direction: outflow
+  Name:      w
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight: -0.000000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    single
+  Direction: outflow
+  Name:      w
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight:  0.000000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+3 attribute single: unchanged when scaled by 0.001
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.000000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Not aggregated to single-subnet: the ratios
+  that would weigh the subnets differ at the two
+  ends of an edge, so the copy would not cancel
+  along the reversed edge. Pass the node level
+  with subnet(single) for a single-subnet
+  attribute network.
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+
+To view the networks:
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight: -0.000000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Not aggregated to single-subnet: the ratios
+  that would weigh the subnets differ at the two
+  ends of an edge, so the copy would not cancel
+  along the reversed edge. Pass the node level
+  with subnet(single) for a single-subnet
+  attribute network.
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+
+To view the networks:
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+3 attribute multi: unchanged when scaled by 0.001
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      w
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      w
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+3 flow single: unchanged when scaled by a factor per period
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+3 flow multi: unchanged when scaled by a factor per period
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating interaction network
+------------------------------------------------------------------------------
+  Type:      interaction
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating interaction network
+------------------------------------------------------------------------------
+  Type:      interaction
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+3 interaction multi: unchanged when scaled by a factor per period
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    single
+  Direction: outflow
+  Name:      w
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight: -0.000000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    single
+  Direction: outflow
+  Name:      w
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight:  0.000000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+3 attribute single: unchanged when scaled by a factor per period
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.000000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Not aggregated to single-subnet: the ratios
+  that would weigh the subnets differ at the two
+  ends of an edge, so the copy would not cancel
+  along the reversed edge. Pass the node level
+  with subnet(single) for a single-subnet
+  attribute network.
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+
+To view the networks:
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.000000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Not aggregated to single-subnet: the ratios
+  that would weigh the subnets differ at the two
+  ends of an edge, so the copy would not cancel
+  along the reversed edge. Pass the node level
+  with subnet(single) for a single-subnet
+  attribute network.
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+
+To view the networks:
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+3 attribute multi: unchanged when scaled by a factor per period
+
+. 
+. *==============================================================
+. * 4. direction(inflow)
+. *
+. * inflow exchanges the two indices and nothing else, so the
+. * weight written on edge i,j is the weight the same formula gives
+. * to edge j,i. The weights of a node therefore add up over the
+. * edges entering it rather than those leaving it, and an
+. * attribute weight, being a log ratio, simply changes sign.
+. *==============================================================
+. 
+. frames reset
+
+. use `flowsgl', clear
+
+. network_calc, type(flow) subnet(single) direction(inflow) name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: inflow
+  Name:      w
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. frame networks_single {
+.     split edge_id, parse("_") gen(node)
+variables created as string: 
+node1  node2
+.     collapse (sum) w, by(year node2)
+.     assert reldif(w, 1) < 1e-12
+. }
+
+. di as res "4a inflow flow single: weights entering a node sum to one"
+4a inflow flow single: weights entering a node sum to one
+
+. 
+. frames reset
+
+. use `flowdat', clear
+
+. network_calc, type(flow) subnet(multi) feature(feature) ///
+>     direction(inflow) name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    multi
+  Feature:   feature
+  Direction: inflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. frame networks_multi {
+.     split edge_id, parse("_") gen(node)
+variables created as string: 
+node1  node2
+.     collapse (sum) w, by(year feature node2)
+.     assert reldif(w, 1) < 1e-12
+. }
+
+. di as res "4b inflow flow multi: each subnet sums to one on its own"
+4b inflow flow multi: each subnet sums to one on its own
+
+. 
+. frames reset
+
+. use `intdat', clear
+
+. network_calc, type(interaction) subnet(multi) feature(feature) ///
+>     direction(inflow) name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating interaction network
+------------------------------------------------------------------------------
+  Type:      interaction
+  Subnet:    multi
+  Feature:   feature
+  Direction: inflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. frame networks_multi {
+.     split edge_id, parse("_") gen(node)
+variables created as string: 
+node1  node2
+.     collapse (sum) w, by(year feature node2)
+.     assert reldif(w, 1) < 1e-12
+. }
+
+. di as res "4c inflow interaction: each subnet sums to one on its own"
+4c inflow interaction: each subnet sums to one on its own
+
+. 
+. * an attribute weight is a log ratio, so reading the edge from the
+. * other end only changes its sign
+. frames reset
+
+. use `attrsgl', clear
+
+. network_calc, type(attribute) subnet(single) name(out)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    single
+  Direction: outflow
+  Name:      out
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight: -0.000000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'out' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. use `attrsgl', clear
+
+. network_calc, type(attribute) subnet(single) direction(inflow) ///
+>     name(inw)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    single
+  Direction: inflow
+  Name:      inw
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight: -0.000000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'inw' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 6 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. frame networks_single {
+.     assert reldif(inw, -out) < 1e-12
+. }
+
+. di as res "4d inflow attribute: the sign is the only difference"
+4d inflow attribute: the sign is the only difference
+
+. 
+. * the outflow weight of i_j and the inflow weight of j_i are the
+. * same number: both divide the same edge by what leaves i
+. tempfile outflow
+
+. frames reset
+
+. use `flowsgl', clear
+
+. network_calc, type(flow) subnet(single) name(out)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      out
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'out' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. frame networks_single: qui save "`outflow'", replace
+
+. 
+. frames reset
+
+. use `flowsgl', clear
+
+. network_calc, type(flow) subnet(single) direction(inflow) name(inw)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: inflow
+  Name:      inw
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'inw' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. frame networks_single {
+.     split edge_id, parse("_") gen(node)
+variables created as string: 
+node1  node2
+.     gen str12 rev = node2 + "_" + node1
+.     keep year rev inw
+.     rename rev edge_id
+.     qui merge 1:1 year edge_id using "`outflow'", ///
+>         keepusing(out) nogenerate
+.     assert reldif(inw, out) < 1e-12
+. }
+
+. di as res "4e inflow flow: the reversed edge carries the same weight"
+4e inflow flow: the reversed edge carries the same weight
+
+. 
+. * the ratio is read where the weight is anchored, at the node the
+. * edge enters: the ratios of that node add up to one, and so does
+. * the single-subnet copy over the edges entering it
+. frames reset
+
+. use `flowdat', clear
+
+. network_calc, type(flow) subnet(multi) feature(feature) ///
+>     direction(inflow) name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    multi
+  Feature:   feature
+  Direction: inflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. frame networks_multi {
+.     split edge_id, parse("_") gen(node)
+variables created as string: 
+node1  node2
+.     bysort year feature node2: keep if _n == 1
+(216 observations deleted)
+.     collapse (sum) w_fratio, by(year node2)
+.     assert reldif(w_fratio, 1) < 1e-12
+. }
+
+. frame networks_single {
+.     split edge_id, parse("_") gen(node)
+variables created as string: 
+node1  node2
+.     collapse (sum) w, by(year node2)
+.     assert reldif(w, 1) < 1e-12
+. }
+
+. di as res "4f inflow flow multi: the ratios and the copy sum at the target"
+4f inflow flow multi: the ratios and the copy sum at the target
+
+. 
+. frames reset
+
+. use `intdat', clear
+
+. network_calc, type(interaction) subnet(multi) feature(feature) ///
+>     direction(inflow) name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating interaction network
+------------------------------------------------------------------------------
+  Type:      interaction
+  Subnet:    multi
+  Feature:   feature
+  Direction: inflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. frame networks_multi {
+.     split edge_id, parse("_") gen(node)
+variables created as string: 
+node1  node2
+.     bysort year feature node2: keep if _n == 1
+(216 observations deleted)
+.     collapse (sum) w_fratio, by(year node2)
+.     assert reldif(w_fratio, 1) < 1e-12
+. }
+
+. frame networks_single {
+.     split edge_id, parse("_") gen(node)
+variables created as string: 
+node1  node2
+.     collapse (sum) w, by(year node2)
+.     assert reldif(w, 1) < 1e-12
+. }
+
+. di as res "4g inflow interaction: the ratios and the copy sum at the target"
+4g inflow interaction: the ratios and the copy sum at the target
+
+. 
+. *==============================================================
+. * 5. Joining a second network into a frame
+. *
+. * A frame is a panel of edges and every network in it is a
+. * column. The networks need not reach the same edges: the merge
+. * keeps the union, so no row is lost, and an edge a network does
+. * not reach weighs zero rather than nothing at all. Two networks
+. * that share no edge stack rather than sit side by side, and the
+. * command says so.
+. *==============================================================
+. 
+. frames reset
+
+. use `flowsgl', clear
+
+. qui count
+
+. local n_full = r(N)
+
+. network_calc, type(flow) subnet(single) name(wa)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      wa
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'wa' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. 
+. * second network on a subset: one edge taken out
+. use `flowsgl', clear
+
+. qui drop if source == "n1" & target == "n2"
+
+. network_calc, type(flow) subnet(single) name(wb)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      wb
+  Obs:       87
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 87 edges
+  Mean weight:  0.206897
+
+Managing network frames...
+  Adding to frame: networks_single
+  Note: the networks in networks_single do not cover the same edges
+    matched:              87
+    only in frame:         3
+    only in new:           0
+  A network weighs zero on the edges it does not reach.
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'wb' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 6 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. 
+. frame networks_single {
+.     qui count
+.     assert r(N) == `n_full'
+.     assert !missing(wa) & !missing(wb)
+.     assert wb == 0 if edge_id == "n1_n2"
+.     qui count if edge_id == "n1_n2"
+.     assert r(N) == 3
+. }
+
+. di as res "5a join: a smaller second network keeps every row"
+5a join: a smaller second network keeps every row
+
+. 
+. * the other direction: the frame is built from the subset first
+. frames reset
+
+. use `flowsgl', clear
+
+. qui drop if source == "n1" & target == "n2"
+
+. network_calc, type(flow) subnet(single) name(wa)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      wa
+  Obs:       87
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 87 edges
+  Mean weight:  0.206897
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'wa' has been calculated and added to:
+  - Frame 'networks_single':       87 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. use `flowsgl', clear
+
+. network_calc, type(flow) subnet(single) name(wb)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      wb
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_single
+  Note: the networks in networks_single do not cover the same edges
+    matched:              87
+    only in frame:         0
+    only in new:           3
+  A network weighs zero on the edges it does not reach.
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'wb' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 6 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. 
+. frame networks_single {
+.     qui count
+.     assert r(N) == `n_full'
+.     assert !missing(wa) & !missing(wb)
+.     assert !missing(source) & !missing(target)
+.     assert edge_id == source + "_" + target
+.     assert wa == 0 if edge_id == "n1_n2"
+. }
+
+. di as res "5b join: a larger second network fills the older column"
+5b join: a larger second network fills the older column
+
+. 
+. * both directions at once: each side reaches an edge the other
+. * does not
+. frames reset
+
+. use `flowsgl', clear
+
+. qui drop if source == "n1" & target == "n2"
+
+. network_calc, type(flow) subnet(single) name(wa)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      wa
+  Obs:       87
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 87 edges
+  Mean weight:  0.206897
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'wa' has been calculated and added to:
+  - Frame 'networks_single':       87 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. use `flowsgl', clear
+
+. qui drop if source == "n3" & target == "n4"
+
+. network_calc, type(flow) subnet(single) name(wb)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      wb
+  Obs:       87
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 87 edges
+  Mean weight:  0.206897
+
+Managing network frames...
+  Adding to frame: networks_single
+  Note: the networks in networks_single do not cover the same edges
+    matched:              84
+    only in frame:         3
+    only in new:           3
+  A network weighs zero on the edges it does not reach.
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'wb' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 6 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. 
+. frame networks_single {
+.     qui count
+.     assert r(N) == `n_full'
+.     assert !missing(wa) & !missing(wb)
+.     assert !missing(source) & !missing(target)
+.     assert edge_id == source + "_" + target
+.     assert wa == 0 if edge_id == "n1_n2"
+.     assert wb == 0 if edge_id == "n3_n4"
+. }
+
+. di as res "5c join: both sides filled in the same call"
+5c join: both sides filled in the same call
+
+. 
+. * an attribute column is filled the same way
+. frames reset
+
+. use `attrsgl', clear
+
+. network_calc, type(attribute) subnet(single) name(ga)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    single
+  Direction: outflow
+  Name:      ga
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight: -0.000000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'ga' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. use `attrsgl', clear
+
+. qui drop if source == "n1" & target == "n2"
+
+. network_calc, type(attribute) subnet(single) name(gb)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    single
+  Direction: outflow
+  Name:      gb
+  Obs:       87
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 87 edges
+  Mean weight: -0.001518
+
+Managing network frames...
+  Adding to frame: networks_single
+  Note: the networks in networks_single do not cover the same edges
+    matched:              87
+    only in frame:         3
+    only in new:           0
+  A network weighs zero on the edges it does not reach.
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'gb' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 6 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. 
+. frame networks_single {
+.     assert !missing(ga) & !missing(gb)
+.     assert gb == 0 if edge_id == "n1_n2"
+. }
+
+. di as res "5d join: an attribute column is filled too"
+5d join: an attribute column is filled too
+
+. 
+. * no shared edge at all: the frame becomes the two blocks stacked
+. frames reset
+
+. use `flowsgl', clear
+
+. network_calc, type(flow) subnet(single) name(wa)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      wa
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'wa' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. frame networks_single {
+.     qui count
+.     local n_before = r(N)
+. }
+
+. use `flowsgl', clear
+
+. qui replace source = "z" + source
+
+. qui replace target = "z" + target
+
+. network_calc, type(flow) subnet(single) name(wb)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      wb
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_single
+  wb shares no edge with the networks already in networks_single
+  Note: the networks in networks_single do not cover the same edges
+    matched:               0
+    only in frame:        90
+    only in new:          90
+  A network weighs zero on the edges it does not reach.
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'wb' has been calculated and added to:
+  - Frame 'networks_single':      180 obs, 6 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. frame networks_single {
+.     qui count
+.     assert r(N) == 2 * `n_before'
+.     qui count if wa != 0 & wb != 0
+.     assert r(N) == 0
+. }
+
+. di as res "5e join: a disjoint network stacks, nothing overlaps"
+5e join: a disjoint network stacks, nothing overlaps
+
+. 
+. * the multi-subnet frame joins the same way, on year, feature and
+. * edge_id, and each network brings its own ratio column
+. frames reset
+
+. use `flowdat', clear
+
+. qui count
+
+. local n_multi = r(N)
+
+. network_calc, type(flow) subnet(multi) feature(feature) name(wa)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      wa
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'wa' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. use `intdat', clear
+
+. network_calc, type(interaction) subnet(multi) feature(feature) ///
+>     name(wb)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating interaction network
+------------------------------------------------------------------------------
+  Type:      interaction
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      wb
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'wb' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 9 variables
+  - Frame 'networks_single':       90 obs, 6 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. frame networks_multi {
+.     qui count
+.     assert r(N) == `n_multi'
+.     assert !missing(wa, wa_fratio, wb, wb_fratio)
+.     qui describe, short
+.     assert r(k) == 9
+. }
+
+. use `attrdat', clear
+
+. qui drop if source == "n1" & target == "n2" & feature == "f1"
+
+. network_calc, type(attribute) subnet(multi) feature(feature) ///
+>     name(wc)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      wc
+  Obs:       267
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 267 edges
+  Mean weight: -0.000555
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Note: the networks in networks_multi do not cover the same edges
+    matched:             267
+    only in frame:         3
+    only in new:           0
+  A network weighs zero on the edges it does not reach.
+  Not aggregated to single-subnet: the ratios
+  that would weigh the subnets differ at the two
+  ends of an edge, so the copy would not cancel
+  along the reversed edge. Pass the node level
+  with subnet(single) for a single-subnet
+  attribute network.
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'wc' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 11 variables
+
+To view the networks:
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. frame networks_multi {
+.     qui count
+.     assert r(N) == `n_multi'
+.     assert !missing(wa, wb, wc)
+.     assert wc == 0 if edge_id == "n1_n2" & feature == "f1"
+. }
+
+. di as res "5f join: networks_multi joins on the feature as well"
+5f join: networks_multi joins on the feature as well
+
+. 
+. *==============================================================
+. * 6. What the command refuses
+. *
+. * Data it cannot make a network of is refused rather than turned
+. * into a weight that reads as defined, and a name that would be
+. * lost or would overwrite a column is refused before anything is
+. * computed. So are an option value the command does not know, an
+. * edge that appears twice in a period, and node names that cannot
+. * be joined into an edge_id. Beside the refusals stand the two ways
+. * a subnet can come to nothing at a node, which are not refused.
+. *==============================================================
+. 
+. frames reset
+
+. use `flowsgl', clear
+
+. qui replace source_value = . in 1
+
+. capture network_calc, type(flow) subnet(single) name(w)
+
+. assert _rc == 416
+
+. capture frame networks_single: describe
+
+. assert _rc != 0
+
+. di as res "6a refuses a missing value, and writes nothing"
+6a refuses a missing value, and writes nothing
+
+. 
+. frames reset
+
+. use `flowsgl', clear
+
+. qui replace source_value = -1 in 1
+
+. capture network_calc, type(flow) subnet(single) name(w)
+
+. assert _rc == 411
+
+. di as res "6b refuses a negative flow"
+6b refuses a negative flow
+
+. 
+. frames reset
+
+. use `flowdat', clear
+
+. qui replace source_size = -1 in 1
+
+. capture network_calc, type(flow) subnet(multi) feature(feature) ///
+>     name(w)
+
+. assert _rc == 411
+
+. di as res "6c refuses a negative subnet size"
+6c refuses a negative subnet size
+
+. 
+. frames reset
+
+. use `attrsgl', clear
+
+. qui replace target_value = 0 in 1
+
+. capture network_calc, type(attribute) subnet(single) name(w)
+
+. assert _rc == 411
+
+. di as res "6d refuses a non-positive attribute value"
+6d refuses a non-positive attribute value
+
+. 
+. frames reset
+
+. use `flowsgl', clear
+
+. foreach bad in year source target edge_id feature {
+  2.     capture network_calc, type(flow) subnet(single) name(`bad')
+  3.     assert _rc == 198
+  4. }
+
+. di as res "6e refuses the five names the frames carry themselves"
+6e refuses the five names the frames carry themselves
+
+. 
+. frames reset
+
+. use `flowsgl', clear
+
+. network_calc, type(flow) subnet(single) name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      w
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. use `flowsgl', clear
+
+. capture network_calc, type(flow) subnet(single) name(w)
+
+. assert _rc == 110
+
+. frame networks_single {
+.     qui describe, short
+.     assert r(k) == 5
+. }
+
+. di as res "6f refuses a name the frame already holds"
+6f refuses a name the frame already holds
+
+. 
+. * a subnet with no rows at a node is not there: the ratios of the
+. * subnets that are there add up to one at that node, and so does
+. * the copy
+. frames reset
+
+. use `flowdat', clear
+
+. qui drop if source == "n1" & feature == "f1"
+
+. network_calc, type(flow) subnet(multi) feature(feature) name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       255
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 255 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       255 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. frame networks_single {
+.     split edge_id, parse("_") gen(node)
+variables created as string: 
+node1  node2
+.     collapse (sum) w, by(year node1)
+.     assert reldif(w, 1) < 1e-12
+. }
+
+. di as res "6g a subnet without rows at a node: the copy sums to one"
+6g a subnet without rows at a node: the copy sums to one
+
+. 
+. * a subnet that has rows but sends nothing weighs zero on every edge
+. * and still holds its ratio, so the copy at that node sums to one
+. * less that ratio
+. tempfile dead
+
+. frames reset
+
+. use `flowdat', clear
+
+. qui replace source_value = 0 if source == "n1" & feature == "f1"
+
+. network_calc, type(flow) subnet(multi) feature(feature) name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.188889
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. frame networks_multi {
+.     split edge_id, parse("_") gen(node)
+variables created as string: 
+node1  node2
+.     qui count if node1 == "n1" & feature == "f1" & w != 0
+.     assert r(N) == 0
+.     qui count if missing(w)
+.     assert r(N) == 0
+.     keep if node1 == "n1" & feature == "f1"
+(255 observations deleted)
+.     collapse (mean) p = w_fratio, by(year)
+.     assert p > 0 & p < 1
+.     qui save "`dead'"
+. }
+
+. frame networks_single {
+.     split edge_id, parse("_") gen(node)
+variables created as string: 
+node1  node2
+.     collapse (sum) w, by(year node1)
+.     qui merge m:1 year using "`dead'", nogenerate
+.     assert reldif(w, 1 - p) < 1e-12 if node1 == "n1"
+.     assert reldif(w, 1) < 1e-12 if node1 != "n1"
+. }
+
+. di as res "6h a subnet that sends nothing: the copy sums to one less its rati
+> o"
+6h a subnet that sends nothing: the copy sums to one less its ratio
+
+. 
+. frames reset
+
+. use `intdat', clear
+
+. qui replace target_value = -1 in 1
+
+. capture network_calc, type(interaction) subnet(multi) ///
+>     feature(feature) name(w)
+
+. assert _rc == 411
+
+. di as res "6i refuses a negative interaction value"
+6i refuses a negative interaction value
+
+. 
+. * an option value the command does not know
+. frames reset
+
+. use `flowsgl', clear
+
+. capture network_calc, type(bogus) subnet(single) name(w)
+
+. assert _rc == 198
+
+. capture network_calc, type(flow) subnet(bogus) name(w)
+
+. assert _rc == 198
+
+. capture network_calc, type(flow) subnet(single) direction(bogus) ///
+>     name(w)
+
+. assert _rc == 198
+
+. capture network_calc, type(flow) subnet(single) name(9w)
+
+. assert _rc == 198
+
+. capture network_calc, type(flow) subnet(multi) name(w)
+
+. assert _rc == 198
+
+. use `intdat', clear
+
+. capture network_calc, type(interaction) subnet(single) name(w)
+
+. assert _rc == 198
+
+. capture frame networks_single: describe
+
+. assert _rc != 0
+
+. di as res "6j refuses an option value it does not know"
+6j refuses an option value it does not know
+
+. 
+. * the two names network_calc uses on its own
+. frames reset
+
+. use `flowdat', clear
+
+. foreach bad in netcalc_fratio _merge {
+  2.     capture network_calc, type(flow) subnet(multi) feature(feature) ///
+>         name(`bad')
+  3.     assert _rc == 198
+  4. }
+
+. di as res "6k refuses the two names network_calc uses on its own"
+6k refuses the two names network_calc uses on its own
+
+. 
+. * a multi-subnet name leaves room for _fratio: 25 characters and
+. * no more
+. frames reset
+
+. use `flowdat', clear
+
+. capture network_calc, type(flow) subnet(multi) feature(feature) ///
+>     name(abcdefghijklmnopqrstuvwxyz)
+
+. assert _rc == 198
+
+. network_calc, type(flow) subnet(multi) feature(feature) ///
+>     name(abcdefghijklmnopqrstuvwxy)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      abcdefghijklmnopqrstuvwxy
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'abcdefghijklmnopqrstuvwxy' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. frame networks_multi: confirm variable abcdefghijklmnopqrstuvwxy_fratio
+
+. di as res "6l refuses a multi-subnet name too long for its ratio column"
+6l refuses a multi-subnet name too long for its ratio column
+
+. 
+. * a frame that holds the ratio column of a name refuses the name,
+. * even after the network itself was dropped. With abbreviation on,
+. * w alone would already match w_fratio, so abbreviation is switched
+. * off to test the check on the ratio column itself.
+. frames reset
+
+. use `flowdat', clear
+
+. network_calc, type(flow) subnet(multi) feature(feature) name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. frame networks_multi: drop w
+
+. frame networks_single: drop w
+
+. local va = c(varabbrev)
+
+. set varabbrev off
+
+. use `flowdat', clear
+
+. capture network_calc, type(flow) subnet(multi) feature(feature) ///
+>     name(w)
+
+. local rc = _rc
+
+. set varabbrev `va'
+
+. assert `rc' == 110
+
+. di as res "6m refuses a name whose ratio column the frame holds"
+6m refuses a name whose ratio column the frame holds
+
+. 
+. * an edge that appears twice in a period, or twice in a subnet
+. frames reset
+
+. use `flowsgl', clear
+
+. qui expand 2 in 1
+
+. capture network_calc, type(flow) subnet(single) name(w)
+
+. assert _rc == 459
+
+. use `flowdat', clear
+
+. qui expand 2 in 1
+
+. capture network_calc, type(flow) subnet(multi) feature(feature) ///
+>     name(w)
+
+. assert _rc == 459
+
+. capture frame networks_single: describe
+
+. assert _rc != 0
+
+. capture frame networks_multi: describe
+
+. assert _rc != 0
+
+. di as res "6n refuses an edge that appears twice in a period"
+6n refuses an edge that appears twice in a period
+
+. 
+. * edge_id joins source and target with an underscore, so both must
+. * be strings and neither may hold an underscore of its own
+. frames reset
+
+. use `flowsgl', clear
+
+. qui encode source, gen(s)
+
+. drop source
+
+. rename s source
+
+. capture network_calc, type(flow) subnet(single) name(w)
+
+. assert _rc == 459
+
+. use `flowsgl', clear
+
+. qui replace source = "n_1" if source == "n1"
+
+. capture network_calc, type(flow) subnet(single) name(w)
+
+. assert _rc == 459
+
+. use `flowsgl', clear
+
+. qui replace target = "n_1" if target == "n1"
+
+. capture network_calc, type(flow) subnet(single) name(w)
+
+. assert _rc == 459
+
+. capture frame networks_single: describe
+
+. assert _rc != 0
+
+. di as res "6o refuses node names that cannot be joined into an edge_id"
+6o refuses node names that cannot be joined into an edge_id
+
+. 
+. *==============================================================
+. * 7. Known answers
+. *
+. * The checks above hold for any weights that sum to one or
+. * cancel, right or wrong. These fix the numbers themselves,
+. * worked out by hand from the formulas that build the data, for
+. * year 2018, edge n1 to n2, and subnet f1 where the weight is
+. * read inside a subnet. In 2018, for node i and subnet f,
+. *
+. *   size  = 1040 + 130 i + 70 f
+. *   level = 6.3 + 0.4 i + 0.9 f
+. *   flow from i to j = 11 + 3 i + 2 j + f
+. *
+. * so n1 has the sizes 1240, 1310 and 1380 in f1, f2 and f3, which
+. * add up to 3930.
+. *==============================================================
+. 
+. frames reset
+
+. use `intdat', clear
+
+. network_calc, type(interaction) subnet(multi) feature(feature) ///
+>     name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating interaction network
+------------------------------------------------------------------------------
+  Type:      interaction
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. frame networks_multi {
+.     * omega: n2 over n2 to n6 in f1, 1370 / (1370 + 1500 + 1630
+.     * + 1760 + 1890)
+.     qui sum w if year == 2018 & feature == "f1" & edge_id == "n1_n2"
+.     assert r(N) == 1
+.     assert reldif(r(mean), 1370 / 8150) < 1e-12
+.     * the ratio: n1 in f1 over n1 in the three subnets
+.     qui sum w_fratio if year == 2018 & feature == "f1" & ///
+>         edge_id == "n1_n2"
+.     assert reldif(r(mean), 1240 / 3930) < 1e-12
+. }
+
+. frame networks_single {
+.     * the copy: omega times the ratio, added over f1, f2 and f3,
+.     * whose omegas are 1370 / 8150, 1440 / 8500 and 1510 / 8850
+.     qui sum w if year == 2018 & edge_id == "n1_n2"
+.     assert r(N) == 1
+.     assert reldif(r(mean), (1240 * 1370 / 8150 + 1310 * 1440 / 8500 ///
+>         + 1380 * 1510 / 8850) / 3930) < 1e-12
+. }
+
+. di as res "7a interaction: the weight, its ratio and the copy by hand"
+7a interaction: the weight, its ratio and the copy by hand
+
+. 
+. frames reset
+
+. use `flowdat', clear
+
+. network_calc, type(flow) subnet(multi) feature(feature) name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. frame networks_multi {
+.     * the edge over what leaves n1 in f1, 19 / (19 + 21 + 23 + 25
+.     * + 27)
+.     qui sum w if year == 2018 & feature == "f1" & edge_id == "n1_n2"
+.     assert r(N) == 1
+.     assert reldif(r(mean), 19 / 115) < 1e-12
+.     * the ratio: size is the same on the five rows of a subnet here
+.     qui sum w_fratio if year == 2018 & feature == "f1" & ///
+>         edge_id == "n1_n2"
+.     assert reldif(r(mean), 1240 / 3930) < 1e-12
+. }
+
+. frame networks_single {
+.     * the copy: in f2 and f3 the edge carries 20 of 120 and 21 of 125
+.     qui sum w if year == 2018 & edge_id == "n1_n2"
+.     assert r(N) == 1
+.     assert reldif(r(mean), (1240 * 19 / 115 + 1310 * 20 / 120 ///
+>         + 1380 * 21 / 125) / 3930) < 1e-12
+. }
+
+. * pooled over the feature, 60 / (60 + 66 + 72 + 78 + 84)
+. frames reset
+
+. use `flowsgl', clear
+
+. network_calc, type(flow) subnet(single) name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      w
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. frame networks_single {
+.     qui sum w if year == 2018 & edge_id == "n1_n2"
+.     assert r(N) == 1
+.     assert reldif(r(mean), 60 / 360) < 1e-12
+. }
+
+. di as res "7b flow: the weight, its ratio, the copy and the pooled weight"
+7b flow: the weight, its ratio, the copy and the pooled weight
+
+. 
+. frames reset
+
+. use `attrdat', clear
+
+. network_calc, type(attribute) subnet(multi) feature(feature) ///
+>     name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.000000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Not aggregated to single-subnet: the ratios
+  that would weigh the subnets differ at the two
+  ends of an edge, so the copy would not cancel
+  along the reversed edge. Pass the node level
+  with subnet(single) for a single-subnet
+  attribute network.
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+
+To view the networks:
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. frame networks_multi {
+.     * level of n2 in f1 over level of n1 in f1
+.     qui sum w if year == 2018 & feature == "f1" & edge_id == "n1_n2"
+.     assert r(N) == 1
+.     assert reldif(r(mean), ln(8.0 / 7.6)) < 1e-12
+.     qui sum w_fratio if year == 2018 & feature == "f1" & ///
+>         edge_id == "n1_n2"
+.     assert reldif(r(mean), 1240 / 3930) < 1e-12
+. }
+
+. * at the node level, the levels of each node weighted by its sizes:
+. * n2 has the sizes 1370, 1440 and 1510 and the levels 8.0, 8.9 and
+. * 9.8, n1 the sizes 1240, 1310 and 1380 and the levels 7.6, 8.5
+. * and 9.4
+. frames reset
+
+. use `attrsgl', clear
+
+. network_calc, type(attribute) subnet(single) name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    single
+  Direction: outflow
+  Name:      w
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight: -0.000000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. frame networks_single {
+.     qui sum w if year == 2018 & edge_id == "n1_n2"
+.     assert r(N) == 1
+.     assert reldif(r(mean),                                     ///
+>         ln(((1370 * 8.0 + 1440 * 8.9 + 1510 * 9.8) / 4320) /   ///
+>            ((1240 * 7.6 + 1310 * 8.5 + 1380 * 9.4) / 3930))) < 1e-12
+. }
+
+. di as res "7c attribute: the subnet value, its ratio and the node value"
+7c attribute: the subnet value, its ratio and the node value
+
+. 
+. *==============================================================
+. * 8. What a call leaves behind
+. *
+. * A call returns in r() which call it was, how many edges it
+. * computed and their mean, and gives the data in memory back as it
+. * found them: the same observations in the same order, the same
+. * file name, and the same record of whether the data have changed
+. * since that file was read.
+. *==============================================================
+. 
+. frames reset
+
+. use `flowdat', clear
+
+. network_calc, type(flow) subnet(multi) feature(feature) name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. assert r(n_edges) == 270
+
+. assert reldif(r(mean_weight), 1 / 5) < 1e-12
+
+. assert "`r(network_name)'" == "w"
+
+. assert "`r(network_type)'" == "flow"
+
+. assert "`r(subnet_type)'" == "multi"
+
+. use `attrsgl', clear
+
+. network_calc, type(attribute) subnet(single) name(a)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    single
+  Direction: outflow
+  Name:      a
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight: -0.000000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'a' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 6 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. assert r(n_edges) == 90
+
+. assert abs(r(mean_weight)) < 1e-12
+
+. assert "`r(network_name)'" == "a"
+
+. assert "`r(network_type)'" == "attribute"
+
+. assert "`r(subnet_type)'" == "single"
+
+. di as res "8a r() holds the call, the number of edges and their mean"
+8a r() holds the call, the number of edges and their mean
+
+. 
+. frames reset
+
+. use `flowsgl', clear
+
+. qui gen byte touched = 1
+
+. assert c(changed) == 1
+
+. local fn "`c(filename)'"
+
+. local srt : sortedby
+
+. qui datasignature
+
+. local sig "`r(datasignature)'"
+
+. network_calc, type(flow) subnet(single) name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      w
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. assert c(changed) == 1
+
+. assert "`c(filename)'" == "`fn'"
+
+. local srt_after : sortedby
+
+. assert "`srt_after'" == "`srt'"
+
+. qui datasignature
+
+. assert "`r(datasignature)'" == "`sig'"
+
+. di as res "8b the data, its file name and its changed flag are kept"
+8b the data, its file name and its changed flag are kept
+
+. 
+. di as res _n "all network_calc certification tests passed"
+
+all network_calc certification tests passed
+
+. 
+end of do-file
+
+. log close
+      name:  <unnamed>
+       log:  C:\Users\ntnta\OneDrive\Desktop\Untitled.smcl
+  log type:  smcl
+ closed on:  23 Sep 2026, 05:05:45
+-------------------------------------------------------------------------------
