@@ -12,20 +12,21 @@ A Stata package for calculating network edge weights from a panel of ordered nod
 
 ## Network Types
 
-### 1. Interaction Network (Multiple-subnet required)
-- **Formula**: e_ij^X = (N_i^X / N_i) · (n_j^X / Σ_{k≠i} N_k^X)
+### 1. Interaction Network (Multi-subnet required)
+- **Formula**: inside a subnet, ω_ij^X = N_j^X / Σ_{k≠i} N_k^X, so the weights of a subnet sum to one over the targets of each source; the single-subnet copy is P_ij = Σ_X (N_i^X / N_i) · ω_ij^X, each subnet scaled by the ratio it holds at the source
 - **Use Case**: Social network connections based on birthplace, ethnicity, etc.
 - **Example**: Connection strength between Ankara residents born in Kars and Istanbul residents born in Kars
 
 ### 2. Flow Network (Single or Multi-subnet)
-- **Formula**: w_i = v_i / T(y,s)
+- **Formula**: w_ij = v_ij / Σ_{k≠i} v_ik, taken inside each subnet under `subnet(multi)`; the single-subnet copy scales each subnet by the ratio it holds at the node before adding them up
 - **Use Case**: Migration flows, trade flows, capital flows
-- **Direction**: outflow (source_value) or inflow (target_value)
+- **Direction**: outflow, or inflow, which exchanges the two indices: the weight written on edge i,j is the one the same formula gives edge j,i
 
 ### 3. Attribute Network (Single or Multi-subnet)
 - **Formula**: w_ij = ln(A_j / A_i) for outflow
 - **Use Case**: Economic disparities (GDP, unemployment, education)
 - **Direction**: outflow (target/source) or inflow (source/target)
+- **Subnets**: an attribute network with subnets stays in `networks_multi`; it is not reduced to a single subnet, since the ratios that would weigh the subnets differ at the two ends of an edge and the copy would lose its antisymmetry
 
 ## Installation
 
@@ -105,18 +106,22 @@ year  feature  source  target  source_size  source_value
 who live there, passengers carried by a mode), read as a ratio of the
 subnet to the node; `value` is the quantity the network is about.
 
+The examples read the data files in `examples/` and run from that
+directory. In the files split into subnets, `feature` holds the province
+people were born in.
+
 ### Example 1: Interaction Network
 
 ```stata
-use "birthplace_data.dta", clear
-network_calc, type(interaction) subnet(multi) feature(birthplace) ///
+import delimited test_interaction_multi.csv, clear
+network_calc, type(interaction) subnet(multi) feature(feature) ///
     name(bplace)
 ```
 
 ### Example 2: Flow Network
 
 ```stata
-use "migration_data.dta", clear
+import delimited test_flow_single.csv, clear
 network_calc, type(flow) subnet(single) name(mig_out)
 network_calc, type(flow) subnet(single) direction(inflow) name(mig_in)
 ```
@@ -124,7 +129,7 @@ network_calc, type(flow) subnet(single) direction(inflow) name(mig_in)
 ### Example 3: Attribute Network
 
 ```stata
-use "schooling_data.dta", clear
+import delimited test_attribute_single.csv, clear
 network_calc, type(attribute) subnet(single) name(sch)
 ```
 
@@ -135,8 +140,9 @@ network_calc, type(attribute) subnet(single) name(sch)
 frame change networks_single
 ivreghdfe y mig_out mig_in bplace sch, absorb(edge_id)
 
-* Multi-subnet regression: bplace_fratio is the share the subnet takes
-* at its node, which a multi-subnet call writes beside the weights
+* Multi-subnet regression: bplace_fratio is the ratio the subnet holds
+* within the feature at its node, which a multi-subnet call writes
+* beside the weights
 frame change networks_multi
 ivreghdfe y bplace bplace_fratio, absorb(edge_id feature)
 ```
@@ -150,7 +156,7 @@ network_calc, type(interaction|flow|attribute) subnet(single|multi) name(network
 **Parameters:**
 - `type()`: Network type (required)
 - `subnet()`: Single or multi-subnet (required)
-- `name()`: Network name (required, valid Stata variable name)
+- `name()`: Network name (required, valid Stata variable name; at most 25 characters with `subnet(multi)`, which adds `_fratio` to it for a second column)
 - `feature()`: Feature variable (required for multi-subnet)
 - `direction()`: Outflow or inflow (default: outflow)
 - `debug`: Display detailed output
@@ -161,13 +167,16 @@ The package creates two frames:
 
 ### networks_single
 ```
-year  edge_id  network1  network2  network3  ...
+year  source  target  edge_id  network1  network2  ...
 ```
 
 ### networks_multi
 ```
-year  feature  edge_id  network1  network2  ...
+year  feature  source  target  edge_id  network1_fratio  network1  ...
 ```
+
+A multi-subnet call writes two columns into `networks_multi`: the network
+and, beside it, the ratio of each subnet within the feature at its node.
 
 ## Project Structure
 
@@ -179,11 +188,9 @@ stata-networks/
 │   ├── _netcalc_interaction.ado  # interaction template
 │   ├── _netcalc_flow.ado         # flow template
 │   ├── _netcalc_attribute.ado    # attribute template
-│   ├── _netcalc_pool.ado         # combines raw data over the feature
-│   ├── _netcalc_frames.ado       # frame subcommand dispatch
 │   ├── _netcalc_join.ado         # creates a frame or joins to it
-│   └── _netcalc_aggregate.ado    # sums subnet weights (interaction)
-├── examples/                      # example datasets
+│   └── _netcalc_aggregate.ado    # sums subnet weights (interaction, flow)
+├── examples/                      # example session, its log and data
 ├── tests/
 │   └── network_calc_cert.do      # certification script
 ├── netcalc.pkg                    # package descriptor
