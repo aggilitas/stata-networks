@@ -1,5 +1,5 @@
-netcalc: directed edge weights from node-level panel data
-=========================================================
+netcalc: directed edge weights from a panel of ordered node pairs
+=================================================================
 
 Necmi Talay
 aggilitas@gmail.com
@@ -8,10 +8,12 @@ aggilitas@gmail.com
 What the package does
 ---------------------
 
-netcalc turns a long node-level panel into a panel of directed edge
-weights, ready for a fixed-effects estimator such as reghdfe. One call
-computes one network and adds it as a variable to a Stata frame, so
-several calls build a multi-network edge panel side by side.
+netcalc turns a long panel, one observation per ordered pair of nodes
+and period, and per subnet when the panel is split by a feature, into a
+panel of directed edge weights, ready for a fixed-effects estimator
+such as reghdfe. One call computes one network and adds it as a
+variable to a Stata frame, so several calls build a multi-network edge
+panel side by side.
 
 Three templates are available.
 
@@ -30,9 +32,12 @@ Three templates are available.
 flow and attribute accept a feature as well. A subnet is a network of
 its own, whose weights add up to one, and size gives it the ratio it
 takes when the subnets are put back together, so the single-subnet copy
-is the weight of the edge in the node as a whole. An attribute weight is
-a log ratio, which does not add up that way, so an attribute network
-with subnets stays in the multi-subnet frame.
+is the weight of the edge in the node as a whole. An attribute network
+is not put back together: the ratios are read at the node the weight is
+anchored on, so an edge and its reverse would be reduced with the ratios
+of two different nodes, and the copy would lose the antisymmetry that
+defines an attribute edge value. An attribute network with subnets
+therefore stays in the multi-subnet frame.
 
 Input is a long panel. Without a feature it holds year, source, target,
 source_value and target_value. With a feature it holds the feature and
@@ -72,18 +77,19 @@ meant to be called directly.
   example_session.do         the session shown in the article
   test_interaction_multi.csv
   test_flow_multi.csv
+  test_attribute_single.csv  the three files the session reads
   test_flow_single.csv
-  test_attribute_multi.csv
-  test_attribute_single.csv  the data the session reads
+  test_attribute_multi.csv   two more, which the session does not read
   generate_test_data.py      builds the five data files
 
 
 Installation
 ------------
 
-From the Stata Journal archive:
+From the Stata Journal archive, under the name the Journal gives the
+package once the article is accepted, which takes the place of st0XXX:
 
-    net install netcalc, from(http://www.stata-journal.com/software/sjXX-X)
+    net install st0XXX, from(http://www.stata-journal.com/software/sjXX-X)
 
 From the development repository:
 
@@ -104,17 +110,22 @@ Certification
 network_calc_cert.do builds its own data, six nodes over three periods
 and three subnets on a complete directed grid, and asserts the
 properties that define the weights rather than recorded numbers. It
-stops at the first failure. Its six sections check:
+stops at the first failure. Its eight sections check:
 
   1. that a subnet's weights sum to one, that the ratios of a node sum
      to one, and that the single-subnet copy sums to one
   2. that attribute weights cancel along a reversed edge
-  3. that scaling the whole input by a positive constant moves no weight
+  3. that scaling the whole input by a positive constant, or by a
+     factor that changes from one period to the next, moves no weight
   4. that direction(inflow) reads the edge from the other end, and that
      an inflow weight equals the outflow weight of the reversed edge
   5. that a second network joined into a frame loses no row and weighs
      zero where it does not reach
   6. that the command refuses each input it cannot make a network of
+  7. that the weights of one edge equal the numbers worked out by hand
+     from the formulas that build the data
+  8. that r() reports the call, and that the data in memory come back
+     as they were found, with their file name and changed flag
 
 
 Citation

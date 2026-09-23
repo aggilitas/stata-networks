@@ -1,6 +1,6 @@
 # Stata Networks Package
 
-A Stata package for calculating network edge weights from node-level data. Supports multiple network types (interaction, flow, attribute) and outputs panel-ready datasets for econometric analysis.
+A Stata package for calculating network edge weights from a panel of ordered node pairs. Supports multiple network types (interaction, flow, attribute) and outputs panel-ready datasets for econometric analysis.
 
 ## Features
 

@@ -166,11 +166,32 @@ frame networks_single {
 }
 di as res "1e interaction: the copy, weighted by size, sums to one"
 
+* under interaction size describes the node, so it is read once for
+* each subnet and node rather than once for each edge: the ratio is
+* one number whichever target the row names, and the ratios of a
+* node add up to one
+frames reset
+use `intdat', clear
+network_calc, type(interaction) subnet(multi) feature(feature) ///
+    name(w)
+frame networks_multi {
+    split edge_id, parse("_") gen(node)
+    bysort year feature node1 (w_fratio): ///
+        gen byte same = w_fratio[1] == w_fratio[_N]
+    assert same
+    by year feature node1: keep if _n == 1
+    collapse (sum) w_fratio, by(year node1)
+    assert reldif(w_fratio, 1) < 1e-12
+}
+di as res "1f interaction: size read once per subnet, the ratios sum to one"
+
 *==============================================================
 * 2. Attribute weights cancel along a reversed edge
 *
 * w_ij is a log ratio, so w_ij + w_ji is zero on a complete
-* two-way grid. A log ratio does not add up over subnets, so an
+* two-way grid. A copy reduced over the subnets would weigh them by
+* the ratios at the node the value is anchored on, which differ
+* between an edge and its reverse, so the copy would not cancel: an
 * attribute network with subnets writes no single-subnet copy.
 *==============================================================
 
@@ -208,10 +229,13 @@ di as res "2c attribute single: cancels"
 *
 * Each template is built from ratios, so multiplying the whole
 * input by a positive constant must not move a single weight.
-* One constant above one and one below.
+* One constant above one and one below. Every total is also taken
+* within a period, so a factor that changes from one period to the
+* next, and is the same for every node within a period, moves
+* nothing either.
 *==============================================================
 
-foreach c in 1000 0.001 {
+foreach c in 1000 0.001 period {
     foreach spec in "flow single flowsgl" "flow multi flowdat" ///
                     "interaction multi intdat" ///
                     "attribute single attrsgl" ///
@@ -237,12 +261,20 @@ foreach c in 1000 0.001 {
 
         frames reset
         use "`dat'", clear
-        qui replace source_value = source_value * `c'
-        qui replace target_value = target_value * `c'
-        if "`sub'" == "multi" {
-            qui replace source_size = source_size * `c'
-            qui replace target_size = target_size * `c'
+        if "`c'" == "period" {
+            qui gen double k = cond(year == 2018, 1000, ///
+                               cond(year == 2019, 0.001, 7))
         }
+        else {
+            qui gen double k = `c'
+        }
+        qui replace source_value = source_value * k
+        qui replace target_value = target_value * k
+        if "`sub'" == "multi" {
+            qui replace source_size = source_size * k
+            qui replace target_size = target_size * k
+        }
+        drop k
         network_calc, type(`typ') subnet(`sub') `opt' name(w)
         frame `frm' {
             rename w w_scaled
@@ -255,7 +287,8 @@ foreach c in 1000 0.001 {
             }
             assert reldif(w_scaled, w) < 1e-12
         }
-        di as res "3 `typ' `sub': unchanged when scaled by `c'"
+        local by = cond("`c'" == "period", "a factor per period", "`c'")
+        di as res "3 `typ' `sub': unchanged when scaled by `by'"
     }
 }
 
@@ -335,6 +368,43 @@ frame networks_single {
     assert reldif(inw, out) < 1e-12
 }
 di as res "4e inflow flow: the reversed edge carries the same weight"
+
+* the ratio is read where the weight is anchored, at the node the
+* edge enters: the ratios of that node add up to one, and so does
+* the single-subnet copy over the edges entering it
+frames reset
+use `flowdat', clear
+network_calc, type(flow) subnet(multi) feature(feature) ///
+    direction(inflow) name(w)
+frame networks_multi {
+    split edge_id, parse("_") gen(node)
+    bysort year feature node2: keep if _n == 1
+    collapse (sum) w_fratio, by(year node2)
+    assert reldif(w_fratio, 1) < 1e-12
+}
+frame networks_single {
+    split edge_id, parse("_") gen(node)
+    collapse (sum) w, by(year node2)
+    assert reldif(w, 1) < 1e-12
+}
+di as res "4f inflow flow multi: the ratios and the copy sum at the target"
+
+frames reset
+use `intdat', clear
+network_calc, type(interaction) subnet(multi) feature(feature) ///
+    direction(inflow) name(w)
+frame networks_multi {
+    split edge_id, parse("_") gen(node)
+    bysort year feature node2: keep if _n == 1
+    collapse (sum) w_fratio, by(year node2)
+    assert reldif(w_fratio, 1) < 1e-12
+}
+frame networks_single {
+    split edge_id, parse("_") gen(node)
+    collapse (sum) w, by(year node2)
+    assert reldif(w, 1) < 1e-12
+}
+di as res "4g inflow interaction: the ratios and the copy sum at the target"
 
 *==============================================================
 * 5. Joining a second network into a frame
@@ -441,13 +511,45 @@ frame networks_single {
 }
 di as res "5e join: a disjoint network stacks, nothing overlaps"
 
+* the multi-subnet frame joins the same way, on year, feature and
+* edge_id, and each network brings its own ratio column
+frames reset
+use `flowdat', clear
+qui count
+local n_multi = r(N)
+network_calc, type(flow) subnet(multi) feature(feature) name(wa)
+use `intdat', clear
+network_calc, type(interaction) subnet(multi) feature(feature) ///
+    name(wb)
+frame networks_multi {
+    qui count
+    assert r(N) == `n_multi'
+    assert !missing(wa, wa_fratio, wb, wb_fratio)
+    qui describe, short
+    assert r(k) == 9
+}
+use `attrdat', clear
+qui drop if source == "n1" & target == "n2" & feature == "f1"
+network_calc, type(attribute) subnet(multi) feature(feature) ///
+    name(wc)
+frame networks_multi {
+    qui count
+    assert r(N) == `n_multi'
+    assert !missing(wa, wb, wc)
+    assert wc == 0 if edge_id == "n1_n2" & feature == "f1"
+}
+di as res "5f join: networks_multi joins on the feature as well"
+
 *==============================================================
 * 6. What the command refuses
 *
 * Data it cannot make a network of is refused rather than turned
 * into a weight that reads as defined, and a name that would be
 * lost or would overwrite a column is refused before anything is
-* computed.
+* computed. So are an option value the command does not know, an
+* edge that appears twice in a period, and node names that cannot
+* be joined into an edge_id. Beside the refusals stand the two ways
+* a subnet can come to nothing at a node, which are not refused.
 *==============================================================
 
 frames reset
@@ -501,13 +603,27 @@ frame networks_single {
 }
 di as res "6f refuses a name the frame already holds"
 
-* a subnet nobody left carries a ratio of zero, its edges weigh
-* zero, the ratio it would have held goes to the subnets that did
-* move, and the reduced copy still adds up to one
+* a subnet with no rows at a node is not there: the ratios of the
+* subnets that are there add up to one at that node, and so does
+* the copy
+frames reset
+use `flowdat', clear
+qui drop if source == "n1" & feature == "f1"
+network_calc, type(flow) subnet(multi) feature(feature) name(w)
+frame networks_single {
+    split edge_id, parse("_") gen(node)
+    collapse (sum) w, by(year node1)
+    assert reldif(w, 1) < 1e-12
+}
+di as res "6g a subnet without rows at a node: the copy sums to one"
+
+* a subnet that has rows but sends nothing weighs zero on every edge
+* and still holds its ratio, so the copy at that node sums to one
+* less that ratio
+tempfile dead
 frames reset
 use `flowdat', clear
 qui replace source_value = 0 if source == "n1" & feature == "f1"
-qui replace source_size  = 0 if source == "n1" & feature == "f1"
 network_calc, type(flow) subnet(multi) feature(feature) name(w)
 frame networks_multi {
     split edge_id, parse("_") gen(node)
@@ -515,13 +631,19 @@ frame networks_multi {
     assert r(N) == 0
     qui count if missing(w)
     assert r(N) == 0
+    keep if node1 == "n1" & feature == "f1"
+    collapse (mean) p = w_fratio, by(year)
+    assert p > 0 & p < 1
+    qui save "`dead'"
 }
 frame networks_single {
     split edge_id, parse("_") gen(node)
     collapse (sum) w, by(year node1)
-    assert reldif(w, 1) < 1e-12
+    qui merge m:1 year using "`dead'", nogenerate
+    assert reldif(w, 1 - p) < 1e-12 if node1 == "n1"
+    assert reldif(w, 1) < 1e-12 if node1 != "n1"
 }
-di as res "6g an empty subnet weighs zero, the node still sums to one"
+di as res "6h a subnet that sends nothing: the copy sums to one less its ratio"
 
 frames reset
 use `intdat', clear
@@ -529,6 +651,253 @@ qui replace target_value = -1 in 1
 capture network_calc, type(interaction) subnet(multi) ///
     feature(feature) name(w)
 assert _rc == 411
-di as res "6h refuses a negative interaction value"
+di as res "6i refuses a negative interaction value"
+
+* an option value the command does not know
+frames reset
+use `flowsgl', clear
+capture network_calc, type(bogus) subnet(single) name(w)
+assert _rc == 198
+capture network_calc, type(flow) subnet(bogus) name(w)
+assert _rc == 198
+capture network_calc, type(flow) subnet(single) direction(bogus) ///
+    name(w)
+assert _rc == 198
+capture network_calc, type(flow) subnet(single) name(9w)
+assert _rc == 198
+capture network_calc, type(flow) subnet(multi) name(w)
+assert _rc == 198
+use `intdat', clear
+capture network_calc, type(interaction) subnet(single) name(w)
+assert _rc == 198
+capture frame networks_single: describe
+assert _rc != 0
+di as res "6j refuses an option value it does not know"
+
+* the two names network_calc uses on its own
+frames reset
+use `flowdat', clear
+foreach bad in netcalc_fratio _merge {
+    capture network_calc, type(flow) subnet(multi) feature(feature) ///
+        name(`bad')
+    assert _rc == 198
+}
+di as res "6k refuses the two names network_calc uses on its own"
+
+* a multi-subnet name leaves room for _fratio: 25 characters and
+* no more
+frames reset
+use `flowdat', clear
+capture network_calc, type(flow) subnet(multi) feature(feature) ///
+    name(abcdefghijklmnopqrstuvwxyz)
+assert _rc == 198
+network_calc, type(flow) subnet(multi) feature(feature) ///
+    name(abcdefghijklmnopqrstuvwxy)
+frame networks_multi: confirm variable abcdefghijklmnopqrstuvwxy_fratio
+di as res "6l refuses a multi-subnet name too long for its ratio column"
+
+* a frame that holds the ratio column of a name refuses the name,
+* even after the network itself was dropped. With abbreviation on,
+* w alone would already match w_fratio, so abbreviation is switched
+* off to test the check on the ratio column itself.
+frames reset
+use `flowdat', clear
+network_calc, type(flow) subnet(multi) feature(feature) name(w)
+frame networks_multi: drop w
+frame networks_single: drop w
+local va = c(varabbrev)
+set varabbrev off
+use `flowdat', clear
+capture network_calc, type(flow) subnet(multi) feature(feature) ///
+    name(w)
+local rc = _rc
+set varabbrev `va'
+assert `rc' == 110
+di as res "6m refuses a name whose ratio column the frame holds"
+
+* an edge that appears twice in a period, or twice in a subnet
+frames reset
+use `flowsgl', clear
+qui expand 2 in 1
+capture network_calc, type(flow) subnet(single) name(w)
+assert _rc == 459
+use `flowdat', clear
+qui expand 2 in 1
+capture network_calc, type(flow) subnet(multi) feature(feature) ///
+    name(w)
+assert _rc == 459
+capture frame networks_single: describe
+assert _rc != 0
+capture frame networks_multi: describe
+assert _rc != 0
+di as res "6n refuses an edge that appears twice in a period"
+
+* edge_id joins source and target with an underscore, so both must
+* be strings and neither may hold an underscore of its own
+frames reset
+use `flowsgl', clear
+qui encode source, gen(s)
+drop source
+rename s source
+capture network_calc, type(flow) subnet(single) name(w)
+assert _rc == 459
+use `flowsgl', clear
+qui replace source = "n_1" if source == "n1"
+capture network_calc, type(flow) subnet(single) name(w)
+assert _rc == 459
+use `flowsgl', clear
+qui replace target = "n_1" if target == "n1"
+capture network_calc, type(flow) subnet(single) name(w)
+assert _rc == 459
+capture frame networks_single: describe
+assert _rc != 0
+di as res "6o refuses node names that cannot be joined into an edge_id"
+
+*==============================================================
+* 7. Known answers
+*
+* The checks above hold for any weights that sum to one or
+* cancel, right or wrong. These fix the numbers themselves,
+* worked out by hand from the formulas that build the data, for
+* year 2018, edge n1 to n2, and subnet f1 where the weight is
+* read inside a subnet. In 2018, for node i and subnet f,
+*
+*   size  = 1040 + 130 i + 70 f
+*   level = 6.3 + 0.4 i + 0.9 f
+*   flow from i to j = 11 + 3 i + 2 j + f
+*
+* so n1 has the sizes 1240, 1310 and 1380 in f1, f2 and f3, which
+* add up to 3930.
+*==============================================================
+
+frames reset
+use `intdat', clear
+network_calc, type(interaction) subnet(multi) feature(feature) ///
+    name(w)
+frame networks_multi {
+    * omega: n2 over n2 to n6 in f1, 1370 / (1370 + 1500 + 1630
+    * + 1760 + 1890)
+    qui sum w if year == 2018 & feature == "f1" & edge_id == "n1_n2"
+    assert r(N) == 1
+    assert reldif(r(mean), 1370 / 8150) < 1e-12
+    * the ratio: n1 in f1 over n1 in the three subnets
+    qui sum w_fratio if year == 2018 & feature == "f1" & ///
+        edge_id == "n1_n2"
+    assert reldif(r(mean), 1240 / 3930) < 1e-12
+}
+frame networks_single {
+    * the copy: omega times the ratio, added over f1, f2 and f3,
+    * whose omegas are 1370 / 8150, 1440 / 8500 and 1510 / 8850
+    qui sum w if year == 2018 & edge_id == "n1_n2"
+    assert r(N) == 1
+    assert reldif(r(mean), (1240 * 1370 / 8150 + 1310 * 1440 / 8500 ///
+        + 1380 * 1510 / 8850) / 3930) < 1e-12
+}
+di as res "7a interaction: the weight, its ratio and the copy by hand"
+
+frames reset
+use `flowdat', clear
+network_calc, type(flow) subnet(multi) feature(feature) name(w)
+frame networks_multi {
+    * the edge over what leaves n1 in f1, 19 / (19 + 21 + 23 + 25
+    * + 27)
+    qui sum w if year == 2018 & feature == "f1" & edge_id == "n1_n2"
+    assert r(N) == 1
+    assert reldif(r(mean), 19 / 115) < 1e-12
+    * the ratio: size is the same on the five rows of a subnet here
+    qui sum w_fratio if year == 2018 & feature == "f1" & ///
+        edge_id == "n1_n2"
+    assert reldif(r(mean), 1240 / 3930) < 1e-12
+}
+frame networks_single {
+    * the copy: in f2 and f3 the edge carries 20 of 120 and 21 of 125
+    qui sum w if year == 2018 & edge_id == "n1_n2"
+    assert r(N) == 1
+    assert reldif(r(mean), (1240 * 19 / 115 + 1310 * 20 / 120 ///
+        + 1380 * 21 / 125) / 3930) < 1e-12
+}
+* pooled over the feature, 60 / (60 + 66 + 72 + 78 + 84)
+frames reset
+use `flowsgl', clear
+network_calc, type(flow) subnet(single) name(w)
+frame networks_single {
+    qui sum w if year == 2018 & edge_id == "n1_n2"
+    assert r(N) == 1
+    assert reldif(r(mean), 60 / 360) < 1e-12
+}
+di as res "7b flow: the weight, its ratio, the copy and the pooled weight"
+
+frames reset
+use `attrdat', clear
+network_calc, type(attribute) subnet(multi) feature(feature) ///
+    name(w)
+frame networks_multi {
+    * level of n2 in f1 over level of n1 in f1
+    qui sum w if year == 2018 & feature == "f1" & edge_id == "n1_n2"
+    assert r(N) == 1
+    assert reldif(r(mean), ln(8.0 / 7.6)) < 1e-12
+    qui sum w_fratio if year == 2018 & feature == "f1" & ///
+        edge_id == "n1_n2"
+    assert reldif(r(mean), 1240 / 3930) < 1e-12
+}
+* at the node level, the levels of each node weighted by its sizes:
+* n2 has the sizes 1370, 1440 and 1510 and the levels 8.0, 8.9 and
+* 9.8, n1 the sizes 1240, 1310 and 1380 and the levels 7.6, 8.5
+* and 9.4
+frames reset
+use `attrsgl', clear
+network_calc, type(attribute) subnet(single) name(w)
+frame networks_single {
+    qui sum w if year == 2018 & edge_id == "n1_n2"
+    assert r(N) == 1
+    assert reldif(r(mean),                                     ///
+        ln(((1370 * 8.0 + 1440 * 8.9 + 1510 * 9.8) / 4320) /   ///
+           ((1240 * 7.6 + 1310 * 8.5 + 1380 * 9.4) / 3930))) < 1e-12
+}
+di as res "7c attribute: the subnet value, its ratio and the node value"
+
+*==============================================================
+* 8. What a call leaves behind
+*
+* A call returns in r() which call it was, how many edges it
+* computed and their mean, and gives the data in memory back as it
+* found them: the same observations in the same order, the same
+* file name, and the same record of whether the data have changed
+* since that file was read.
+*==============================================================
+
+frames reset
+use `flowdat', clear
+network_calc, type(flow) subnet(multi) feature(feature) name(w)
+assert r(n_edges) == 270
+assert reldif(r(mean_weight), 1 / 5) < 1e-12
+assert "`r(network_name)'" == "w"
+assert "`r(network_type)'" == "flow"
+assert "`r(subnet_type)'" == "multi"
+use `attrsgl', clear
+network_calc, type(attribute) subnet(single) name(a)
+assert r(n_edges) == 90
+assert abs(r(mean_weight)) < 1e-12
+assert "`r(network_name)'" == "a"
+assert "`r(network_type)'" == "attribute"
+assert "`r(subnet_type)'" == "single"
+di as res "8a r() holds the call, the number of edges and their mean"
+
+frames reset
+use `flowsgl', clear
+qui gen byte touched = 1
+assert c(changed) == 1
+local fn "`c(filename)'"
+local srt : sortedby
+qui datasignature
+local sig "`r(datasignature)'"
+network_calc, type(flow) subnet(single) name(w)
+assert c(changed) == 1
+assert "`c(filename)'" == "`fn'"
+local srt_after : sortedby
+assert "`srt_after'" == "`srt'"
+qui datasignature
+assert "`r(datasignature)'" == "`sig'"
+di as res "8b the data, its file name and its changed flag are kept"
 
 di as res _n "all network_calc certification tests passed"

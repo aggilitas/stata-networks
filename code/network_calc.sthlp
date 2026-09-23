@@ -13,8 +13,8 @@
 {title:Title}
 
 {phang}
-{bf:network_calc} {hline 2} Directed edge weights from node-level panel
-data
+{bf:network_calc} {hline 2} Directed edge weights from a panel of ordered
+node pairs and periods
 
 
 {marker syntax}{...}
@@ -55,11 +55,12 @@ results into {help frames}.
 {title:Description}
 
 {pstd}
-{cmd:network_calc} turns a long node-level panel into a panel of
-directed edge weights, ready for a fixed-effects estimator such as
-{help reghdfe} or {cmd:ivreghdfe}. One call computes one network and
-adds it as a variable to a frame, so several calls build a
-multi-network edge panel side by side.
+{cmd:network_calc} turns a long panel, one observation per ordered pair
+of nodes and period, and per subnet when the panel is split by a
+feature, into a panel of directed edge weights, ready for a
+fixed-effects estimator such as {help reghdfe} or {cmd:ivreghdfe}. One
+call computes one network and adds it as a variable to a frame, so
+several calls build a multi-network edge panel side by side.
 
 {pstd}
 The data in memory is not the output: the calculated weights are
@@ -71,8 +72,11 @@ restored when the command finishes, unchanged.
 The command refuses data it cannot make a network of, rather than
 returning a weight that reads as defined. It stops on a missing value
 in any required variable; on a negative size, a negative flow or a
-negative {cmd:interaction} value; and on an {cmd:attribute} value that
-is zero or negative, the log ratio being undefined there. A zero
+negative {cmd:interaction} value; on an {cmd:attribute} value that is
+zero or negative, the log ratio being undefined there; on an edge that
+appears more than once in a period, or in a subnet; and on a
+{cmd:source} or {cmd:target} that is not a string or holds an
+underscore, from which no {cmd:edge_id} can be built. A zero
 denominator is not refused. A node out of which nothing travels, a
 subnet the node does not hold, and a subnet absent from every node but
 its source all come to zero, and their weights are written as zero.
@@ -100,8 +104,14 @@ weight per edge, period and level of {cmd:feature()}, and for
 {phang}
 {opt n:ame(netname)} is required and names the network. The name
 becomes the variable that holds the weights in the output frames, so it
-must be a valid Stata variable name and must not already be taken by
-another network in the same frame.
+must be a valid Stata variable name and must not already be taken in
+either output frame: {cmd:networks_single} and {cmd:networks_multi} are
+both checked, whichever of them the call writes. The same holds for
+{it:netname}{cmd:_fratio}, the column a {cmd:subnet(multi)} call writes
+beside the network, and under {cmd:subnet(multi)} the name has at most
+25 characters, so that {it:netname}{cmd:_fratio} fits in 32. The name
+cannot be {cmd:netcalc_fratio} or {cmd:_merge}, which the command uses
+on its own.
 
 {phang}
 {opt f:eature(varname)} names the variable that splits the network into
@@ -181,8 +191,9 @@ it travels along it, as in {cmd:flow}.
 
 {pstd}
 {cmd:source} and {cmd:target} must be string variables, because the
-edge identifier is built by joining them. Choose node names that
-contain no underscore, so that the identifier stays unambiguous.
+edge identifier is built by joining them with an underscore, and the
+node names must contain no underscore of their own, so that the
+identifier stays unambiguous. Data that break either rule are refused.
 
 
 {marker templates}{...}
@@ -197,7 +208,7 @@ share of the target node in what the subnet holds outside the source,
 read from {cmd:value}:
 
 {p 8 8 2}
-e(ij,X) = v(j,X) / sum over k != i of v(k,X)
+ω(ij,X) = v(j,X) / sum over k != i of v(k,X)
 
 {pstd}
 How much of the quantity the subnet carries, outside the source node,
@@ -213,7 +224,7 @@ the copy written to {cmd:networks_single}.
 weight is the share of the edge in what leaves its node in that period:
 
 {p 8 8 2}
-w(ij) = v(ij) / sum over j of v(ij)
+w(ij) = v(ij) / sum over k != i of v(ik)
 
 {pstd}
 Under {cmd:subnet(multi)} the same share is taken inside the subnet, so
@@ -221,7 +232,7 @@ a subnet is a network in its own right and its weights add up to one on
 their own:
 
 {p 8 8 2}
-w(ij,X) = v(ij,X) / sum over j of v(ij,X)
+w(ij,X) = v(ij,X) / sum over k != i of v(ik,X)
 
 {pstd}
 {cmd:size} does not enter that weight. It enters where the subnets are
@@ -243,8 +254,9 @@ w(ij) = ln[A(j) / A(i)]     under {cmd:direction(outflow)}
 
 {pstd}
 Under {cmd:subnet(multi)} the ratio is taken between the same subnet at
-the two nodes. {cmd:size} is not used, because a log ratio compares two
-specific subnets and nothing is being weighted.
+the two nodes. {cmd:size} does not enter that value; it is read, as
+under the other templates, into the {cmd:_fratio} column written beside
+it in {cmd:networks_multi}.
 
 {pstd}
 Use it for levels that describe nodes rather than travel between them:
@@ -269,8 +281,10 @@ first call and merging into it on later calls:
 
 {pstd}
 {cmd:edge_id} is {cmd:source} and {cmd:target} joined by an underscore.
-Every call adds one variable, named by {cmd:name()}, to the frame or
-frames it writes:
+Every call adds the network, named by {cmd:name()}, to the frame or
+frames it writes, and a {cmd:subnet(multi)} call writes two columns
+into {cmd:networks_multi}: the network and, beside it,
+{it:netname}{cmd:_fratio}.
 
 {p2colset 9 34 36 2}{...}
 {p2col :{cmd:subnet(single)}}{cmd:networks_single}{p_end}
@@ -288,13 +302,29 @@ and the call reports how many edges matched and how many were on one
 side only.
 
 {pstd}
-An edge a network does not reach is not a gap in that network: the
-weight there is zero, and those cells are filled with zero so that no
-row is lost to an estimator. Nothing already in the frame moves. For
-{cmd:interaction} and {cmd:flow} the total the weights were divided by
-never counted that edge; an {cmd:attribute} weight is part of no total
-at all, so its cells are filled the same way and nothing moves there
-either. Only the cells the merge itself introduced are filled.
+On an edge a network does not reach, the column of that network is
+filled with zero rather than left missing, so that no row is lost to an
+estimator. Nothing already in the frame moves. For {cmd:interaction}
+and {cmd:flow} the total the weights were divided by never counted that
+edge; an {cmd:attribute} weight is part of no total at all, so its
+cells are filled the same way and nothing moves there either. Only the
+cells the merge itself introduced are filled.
+
+{pstd}
+What that zero means depends on the template. Under {cmd:flow} an edge
+absent from the input is a flow nobody recorded, which is an observed
+zero: the weight there is zero, and a flow layer built from sparse
+counts is used as it stands. That holds while the source leaves out
+only the flows that did not happen; corridors it never collected are a
+gap the template cannot tell from a zero, a property of the source and
+not of the command, and the analyst decides. Under {cmd:interaction}
+and {cmd:attribute} the source describes nodes, and the zero only
+records that the channel does not reach the edge; an {cmd:attribute}
+value of zero would claim that the two nodes stand level. An
+{cmd:interaction} or {cmd:attribute} channel that does not cover the
+edge set of the panel in full is not used as a layer: its filled cells
+would enter the estimation as observations of a relation that was
+never observed.
 
 {pstd}
 A network that shares no edge at all with the frame is reported as
@@ -322,13 +352,17 @@ whose weights add up to one; the ratios of a node add up to one as
 well, so the copy is the weight of the edge in the node as a whole.
 
 {pstd}
-An {cmd:attribute} weight is a log ratio, which does not work that way:
-adding log ratios over subnets multiplies the ratios, and the result
-grows with the number of subnets rather than describing the node. So an
-attribute network with subnets stays in {cmd:networks_multi}, and the
-command says so when it runs. For a single-subnet attribute network,
-reduce the node levels yourself and pass them with
-{cmd:subnet(single)}.
+An {cmd:attribute} network is not put back together that way. The
+reduction weighs each subnet by its {cmd:_fratio}, which is read at the
+node the weight is anchored on, the source under {cmd:outflow} and the
+target under {cmd:inflow}, so the reversed edge would be reduced with
+the ratios of the other node. Its log ratios change sign, but the
+ratios weighting them change too, and the two reduced values no longer
+cancel: the copy would lose the antisymmetry that defines an attribute
+edge value. So an attribute network with subnets stays in
+{cmd:networks_multi}, and the command says so when it runs. For a
+single-subnet attribute network, reduce the node levels yourself and
+pass them with {cmd:subnet(single)}.
 
 {pstd}
 A network read at the two resolutions is not the same calculation. A
@@ -340,8 +374,14 @@ questions and will not agree in general.
 {marker examples}{...}
 {title:Examples}
 
+{pstd}
+The examples read the {cmd:.csv} files listed in {cmd:readme.txt}, and
+run from the directory that holds them. Where a file is split into
+subnets, the variable {cmd:feature} holds the province people were born
+in.
+
 {pstd}One network from migration flows{p_end}
-{phang2}{cmd:. use migration.dta, clear}{p_end}
+{phang2}{cmd:. import delimited test_flow_single.csv, clear}{p_end}
 {phang2}{cmd:. network_calc, type(flow) subnet(single) name(mig_out)}{p_end}
 
 {pstd}The same flows seen from the receiving node{p_end}
@@ -349,18 +389,23 @@ questions and will not agree in general.
 {cmd:          direction(inflow)}{p_end}
 
 {pstd}Social connection by birthplace, one subnet per birthplace{p_end}
-{phang2}{cmd:. use birthplace.dta, clear}{p_end}
+{phang2}{cmd:. import delimited test_interaction_multi.csv, clear}{p_end}
 {phang2}{cmd:. network_calc, type(interaction) subnet(multi)}{break}
-{cmd:          feature(birthplace) name(bplace)}{p_end}
+{cmd:          feature(feature) name(bplace)}{p_end}
 
 {pstd}Migration split by the same subnets, and the ratio each subnet
 holds at its node, which the call leaves in {cmd:mig_out_fratio}{p_end}
-{phang2}{cmd:. use migration_by_birthplace.dta, clear}{p_end}
+{phang2}{cmd:. import delimited test_flow_multi.csv, clear}{p_end}
 {phang2}{cmd:. network_calc, type(flow) subnet(multi)}{break}
-{cmd:          feature(birthplace) name(mig_out)}{p_end}
+{cmd:          feature(feature) name(mig_out)}{p_end}
+
+{pstd}
+This call and the first one are two derivations of the same channel,
+not steps to run one after the other: whichever comes second finds
+{cmd:mig_out} already in {cmd:networks_single} and is refused.
 
 {pstd}The schooling gap between the two nodes of each edge{p_end}
-{phang2}{cmd:. use schooling.dta, clear}{p_end}
+{phang2}{cmd:. import delimited test_attribute_single.csv, clear}{p_end}
 {phang2}{cmd:. network_calc, type(attribute) subnet(single) name(sch)}{p_end}
 
 {pstd}Estimating on the edge panel the calls have built{p_end}
@@ -372,6 +417,11 @@ dimension{p_end}
 {phang2}{cmd:. frame change networks_multi}{p_end}
 {phang2}{cmd:. reghdfe y bplace mig_out_fratio,}{break}
 {cmd:          absorb(edge_id feature)}{p_end}
+
+{pstd}
+The two estimations take one derivation of each channel, not all of
+them: {cmd:mig_out_fratio} is there only when {cmd:mig_out} was
+computed with {cmd:subnet(multi)}.
 
 
 {marker results}{...}

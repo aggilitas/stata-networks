@@ -96,10 +96,10 @@ program define _netcalc_flow, rclass
             gen double `edge_weight' = `vsrc' / `total_group'
             replace `edge_weight' = 0 if `total_group' == 0
 
-            * What size carries is the share of the subnet at the
+            * What size carries is the ratio of the subnet at the
             * node, and that is where the subnets are put back
             * together: the single-subnet copy adds up the subnet
-            * weights after each has been scaled by its own share.
+            * weights after each has been scaled by its own ratio.
             * The column travels with the weights as far as the
             * reduction and no further.
             tempvar runsub total_sub runsize total_size

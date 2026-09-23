@@ -105,10 +105,10 @@ program define _netcalc_interaction, rclass
                                    / `total_target_excl_source'
         replace `edge_weight' = 0 if `total_target_excl_source' == 0
 
-        * Step 4: what size carries is the share of the subnet at the
+        * Step 4: what size carries is the ratio of the subnet at the
         * node, and that is where the subnets are put back together:
         * the single-subnet copy adds the subnet weights up after each
-        * has been scaled by its own share. The column travels with
+        * has been scaled by its own ratio. The column travels with
         * the weights as far as the reduction and no further.
         gen double `netcalc_fratio' = `ssrc' / `total_source'
         replace `netcalc_fratio' = 0 if `total_source' == 0

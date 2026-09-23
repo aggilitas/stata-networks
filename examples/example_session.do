@@ -3,6 +3,7 @@
 *! files are. Each call computes one network and adds it to the edge
 *! panel, so the calls together build a multi-network panel.
 
+version 16.0
 clear all
 
 * the listings below are laid out to this width, which is what the
@@ -14,7 +15,7 @@ capture log close
 log using example_session.log, text replace
 
 *--------------------------------------------------------------
-* The input: a long node-level panel split into subnets
+* The input: a long panel of ordered node pairs split into subnets
 *
 * Five provinces, three years, and the migrants grouped by the
 * province they were born in. size gives the subnet its ratio and
@@ -91,7 +92,7 @@ preserve
     list, noobs abbreviate(16)
 restore
 
-* an attribute weight is a log ratio, so it cancels along the
+* an attribute edge value is a log ratio, so it cancels along the
 * reversed edge
 preserve
     split edge_id, parse("_") gen(node)

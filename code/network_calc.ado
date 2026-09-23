@@ -81,16 +81,40 @@ program define network_calc, rclass
         exit 198
     }
 
+    * The templates hand the ratio column over as netcalc_fratio and
+    * the join marks the rows of its merge in _merge, so a network
+    * cannot take either name.
+    if inlist("`name'", "netcalc_fratio", "_merge") {
+        di as error "name(`name') is used by network_calc itself"
+        exit 198
+    }
+
+    * A multi-subnet call writes a second column, the name with
+    * _fratio added. A variable name holds at most 32 characters,
+    * which leaves 25 for the network.
+    if "`subnet'" == "multi" & ustrlen("`name'") > 25 {
+        di as error "name(`name') is longer than 25 characters"
+        di as error "subnet(multi) adds _fratio to it for a second column"
+        exit 198
+    }
+
     * A name a frame already holds cannot be replaced: the merge
     * keeps the column the frame has and the newly computed weights
     * would be dropped without a word. Both frames are checked
     * whatever the call writes, and before anything is computed, so
     * that a name means one network wherever it appears and nothing
-    * is half written.
+    * is half written. The ratio column a name would bring is
+    * checked the same way.
     foreach fr in networks_single networks_multi {
         capture frame `fr': confirm variable `name'
         if _rc == 0 {
             di as error "`name' is already in frame `fr'"
+            di as error "Drop it, or choose another name()"
+            exit 110
+        }
+        capture frame `fr': confirm variable `name'_fratio
+        if _rc == 0 {
+            di as error "`name'_fratio is already in frame `fr'"
             di as error "Drop it, or choose another name()"
             exit 110
         }
@@ -122,6 +146,13 @@ program define network_calc, rclass
         di as text "Validating input data..."
     }
     
+    * The data in memory is given back as it was found, down to
+    * whether it has changed since it was read and the file it came
+    * from. Saving it to a temporary file and reading that back would
+    * have set both to the temporary file. From here on the data can
+    * be sorted and cut freely, and a refusal gives it back as well.
+    preserve
+
     * Check required variables based on subnet type
     if "`subnet'" == "multi" {
         local required_vars year `feature' source target ///
@@ -164,6 +195,37 @@ program define network_calc, rclass
         }
     }
     
+    * edge_id joins source and target with an underscore, so both
+    * must be strings and neither may hold an underscore of its own:
+    * a_b with c and a with b_c would both become a_b_c.
+    foreach var in source target {
+        capture confirm string variable `var'
+        if _rc {
+            di as error "`var' must be a string variable"
+            exit 459
+        }
+        qui count if strpos(`var', "_") > 0
+        if r(N) > 0 {
+            di as error "`var' holds an underscore in " r(N) ///
+                        " observations"
+            di as error "edge_id joins source and target with one"
+            exit 459
+        }
+    }
+
+    * An edge appears once in a period, and once in each subnet under
+    * subnet(multi). A second copy would sit inside its own
+    * denominator and the frames, which are keyed on the edge, could
+    * not hold both.
+    local key year `feature' source target
+    local key : list retokenize key
+    capture isid `key'
+    if _rc {
+        di as error "`key' do not identify the observations"
+        di as error "an edge appears more than once in a period"
+        exit 459
+    }
+
     *===========================================================================
     * 4. CALL APPROPRIATE CALCULATION FUNCTION
     *===========================================================================
@@ -171,16 +233,12 @@ program define network_calc, rclass
     di as text ""
     di as text "Calculating network weights..."
     
-    * Preserve original data
-    tempfile original
-    qui save `original'
-    
     * Under subnet(multi) a weight is computed inside its subnet, and
     * the ratio of the subnet within the feature at its node enters
     * only where the subnets are put back together. A size of zero is
     * a subnet the node does not hold, which the templates weigh as
     * zero; a size below zero is not a size.
-    if "`subnet'" == "multi" & "`type'" != "attribute" {
+    if "`subnet'" == "multi" {
         local ssrc = cond("`direction'" == "inflow", ///
                           "target_size", "source_size")
         qui count if `ssrc' < 0
@@ -261,14 +319,20 @@ program define network_calc, rclass
         * each has been scaled by the ratio its subnet holds at the
         * node. That works where a subnet weight is a share of what
         * leaves the node, as in flow and interaction. It does not
-        * work for attribute, whose weight is a log ratio, so a sum
-        * over subnets is a product of ratios and grows with their
-        * number. An attribute network therefore stays in
-        * networks_multi.
+        * work for attribute. The ratios are read at the node the
+        * weight is anchored on, the source under outflow and the
+        * target under inflow, so an edge and its reverse would be
+        * reduced with the ratios of two different nodes: the log
+        * ratios change sign, the ratios weighting them change too,
+        * and the copy would lose the antisymmetry that defines an
+        * attribute edge value. An attribute network therefore stays
+        * in networks_multi.
         if "`type'" == "attribute" {
-            di as text "  Not aggregated to single-subnet: a log ratio"
-            di as text "  does not add up over subnets. Pass the node"
-            di as text "  level with subnet(single) for a single-subnet"
+            di as text "  Not aggregated to single-subnet: the ratios"
+            di as text "  that would weigh the subnets differ at the two"
+            di as text "  ends of an edge, so the copy would not cancel"
+            di as text "  along the reversed edge. Pass the node level"
+            di as text "  with subnet(single) for a single-subnet"
             di as text "  attribute network."
             local wrote_single = 0
         }
@@ -318,8 +382,8 @@ program define network_calc, rclass
             `debug'
     }
     
-    * Restore original data
-    use `original', clear
+    * Give the data in memory back as it was found
+    restore
     
     *===========================================================================
     * 6. REPORT RESULTS

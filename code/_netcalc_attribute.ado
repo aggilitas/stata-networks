@@ -86,10 +86,13 @@ program define _netcalc_attribute, rclass
         tempvar edge_weight
         gen double `edge_weight' = ln(`vtgt' / `vsrc')
 
-        * A log ratio does not add up over the subnets, so an
-        * attribute network is not reduced to a single one. The share
-        * the subnet holds at its node is still worth having beside
-        * the weights, and it is read from size as everywhere else.
+        * An attribute network is not reduced to a single one. The
+        * ratios that would weigh the subnets are read at the node the
+        * value is anchored on, so an edge and its reverse would be
+        * weighed by two different nodes and the reduced values would
+        * no longer cancel. The ratio the subnet holds at its node is
+        * still worth having beside the weights, and it is read from
+        * size as everywhere else.
         if "`subnet'" == "multi" {
             tempvar runsub total_sub runsize total_size
             bysort year `feature' `nsrc': ///
