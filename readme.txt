@@ -76,6 +76,7 @@ meant to be called directly.
   network_calc_cert.log      its log, run on Stata 17
 
   example_session.do         the session shown in the article
+  example_session.log        its log
   test_interaction_multi.csv
   test_flow_multi.csv
   test_attribute_single.csv  the three files the session reads
