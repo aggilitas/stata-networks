@@ -1,0 +1,27 @@
+Shares of EU27 exports to the world in the 19 TCLF chapters, 2016-2025 (section 6.1):
+  IT 20.7 per cent
+  DE 17.3 per cent
+  FR 11.2 per cent
+  the eighteen members of R 83.8 per cent
+  over the 18 chapters without 55: the eighteen members of R 84.0 per cent; IT 20.9 per cent
+Share of exports outside the EU27, 18 chapters, 2016-2025 (section 6.5): lowest BG 15.4, highest IT 54.3 per cent
+Cells of the mesh of R (section 6.5): 55080; recorded 50924, of which 4 with value zero; absent 4156
+REST share of the source's world exports, 3240 source-chapter-year cells (section 6.1): min 0.000; median 45.9, 10th 22.9, 90th 68.9 per cent
+Factor 1/(1-rho) without REST, 3238 cells with rho < 1 (section 6.2): median 1.85, 10th 1.30, 90th 3.21
+  largest over smallest factor within a source-chapter series, 324 series: median 1.29; above 3 in 29 (9.0 per cent)
+Year-to-year switches between zero and a positive value on the corridors of R (section 6.1): 1659 over 5508 corridor series
+Manufacturing producer price change in 2022 across the eighteen members (section 6.2): 10.3 to 29.5 per cent
+Screen, corridor-clustered standard errors (section 6.3): correlation of the t statistics of the two directions over 153 unordered pairs 0.90; pairs significant in at least one direction 38, in both 28, in one only 10
+Table 4 with corridor-clustered standard errors, significant at 5 per cent by block (ordered pairs, positive, negative, density):
+  finished goods, within: 42, 37, 0, 0.88
+  other group, within: 110, 18, 0, 0.16
+  finished goods on the other group: 77, 6, 1, 0.09
+  other group on finished goods: 77, 4, 0, 0.05
+  all: 306, 65, 1, 0.22
+Table 4 with MRQAP, significant at 5 per cent by block (ordered pairs, positive, negative, density):
+  finished goods, within: 42, 38, 0, 0.90
+  other group, within: 110, 20, 0, 0.18
+  finished goods on the other group: 77, 6, 1, 0.09
+  other group on finished goods: 77, 5, 0, 0.06
+  all: 306, 69, 1, 0.23
+Screen, MRQAP (section 6.3): pairs significant in at least one direction 40, in both 30, in one only 10

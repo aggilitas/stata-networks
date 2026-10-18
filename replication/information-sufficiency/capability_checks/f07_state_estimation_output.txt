@@ -1,0 +1,46 @@
+Supplementary Section S11.3, S11 Table C (family F07): recomputed values
+
+Table C row A, C1 and C2: largest change of a retained AIMNER flow weight between full observation and the period-specific construction sets S_t (reference) = 0
+Table C row A, C3: largest change of a retained AIMNER flow weight under the period shocks lambda_t (reference, rounding only) = 2.2e-16
+
+Table C row 5, C3: seasonally adjusted value at month 30 without the shock = 1.3401
+Table C row 5, C3: seasonally adjusted value at month 30 with a shock of 1.5 at that month = 1.8143
+
+Table C row 10, C1: period in which node 11 enters the ambient system = 5
+Table C row 10, C1: nodes kept by the fixed node-set rule, of 12 = 11
+Table C row 10, C1: positive edge values from the five nodes of R to the entering node 11 in periods 5 to 11, removed with the node = 35
+
+Table C row 14, C1 and C2: nodes not represented under partial observation = 5
+Table C row 14, C1 and C2: normal score of the retained value x[3, 0, 1], all 12 nodes represented = -0.5308
+Table C row 14, C1 and C2: normal score of the same retained value, nodes 7 to 11 not represented = -0.5560
+Table C row 14, C3: normal score of the retained value after the period shocks lambda_t, pooled over all periods = -0.0214
+
+Table C row 15, C1 and C2: number of sites in the grid cell = 3
+Table C row 15, C1 and C2: cell value, all three sites represented = 4.0
+Table C row 15, C1 and C2: cell value, the site observing 8 not represented = 2.0
+
+Table C row 19, C1 and C2: report at 1.2, both tracks represented, assigned to = track 2
+Table C row 19, C1 and C2: report at 1.2, track 2 not represented, assigned to = track 0
+Table C row 19, C3: report position after a shock of 0.5 = 0.6
+Table C row 19, C3: shocked report, both tracks represented, assigned to = track 0
+
+Table C row 21, C1 and C2: lasso optimality conditions hold in both pools = True
+Table C row 21, C1 and C2: series x0 selected from pool A (x0 and three unrelated series) = True
+Table C row 21, C1 and C2: series x0 selected once x1 enters the pool (pool B) = False
+Table C row 21, C1 and C2: coefficient of x0 in pool A = 0.2385
+Table C row 21, C1 and C2: coefficient of x0 in pool B = 0.0000
+
+Table C row 22, C1 and C2: mean calls of node 0 per period, all 12 nodes as partners = 1.077
+Table C row 22, C1 and C2: node 0 kept (mean at least 1), all 12 nodes as partners = True
+Table C row 22, C1 and C2: mean calls of node 0 per period, represented partners 0 to 5 only = 0.333
+Table C row 22, C1 and C2: node 0 kept, represented partners 0 to 5 only = False
+Table C row 22, C3: shocked periods (periods 0 to 5), of 12 = 6
+Table C row 22, C3: mean calls of node 0 per period after a shock of 0.6 in the shocked periods = 0.878
+Table C row 22, C3: node 0 kept after the shock = False
+
+Table C row 28, C1 and C2: partial correlation of nodes a and b, only a and b represented = 0.912
+Table C row 28, C1 and C2: partial correlation of nodes a and b, node g also represented = 0.031
+
+Table C row 1, Fs: largest |v_ij - v_ji| after the log of a symmetric full-mesh input = 0
+Table C row 12, Fs: largest |v_ij - v_ji| after division by the network-wide total = 0
+Table C row A, Fs: largest |w_ij - w_ji| of the AIMNER flow weight on the same input = 0.0224

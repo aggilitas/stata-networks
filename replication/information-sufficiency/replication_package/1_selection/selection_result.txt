@@ -1,0 +1,304 @@
+negative values: 0
+
+observed countries per chapter (of 27):
+  41: 25  not observed: NL(QY 1y), SK(QY 3y)
+  42: 24  not observed: CZ(QY 2y), IE(QV>=1% 1y), LU(QV>=1% 4y)
+  43: 25  not observed: IE(QV>=1% 2y), NL(QY 1y)
+  50: 24  not observed: CY(WORLD missing [2016, 2018, 2020, 2021]), IE(QV>=1% 1y), MT(WORLD missing [2016, 2017, 2018, 2019, 2020])
+  51: 24  not observed: CZ(QY 2y), MT(WORLD missing [2020, 2022]), NL(QY 7y QV>=1% 3y)
+  52: 25  not observed: MT(WORLD missing [2022, 2023]), NL(QY 6y)
+  53: 24  not observed: CY(WORLD missing [2023]), MT(WORLD missing [2017, 2018]), NL(QY 7y)
+  54: 25  not observed: CZ(QY 6y), NL(QY 9y)
+  55: 23  not observed: CZ(QY 2y), DK(QY 10y), IT(QY 5y), NL(QY 9y)
+  56: 22  not observed: AT(QY 4y), CZ(QY 2y), FI(QY 6y), IE(QV>=1% 2y), NL(QY 7y QV>=1% 2y)
+  57: 25  not observed: IE(QV>=1% 5y), NL(QY 7y)
+  58: 25  not observed: CZ(QY 2y), NL(QY 5y)
+  59: 23  not observed: AT(QY 1y), CZ(QY 6y), IE(QV>=1% 3y), NL(QY 7y)
+  60: 23  not observed: CZ(QY 2y), FI(QY 5y), IE(QV>=1% 5y), NL(QY 1y)
+  61: 24  not observed: CZ(QY 2y), IE(QV>=1% 2y), LU(QV>=1% 1y)
+  62: 23  not observed: CZ(QY 2y), IE(QV>=1% 4y), LU(QV>=1% 1y), NL(QV>=1% 1y)
+  63: 22  not observed: AT(QY 3y), CZ(QY 2y), IE(QV>=1% 3y), LU(QV>=1% 3y), NL(QY 8y)
+  64: 25  not observed: IE(QV>=1% 1y), NL(QY 1y)
+  65: 25  not observed: CZ(QY 2y), LU(QV>=1% 3y)
+
+observed chapters per country (of 19):
+  AT: 16  missing: 56 59 63
+  BE: 19  missing: 
+  BG: 19  missing: 
+  CY: 17  missing: 50 53
+  CZ: 7  missing: 42 51 54 55 56 58 59 60 61 62 63 65
+  DE: 19  missing: 
+  DK: 18  missing: 55
+  EE: 19  missing: 
+  ES: 19  missing: 
+  FI: 17  missing: 56 60
+  FR: 19  missing: 
+  GR: 19  missing: 
+  HR: 19  missing: 
+  HU: 19  missing: 
+  IE: 8  missing: 42 43 50 56 57 59 60 61 62 63 64
+  IT: 18  missing: 55
+  LT: 19  missing: 
+  LU: 14  missing: 42 61 62 63 65
+  LV: 19  missing: 
+  MT: 15  missing: 50 51 52 53
+  NL: 4  missing: 41 43 51 52 53 54 55 56 57 58 59 60 62 63 64
+  PL: 19  missing: 
+  PT: 19  missing: 
+  RO: 19  missing: 
+  SE: 19  missing: 
+  SI: 19  missing: 
+  SK: 18  missing: 41
+
+chapters -> largest fixed country set observed in all of them:
+  19 chapters: 16 countries | left out: - | countries: BE BG DE EE ES FR GR HR HU LT LV PL PT RO SE SI
+  18 chapters: 18 countries | left out: 55 | countries: BE BG DE DK EE ES FR GR HR HU IT LT LV PL PT RO SE SI
+  17 chapters: 19 countries | left out: 41 55 | countries: BE BG DE DK EE ES FR GR HR HU IT LT LV PL PT RO SE SI SK
+  16 chapters: 19 countries | left out: 55 56 60 | countries: BE BG DE DK EE ES FI FR GR HR HU IT LT LV PL PT RO SE SI
+  15 chapters: 20 countries | left out: 41 55 56 60 | countries: BE BG DE DK EE ES FI FR GR HR HU IT LT LV PL PT RO SE SI SK
+  14 chapters: 20 countries | left out: 55 56 59 60 63 | countries: AT BE BG DE DK EE ES FI FR GR HR HU IT LT LV PL PT RO SE SI
+  13 chapters: 21 countries | left out: 41 55 56 59 60 63 | countries: AT BE BG DE DK EE ES FI FR GR HR HU IT LT LV PL PT RO SE SI SK
+  12 chapters: 21 countries | left out: 50 53 55 56 59 60 63 | countries: AT BE BG CY DE DK EE ES FI FR GR HR HU IT LT LV PL PT RO SE SI
+  11 chapters: 22 countries | left out: 41 50 53 55 56 59 60 63 | countries: AT BE BG CY DE DK EE ES FI FR GR HR HU IT LT LV PL PT RO SE SI SK
+  10 chapters: 22 countries | left out: 50 51 52 53 55 56 59 60 63 | countries: AT BE BG CY DE DK EE ES FI FR GR HR HU IT LT LV MT PL PT RO SE SI
+   9 chapters: 23 countries | left out: 41 50 51 52 53 55 56 59 60 63 | countries: AT BE BG CY DE DK EE ES FI FR GR HR HU IT LT LV MT PL PT RO SE SI SK
+   8 chapters: 23 countries | left out: 41 50 51 52 53 55 56 59 60 63 65 | countries: AT BE BG CY DE DK EE ES FI FR GR HR HU IT LT LV MT PL PT RO SE SI SK
+   7 chapters: 23 countries | left out: 41 50 51 52 53 55 56 59 60 63 64 65 | countries: AT BE BG CY DE DK EE ES FI FR GR HR HU IT LT LV MT PL PT RO SE SI SK
+   6 chapters: 23 countries | left out: 42 50 51 52 53 55 56 59 60 61 62 63 65 | countries: AT BE BG CY DE DK EE ES FI FR GR HR HU IT LT LU LV MT PL PT RO SE SI
+   5 chapters: 24 countries | left out: 41 42 50 51 52 53 55 56 59 60 61 62 63 65 | countries: AT BE BG CY DE DK EE ES FI FR GR HR HU IT LT LU LV MT PL PT RO SE SI SK
+   4 chapters: 24 countries | left out: 42 50 51 52 53 54 55 56 58 59 60 61 62 63 65 | countries: AT BE BG CY CZ DE DK EE ES FI FR GR HR HU IT LT LU LV MT PL PT RO SE SI
+   3 chapters: 25 countries | left out: 41 42 50 51 52 53 54 55 56 58 59 60 61 62 63 65 | countries: AT BE BG CY CZ DE DK EE ES FI FR GR HR HU IT LT LU LV MT PL PT RO SE SI SK
+   2 chapters: 25 countries | left out: 41 42 50 51 52 53 54 55 56 58 59 60 61 62 63 64 65 | countries: AT BE BG CY CZ DE DK EE ES FI FR GR HR HU IT LT LU LV MT PL PT RO SE SI SK
+   1 chapters: 25 countries | left out: 42 43 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 | countries: AT BE BG CY CZ DE DK EE ES FI FR GR HR HU IE IT LT LU LV MT PL PT RO SE SI
+
+zero cells for the full set of 19 chapters and for each Pareto set with >= 10 countries:
+  19 chapters, 16 countries (240 edges x 10 years):
+     41: zero edge-years 481 (20.0%), edges zero in all years 16, min REST 176,835
+     42: zero edge-years 6 (0.2%), edges zero in all years 0, min REST 6,379,805
+     43: zero edge-years 663 (27.6%), edges zero in all years 19, min REST 389,310
+     50: zero edge-years 1076 (44.8%), edges zero in all years 53, min REST 219
+     51: zero edge-years 409 (17.0%), edges zero in all years 18, min REST 481,937
+     52: zero edge-years 133 (5.5%), edges zero in all years 2, min REST 1,473,430
+     53: zero edge-years 283 (11.8%), edges zero in all years 6, min REST 65,847
+     54: zero edge-years 89 (3.7%), edges zero in all years 1, min REST 1,562,802
+     55: zero edge-years 154 (6.4%), edges zero in all years 2, min REST 1,476,224
+     56: zero edge-years 29 (1.2%), edges zero in all years 1, min REST 4,959,826
+     57: zero edge-years 304 (12.7%), edges zero in all years 5, min REST 956,786
+     58: zero edge-years 31 (1.3%), edges zero in all years 0, min REST 1,218,669
+     59: zero edge-years 68 (2.8%), edges zero in all years 0, min REST 2,836,944
+     60: zero edge-years 129 (5.4%), edges zero in all years 3, min REST 1,375,228
+     61: zero edge-years 1 (0.0%), edges zero in all years 0, min REST 26,930,446
+     62: zero edge-years 0 (0.0%), edges zero in all years 0, min REST 45,631,848
+     63: zero edge-years 2 (0.1%), edges zero in all years 0, min REST 9,728,451
+     64: zero edge-years 14 (0.6%), edges zero in all years 0, min REST 17,629,048
+     65: zero edge-years 25 (1.0%), edges zero in all years 0, min REST 1,310,546
+  18 chapters, 18 countries (306 edges x 10 years):
+     41: zero edge-years 534 (17.5%), edges zero in all years 17, min REST 131,736
+     42: zero edge-years 6 (0.2%), edges zero in all years 0, min REST 4,532,399
+     43: zero edge-years 712 (23.3%), edges zero in all years 20, min REST 97,023
+     50: zero edge-years 1272 (41.6%), edges zero in all years 59, min REST 219
+     51: zero edge-years 436 (14.2%), edges zero in all years 19, min REST 305,258
+     52: zero edge-years 143 (4.7%), edges zero in all years 2, min REST 1,401,144
+     53: zero edge-years 309 (10.1%), edges zero in all years 6, min REST 59,284
+     54: zero edge-years 93 (3.0%), edges zero in all years 1, min REST 1,551,073
+     56: zero edge-years 36 (1.2%), edges zero in all years 1, min REST 3,915,431
+     57: zero edge-years 330 (10.8%), edges zero in all years 5, min REST 473,142
+     58: zero edge-years 32 (1.0%), edges zero in all years 0, min REST 982,029
+     59: zero edge-years 75 (2.5%), edges zero in all years 0, min REST 2,222,455
+     60: zero edge-years 139 (4.5%), edges zero in all years 3, min REST 1,367,368
+     61: zero edge-years 1 (0.0%), edges zero in all years 0, min REST 26,348,233
+     62: zero edge-years 0 (0.0%), edges zero in all years 0, min REST 24,886,523
+     63: zero edge-years 3 (0.1%), edges zero in all years 0, min REST 7,983,990
+     64: zero edge-years 14 (0.5%), edges zero in all years 0, min REST 11,451,056
+     65: zero edge-years 25 (0.8%), edges zero in all years 0, min REST 938,838
+  17 chapters, 19 countries (342 edges x 10 years):
+     42: zero edge-years 6 (0.2%), edges zero in all years 0, min REST 4,485,349
+     43: zero edge-years 810 (23.7%), edges zero in all years 21, min REST 84,144
+     50: zero edge-years 1484 (43.4%), edges zero in all years 65, min REST 124
+     51: zero edge-years 534 (15.6%), edges zero in all years 20, min REST 103,771
+     52: zero edge-years 183 (5.4%), edges zero in all years 2, min REST 1,401,144
+     53: zero edge-years 422 (12.3%), edges zero in all years 8, min REST 59,284
+     54: zero edge-years 93 (2.7%), edges zero in all years 1, min REST 1,543,638
+     56: zero edge-years 36 (1.1%), edges zero in all years 1, min REST 3,915,325
+     57: zero edge-years 380 (11.1%), edges zero in all years 5, min REST 472,081
+     58: zero edge-years 32 (0.9%), edges zero in all years 0, min REST 981,505
+     59: zero edge-years 78 (2.3%), edges zero in all years 0, min REST 1,813,004
+     60: zero edge-years 158 (4.6%), edges zero in all years 3, min REST 1,367,368
+     61: zero edge-years 1 (0.0%), edges zero in all years 0, min REST 26,339,171
+     62: zero edge-years 0 (0.0%), edges zero in all years 0, min REST 24,102,190
+     63: zero edge-years 3 (0.1%), edges zero in all years 0, min REST 7,839,908
+     64: zero edge-years 15 (0.4%), edges zero in all years 0, min REST 11,257,092
+     65: zero edge-years 27 (0.8%), edges zero in all years 0, min REST 925,438
+  16 chapters, 19 countries (342 edges x 10 years):
+     41: zero edge-years 623 (18.2%), edges zero in all years 17, min REST 131,736
+     42: zero edge-years 6 (0.2%), edges zero in all years 0, min REST 1,832,856
+     43: zero edge-years 782 (22.9%), edges zero in all years 20, min REST 97,023
+     50: zero edge-years 1516 (44.3%), edges zero in all years 75, min REST 219
+     51: zero edge-years 539 (15.8%), edges zero in all years 23, min REST 305,258
+     52: zero edge-years 156 (4.6%), edges zero in all years 2, min REST 643,287
+     53: zero edge-years 386 (11.3%), edges zero in all years 7, min REST 59,090
+     54: zero edge-years 129 (3.8%), edges zero in all years 1, min REST 894,763
+     57: zero edge-years 363 (10.6%), edges zero in all years 7, min REST 473,142
+     58: zero edge-years 40 (1.2%), edges zero in all years 0, min REST 593,653
+     59: zero edge-years 76 (2.2%), edges zero in all years 0, min REST 586,763
+     61: zero edge-years 1 (0.0%), edges zero in all years 0, min REST 17,754,885
+     62: zero edge-years 0 (0.0%), edges zero in all years 0, min REST 18,069,236
+     63: zero edge-years 3 (0.1%), edges zero in all years 0, min REST 7,614,900
+     64: zero edge-years 14 (0.4%), edges zero in all years 0, min REST 7,617,086
+     65: zero edge-years 25 (0.7%), edges zero in all years 0, min REST 938,331
+  15 chapters, 20 countries (380 edges x 10 years):
+     42: zero edge-years 6 (0.2%), edges zero in all years 0, min REST 1,832,649
+     43: zero edge-years 887 (23.3%), edges zero in all years 21, min REST 82,919
+     50: zero edge-years 1748 (46.0%), edges zero in all years 83, min REST 124
+     51: zero edge-years 655 (17.2%), edges zero in all years 25, min REST 103,771
+     52: zero edge-years 201 (5.3%), edges zero in all years 2, min REST 643,019
+     53: zero edge-years 515 (13.6%), edges zero in all years 9, min REST 59,090
+     54: zero edge-years 131 (3.4%), edges zero in all years 1, min REST 894,022
+     57: zero edge-years 418 (11.0%), edges zero in all years 7, min REST 472,081
+     58: zero edge-years 40 (1.1%), edges zero in all years 0, min REST 593,129
+     59: zero edge-years 80 (2.1%), edges zero in all years 0, min REST 586,763
+     61: zero edge-years 1 (0.0%), edges zero in all years 0, min REST 17,745,823
+     62: zero edge-years 0 (0.0%), edges zero in all years 0, min REST 17,898,763
+     63: zero edge-years 3 (0.1%), edges zero in all years 0, min REST 7,504,335
+     64: zero edge-years 15 (0.4%), edges zero in all years 0, min REST 7,613,963
+     65: zero edge-years 27 (0.7%), edges zero in all years 0, min REST 924,931
+  14 chapters, 20 countries (380 edges x 10 years):
+     41: zero edge-years 660 (17.4%), edges zero in all years 19, min REST 131,736
+     42: zero edge-years 7 (0.2%), edges zero in all years 0, min REST 1,832,828
+     43: zero edge-years 833 (21.9%), edges zero in all years 20, min REST 97,010
+     50: zero edge-years 1622 (42.7%), edges zero in all years 78, min REST 11
+     51: zero edge-years 564 (14.8%), edges zero in all years 23, min REST 305,254
+     52: zero edge-years 163 (4.3%), edges zero in all years 2, min REST 643,287
+     53: zero edge-years 399 (10.5%), edges zero in all years 7, min REST 59,068
+     54: zero edge-years 139 (3.7%), edges zero in all years 1, min REST 894,003
+     57: zero edge-years 374 (9.8%), edges zero in all years 7, min REST 445,247
+     58: zero edge-years 41 (1.1%), edges zero in all years 0, min REST 588,543
+     61: zero edge-years 1 (0.0%), edges zero in all years 0, min REST 17,724,550
+     62: zero edge-years 0 (0.0%), edges zero in all years 0, min REST 13,880,717
+     64: zero edge-years 14 (0.4%), edges zero in all years 0, min REST 7,023,906
+     65: zero edge-years 25 (0.7%), edges zero in all years 0, min REST 688,513
+  13 chapters, 21 countries (420 edges x 10 years):
+     42: zero edge-years 7 (0.2%), edges zero in all years 0, min REST 1,832,621
+     43: zero edge-years 938 (22.3%), edges zero in all years 21, min REST 65,855
+     50: zero edge-years 1864 (44.4%), edges zero in all years 86, min REST 11
+     51: zero edge-years 681 (16.2%), edges zero in all years 25, min REST 103,172
+     52: zero edge-years 208 (5.0%), edges zero in all years 2, min REST 643,019
+     53: zero edge-years 528 (12.6%), edges zero in all years 9, min REST 59,068
+     54: zero edge-years 141 (3.4%), edges zero in all years 1, min REST 893,262
+     57: zero edge-years 429 (10.2%), edges zero in all years 7, min REST 444,186
+     58: zero edge-years 41 (1.0%), edges zero in all years 0, min REST 588,019
+     61: zero edge-years 1 (0.0%), edges zero in all years 0, min REST 17,715,488
+     62: zero edge-years 0 (0.0%), edges zero in all years 0, min REST 13,096,384
+     64: zero edge-years 15 (0.4%), edges zero in all years 0, min REST 6,966,079
+     65: zero edge-years 27 (0.6%), edges zero in all years 0, min REST 686,314
+  12 chapters, 21 countries (420 edges x 10 years):
+     41: zero edge-years 909 (21.6%), edges zero in all years 34, min REST 63,818
+     42: zero edge-years 76 (1.8%), edges zero in all years 0, min REST 627,634
+     43: zero edge-years 1108 (26.4%), edges zero in all years 34, min REST 0
+     51: zero edge-years 860 (20.5%), edges zero in all years 45, min REST 0
+     52: zero edge-years 400 (9.5%), edges zero in all years 22, min REST 0
+     54: zero edge-years 374 (8.9%), edges zero in all years 20, min REST 0
+     57: zero edge-years 601 (14.3%), edges zero in all years 20, min REST 2,328
+     58: zero edge-years 256 (6.1%), edges zero in all years 14, min REST 0
+     61: zero edge-years 64 (1.5%), edges zero in all years 0, min REST 808,601
+     62: zero edge-years 60 (1.4%), edges zero in all years 0, min REST 1,413,953
+     64: zero edge-years 87 (2.1%), edges zero in all years 0, min REST 1,853,947
+     65: zero edge-years 131 (3.1%), edges zero in all years 0, min REST 37,912
+  11 chapters, 22 countries (462 edges x 10 years):
+     42: zero edge-years 81 (1.8%), edges zero in all years 0, min REST 627,634
+     43: zero edge-years 1231 (26.6%), edges zero in all years 36, min REST 0
+     51: zero edge-years 997 (21.6%), edges zero in all years 49, min REST 0
+     52: zero edge-years 461 (10.0%), edges zero in all years 23, min REST 0
+     54: zero edge-years 395 (8.5%), edges zero in all years 21, min REST 0
+     57: zero edge-years 667 (14.4%), edges zero in all years 20, min REST 2,257
+     58: zero edge-years 269 (5.8%), edges zero in all years 15, min REST 0
+     61: zero edge-years 69 (1.5%), edges zero in all years 0, min REST 808,601
+     62: zero edge-years 65 (1.4%), edges zero in all years 0, min REST 1,413,953
+     64: zero edge-years 93 (2.0%), edges zero in all years 0, min REST 1,853,947
+     65: zero edge-years 139 (3.0%), edges zero in all years 0, min REST 37,912
+  10 chapters, 22 countries (462 edges x 10 years):
+     41: zero edge-years 1251 (27.1%), edges zero in all years 61, min REST 0
+     42: zero edge-years 171 (3.7%), edges zero in all years 0, min REST 206,420
+     43: zero edge-years 1433 (31.0%), edges zero in all years 59, min REST 0
+     54: zero edge-years 616 (13.3%), edges zero in all years 32, min REST 0
+     57: zero edge-years 843 (18.2%), edges zero in all years 34, min REST 925
+     58: zero edge-years 497 (10.8%), edges zero in all years 29, min REST 0
+     61: zero edge-years 100 (2.2%), edges zero in all years 0, min REST 808,103
+     62: zero edge-years 95 (2.1%), edges zero in all years 0, min REST 1,413,694
+     64: zero edge-years 149 (3.2%), edges zero in all years 0, min REST 313,291
+     65: zero edge-years 229 (5.0%), edges zero in all years 1, min REST 37,833
+  9 chapters, 23 countries (506 edges x 10 years):
+     42: zero edge-years 176 (3.5%), edges zero in all years 0, min REST 156,778
+     43: zero edge-years 1576 (31.1%), edges zero in all years 63, min REST 0
+     54: zero edge-years 656 (13.0%), edges zero in all years 34, min REST 0
+     57: zero edge-years 923 (18.2%), edges zero in all years 34, min REST 925
+     58: zero edge-years 519 (10.3%), edges zero in all years 30, min REST 0
+     61: zero edge-years 105 (2.1%), edges zero in all years 0, min REST 808,103
+     62: zero edge-years 104 (2.1%), edges zero in all years 0, min REST 1,413,694
+     64: zero edge-years 155 (3.1%), edges zero in all years 0, min REST 305,978
+     65: zero edge-years 242 (4.8%), edges zero in all years 1, min REST 37,833
+  8 chapters, 23 countries (506 edges x 10 years):
+     42: zero edge-years 176 (3.5%), edges zero in all years 0, min REST 156,778
+     43: zero edge-years 1576 (31.1%), edges zero in all years 63, min REST 0
+     54: zero edge-years 656 (13.0%), edges zero in all years 34, min REST 0
+     57: zero edge-years 923 (18.2%), edges zero in all years 34, min REST 925
+     58: zero edge-years 519 (10.3%), edges zero in all years 30, min REST 0
+     61: zero edge-years 105 (2.1%), edges zero in all years 0, min REST 808,103
+     62: zero edge-years 104 (2.1%), edges zero in all years 0, min REST 1,413,694
+     64: zero edge-years 155 (3.1%), edges zero in all years 0, min REST 305,978
+  7 chapters, 23 countries (506 edges x 10 years):
+     42: zero edge-years 176 (3.5%), edges zero in all years 0, min REST 156,778
+     43: zero edge-years 1576 (31.1%), edges zero in all years 63, min REST 0
+     54: zero edge-years 656 (13.0%), edges zero in all years 34, min REST 0
+     57: zero edge-years 923 (18.2%), edges zero in all years 34, min REST 925
+     58: zero edge-years 519 (10.3%), edges zero in all years 30, min REST 0
+     61: zero edge-years 105 (2.1%), edges zero in all years 0, min REST 808,103
+     62: zero edge-years 104 (2.1%), edges zero in all years 0, min REST 1,413,694
+  6 chapters, 23 countries (506 edges x 10 years):
+     41: zero edge-years 1562 (30.9%), edges zero in all years 81, min REST 0
+     43: zero edge-years 1710 (33.8%), edges zero in all years 82, min REST 0
+     54: zero edge-years 767 (15.2%), edges zero in all years 40, min REST 0
+     57: zero edge-years 1067 (21.1%), edges zero in all years 40, min REST 925
+     58: zero edge-years 681 (13.5%), edges zero in all years 34, min REST 0
+     64: zero edge-years 174 (3.4%), edges zero in all years 0, min REST 310,876
+  5 chapters, 24 countries (552 edges x 10 years):
+     43: zero edge-years 1867 (33.8%), edges zero in all years 86, min REST 0
+     54: zero edge-years 814 (14.7%), edges zero in all years 42, min REST 0
+     57: zero edge-years 1161 (21.0%), edges zero in all years 40, min REST 925
+     58: zero edge-years 710 (12.9%), edges zero in all years 35, min REST 0
+     64: zero edge-years 181 (3.3%), edges zero in all years 0, min REST 303,563
+  4 chapters, 24 countries (552 edges x 10 years):
+     41: zero edge-years 1643 (29.8%), edges zero in all years 85, min REST 0
+     43: zero edge-years 1787 (32.4%), edges zero in all years 84, min REST 0
+     57: zero edge-years 1101 (19.9%), edges zero in all years 41, min REST 925
+     64: zero edge-years 175 (3.2%), edges zero in all years 0, min REST 306,971
+  3 chapters, 25 countries (600 edges x 10 years):
+     43: zero edge-years 1944 (32.4%), edges zero in all years 88, min REST 0
+     57: zero edge-years 1195 (19.9%), edges zero in all years 41, min REST 925
+     64: zero edge-years 182 (3.0%), edges zero in all years 0, min REST 299,658
+  2 chapters, 25 countries (600 edges x 10 years):
+     43: zero edge-years 1944 (32.4%), edges zero in all years 88, min REST 0
+     57: zero edge-years 1195 (19.9%), edges zero in all years 41, min REST 925
+  1 chapters, 25 countries (600 edges x 10 years):
+     41: zero edge-years 1836 (30.6%), edges zero in all years 93, min REST 0
+
+largest QV share of the WORLD total, 2016-2025, 18 chapters without 55 (chapter-years with WORLD published and no QY/QX):
+  IE: 29.6659 per cent (chapter 43, 2021)
+  LU: 4.3920 per cent (chapter 65, 2024)
+  NL: 4.0717 per cent (chapter 51, 2023)
+  BG: 0.5884 per cent (chapter 58, 2018)
+  CZ: 0.4157 per cent (chapter 63, 2021)
+  DK: 0.3968 per cent (chapter 51, 2025)
+  DE: 0.1128 per cent (chapter 57, 2022)
+  IT: 0.1018 per cent (chapter 63, 2018)
+  ES: 0.0968 per cent (chapter 42, 2017)
+  PT: 0.0539 per cent (chapter 62, 2022)
+  PL: 0.0426 per cent (chapter 63, 2025)
+  BE: 0.0167 per cent (chapter 56, 2023)
+  RO: 0.0136 per cent (chapter 51, 2020)
+  EE: 0.0039 per cent (chapter 64, 2022)
+  HR: 0.0026 per cent (chapter 63, 2021)
+  SE: 0.0016 per cent (chapter 61, 2016)
+  SK: 0.0000 per cent (chapter 42, 2020)
+  in the 18-chapter set (18 states) the largest share is 0.5884 per cent; the member states that fail only on QV: IE 29.6659, LU 4.3920
+  any threshold between 0.5884 and 4.3920 per cent gives the same 18-chapter set

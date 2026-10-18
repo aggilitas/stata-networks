@@ -1,0 +1,1291 @@
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  estimation.log
+  log type:  text
+ opened on:  27 Sep 2026, 03:35:30
+
+. 
+. which network_calc
+network_calc.ado
+*! network_calc 2.0.0
+*! Main command for calculating network edge weights
+*! Author: Necmi TALAY
+*! Date: 2026-09-13
+
+. foreach p in ftools reghdfe {
+  2.     capture which `p'
+  3.     if _rc {
+  4.         display as error "`p' is not installed (ssc install `p')"
+  5.         exit 111
+  6.     }
+  7. }
+
+. 
+. * ---- settings ----------------------------------------------------------------
+. local R  "BE BG DE DK EE ES FR GR HR HU IT LT LV PL PT RO SE SI"
+
+. local HS "41 42 43 50 51 52 53 54 56 57 58 59 60 61 62 63 64 65"
+
+. local alpha 0.05
+
+. local nR : word count `R'
+
+. local nE = `nR' * (`nR' - 1)
+
+. local nHS : word count `HS'
+
+. * -----------------------------------------------------------------------------
+. 
+. *----------------------------------------------------------------------------
+. * 1. Construction, one file per network
+. *----------------------------------------------------------------------------
+. foreach k of local HS {
+  2.     import delimited using "../4_inputs/networks/export_`k'.csv", clear varnames(1) asdouble stringcols(2 3)
+  3.     * whole euro values below the long limit are read as long, which holds
+.     * them exactly; only float would lose digits
+.     confirm numeric variable source_value target_value
+  4.     foreach c in source_value target_value {
+  5.         local t : type `c'
+  6.         if "`t'" == "float" {
+  7.             display as error "../4_inputs/networks/export_`k'.csv: `c' read as float"
+  8.             exit 7
+  9.         }
+ 10.     }
+ 11.     assert inrange(year, 2016, 2025)
+ 12.     assert source != target
+ 13.     assert !missing(source_value, target_value)
+ 14.     assert source_value >= 0 & source_value == target_value
+ 15.     gen byte inR  = strpos(" `R' ", " " + source + " ") > 0 & strpos(" `R' ", " " + target + " ") > 0
+ 16.     gen byte rest = target == "REST" & strpos(" `R' ", " " + source + " ") > 0
+ 17.     assert inR | rest
+ 18.     bysort year: egen long nRR = total(inR)
+ 19.     bysort year: egen long nREST = total(rest)
+ 20.     assert nRR == `nE' & nREST == `nR'                  // complete R mesh, one REST row per node
+ 21.     quietly tabulate year
+ 22.     assert r(r) == 10
+ 23.     drop inR rest nRR nREST
+ 24.     network_calc, type(flow) subnet(single) direction(outflow) name(export_`k')
+ 25. }
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 3,240 obs)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      export_41
+  Obs:       3240
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 3240 edges
+  Mean weight:  0.055556
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'export_41' has been calculated and added to:
+  - Frame 'networks_single':     3240 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 3,240 obs)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      export_42
+  Obs:       3240
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 3240 edges
+  Mean weight:  0.055556
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'export_42' has been calculated and added to:
+  - Frame 'networks_single':     3240 obs, 6 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 3,240 obs)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      export_43
+  Obs:       3240
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 3240 edges
+  Mean weight:  0.055556
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'export_43' has been calculated and added to:
+  - Frame 'networks_single':     3240 obs, 7 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 3,240 obs)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      export_50
+  Obs:       3240
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 3240 edges
+  Mean weight:  0.055556
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'export_50' has been calculated and added to:
+  - Frame 'networks_single':     3240 obs, 8 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 3,240 obs)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      export_51
+  Obs:       3240
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 3240 edges
+  Mean weight:  0.055556
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'export_51' has been calculated and added to:
+  - Frame 'networks_single':     3240 obs, 9 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 3,240 obs)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      export_52
+  Obs:       3240
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 3240 edges
+  Mean weight:  0.055556
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'export_52' has been calculated and added to:
+  - Frame 'networks_single':     3240 obs, 10 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 3,240 obs)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      export_53
+  Obs:       3240
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 3240 edges
+  Mean weight:  0.055556
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'export_53' has been calculated and added to:
+  - Frame 'networks_single':     3240 obs, 11 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 3,240 obs)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      export_54
+  Obs:       3240
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 3240 edges
+  Mean weight:  0.055556
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'export_54' has been calculated and added to:
+  - Frame 'networks_single':     3240 obs, 12 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 3,240 obs)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      export_56
+  Obs:       3240
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 3240 edges
+  Mean weight:  0.055556
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'export_56' has been calculated and added to:
+  - Frame 'networks_single':     3240 obs, 13 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 3,240 obs)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      export_57
+  Obs:       3240
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 3240 edges
+  Mean weight:  0.055556
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'export_57' has been calculated and added to:
+  - Frame 'networks_single':     3240 obs, 14 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 3,240 obs)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      export_58
+  Obs:       3240
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 3240 edges
+  Mean weight:  0.055556
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'export_58' has been calculated and added to:
+  - Frame 'networks_single':     3240 obs, 15 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 3,240 obs)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      export_59
+  Obs:       3240
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 3240 edges
+  Mean weight:  0.055556
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'export_59' has been calculated and added to:
+  - Frame 'networks_single':     3240 obs, 16 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 3,240 obs)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      export_60
+  Obs:       3240
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 3240 edges
+  Mean weight:  0.055556
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'export_60' has been calculated and added to:
+  - Frame 'networks_single':     3240 obs, 17 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 3,240 obs)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      export_61
+  Obs:       3240
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 3240 edges
+  Mean weight:  0.055556
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'export_61' has been calculated and added to:
+  - Frame 'networks_single':     3240 obs, 18 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 3,240 obs)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      export_62
+  Obs:       3240
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 3240 edges
+  Mean weight:  0.055556
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'export_62' has been calculated and added to:
+  - Frame 'networks_single':     3240 obs, 19 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 3,240 obs)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      export_63
+  Obs:       3240
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 3240 edges
+  Mean weight:  0.055556
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'export_63' has been calculated and added to:
+  - Frame 'networks_single':     3240 obs, 20 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 3,240 obs)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      export_64
+  Obs:       3240
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 3240 edges
+  Mean weight:  0.055556
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'export_64' has been calculated and added to:
+  - Frame 'networks_single':     3240 obs, 21 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 3,240 obs)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      export_65
+  Obs:       3240
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 3240 edges
+  Mean weight:  0.055556
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'export_65' has been calculated and added to:
+  - Frame 'networks_single':     3240 obs, 22 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. 
+. foreach a in prod fin elec {
+  2.     import delimited using "../4_inputs/networks/attr_`a'.csv", clear varnames(1) asdouble stringcols(2 3)
+  3.     confirm numeric variable source_value target_value
+  4.     foreach c in source_value target_value {
+  5.         local t : type `c'
+  6.         if "`t'" == "float" {
+  7.             display as error "../4_inputs/networks/attr_`a'.csv: `c' read as float"
+  8.             exit 7
+  9.         }
+ 10.     }
+ 11.     assert inrange(year, 2015, 2025)
+ 12.     assert source != target & !missing(source_value, target_value)
+ 13.     assert source_value > 0 & target_value > 0
+ 14.     gen byte inR = strpos(" `R' ", " " + source + " ") > 0 & strpos(" `R' ", " " + target + " ") > 0
+ 15.     assert inR
+ 16.     bysort year: egen long nRR = total(inR)
+ 17.     assert nRR == `nE'
+ 18.     quietly tabulate year
+ 19.     assert r(r) == 11
+ 20.     drop inR nRR
+ 21.     network_calc, type(attribute) subnet(single) name(attr_`a')
+ 22. }
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 3,366 obs)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    single
+  Direction: outflow
+  Name:      attr_prod
+  Obs:       3366
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 3366 edges
+  Mean weight:  0.000000
+
+Managing network frames...
+  Adding to frame: networks_single
+  Note: the networks in networks_single do not cover the same edges
+    matched:            3060
+    only in frame:       180
+    only in new:         306
+  A network weighs zero on the edges it does not reach.
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'attr_prod' has been calculated and added to:
+  - Frame 'networks_single':     3546 obs, 23 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 3,366 obs)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    single
+  Direction: outflow
+  Name:      attr_fin
+  Obs:       3366
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 3366 edges
+  Mean weight:  0.000000
+
+Managing network frames...
+  Adding to frame: networks_single
+  Note: the networks in networks_single do not cover the same edges
+    matched:            3366
+    only in frame:       180
+    only in new:           0
+  A network weighs zero on the edges it does not reach.
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'attr_fin' has been calculated and added to:
+  - Frame 'networks_single':     3546 obs, 24 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 3,366 obs)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating attribute network
+------------------------------------------------------------------------------
+  Type:      attribute
+  Subnet:    single
+  Direction: outflow
+  Name:      attr_elec
+  Obs:       3366
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 3366 edges
+  Mean weight:  0.000000
+
+Managing network frames...
+  Adding to frame: networks_single
+  Note: the networks in networks_single do not cover the same edges
+    matched:            3366
+    only in frame:       180
+    only in new:           0
+  A network weighs zero on the edges it does not reach.
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'attr_elec' has been calculated and added to:
+  - Frame 'networks_single':     3546 obs, 25 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. 
+. frame change networks_single
+
+. 
+. * 1a. row sums: export weights sum to one at the source, REST included; a
+. *     source whose world exports in a sector are zero weighs zero
+. foreach k of local HS {
+  2.     bysort year source: egen double rs = total(export_`k')
+  3.     assert abs(rs - 1) < 1e-10 | rs == 0 if year >= 2016 & source != "REST"
+  4.     drop rs
+  5. }
+
+. 
+. * 1b. direct formula: the weights against the recorded world totals
+. frame create chk
+
+. frame chk {
+.     import delimited using "../4_inputs/check_weights.csv", clear varnames(1) asdouble stringcols(2 3 4)
+(encoding automatically selected: ISO-8859-1)
+(5 vars, 55,080 obs)
+.     reshape wide export_direct, i(year source target) j(hs) string
+(j = 41 42 43 50 51 52 53 54 56 57 58 59 60 61 62 63 64 65)
+
+Data                               Long   ->   Wide
+-----------------------------------------------------------------------------
+Number of observations           55,080   ->   3,060       
+Number of variables                   5   ->   21          
+j variable (18 values)               hs   ->   (dropped)
+xij variables:
+                          export_direct   ->   export_direct41 export_direct42 ... export_direct65
+-----------------------------------------------------------------------------
+.     gen edge_id = source + "_" + target
+.     keep year edge_id export_direct*
+. }
+
+. frlink m:1 year edge_id, frame(chk)
+  (486 observations in frame networks_single unmatched)
+
+. frget export_direct*, from(chk)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+  (18 variables copied from linked frame)
+
+. foreach k of local HS {
+  2.     gen double d1 = abs(export_`k' - export_direct`k') if !missing(export_direct`k')
+  3.     quietly count if !missing(d1)
+  4.     assert r(N) == `nE' * 10
+  5.     assert d1 < 1e-10 if !missing(d1)
+  6.     drop d1
+  7. }
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+(486 missing values generated)
+
+. drop chk export_direct*
+
+. frame drop chk
+
+. display "construction matches the direct formula"
+construction matches the direct formula
+
+. 
+. * 1c. keep the R mesh; the attribute inputs bring 2015 rows on which the trade
+. *     columns were filled with zero by the join: set them to missing
+. gen byte inR = strpos(" `R' ", " " + source + " ") > 0 & strpos(" `R' ", " " + target + " ") > 0
+
+. keep if inR
+(180 observations deleted)
+
+. drop inR
+
+. foreach v of varlist export_* {
+  2.     quietly replace `v' = . if year == 2015
+  3. }
+
+. egen long cid = group(edge_id)
+
+. bysort year: gen long n_edges = _N
+
+. assert n_edges == `nE'
+
+. drop n_edges
+
+. xtset cid year
+
+Panel variable: cid (strongly balanced)
+ Time variable: year, 2015 to 2025
+         Delta: 1 unit
+
+. assert r(balanced) == "strongly balanced"
+
+. 
+. *----------------------------------------------------------------------------
+. * 2. Unit roots in levels, once per variable
+. *----------------------------------------------------------------------------
+. * Every variable is tested on its levels 2016-2025: the first test observation
+. * is 2017 with its lag in 2016. A corridor whose series does not move over
+. * 2017-2025 or over 2016-2024 has no statistic and is left out; the corridors
+. * left out are posted: constant over 2016-2025, and constant in one window only.
+. local A ""
+
+. tempname ur
+
+. postfile `ur' str24 variable double(p_fisher_pp n_panels n_constant n_one_window) using "results/unit_roots.dta", replace
+(file results/unit_roots.dta not found)
+
+. foreach v of varlist export_* attr_* {
+  2.     local half ""
+  3.     if substr("`v'", 1, 5) == "attr_" local half "& source < target"
+  4.     tempvar sdv sdy sdl
+  5.     quietly bysort cid: egen double `sdv' = sd(cond(year >= 2016, `v', .))
+  6.     quietly bysort cid: egen double `sdy' = sd(cond(year >= 2017, `v', .))
+  7.     quietly bysort cid: egen double `sdl' = sd(cond(inrange(year, 2016, 2024), `v', .))
+  8.     sort cid year
+  9.     local ok "`sdy' > 0 & `sdl' > 0"
+ 10.     quietly count if year == 2016 & `ok' `half'
+ 11.     local npan = r(N)
+ 12.     quietly count if year == 2016 & `sdv' == 0 `half'
+ 13.     local ncon = r(N)
+ 14.     quietly count if year == 2016 & `sdv' > 0 & !(`ok') `half'
+ 15.     local none = r(N)
+ 16.     quietly xtunitroot fisher `v' if year >= 2017 & `ok' `half', pperron lags(1)
+ 17.     local p = r(p_P)
+ 18.     if missing(`p') {
+ 19.         display as error "`v': the unit-root test returned no p value"
+ 20.         exit 459
+ 21.     }
+ 22.     assert r(df_P) == 2 * `npan'
+ 23.     post `ur' ("`v'") (`p') (`npan') (`ncon') (`none')
+ 24.     drop `sdv' `sdy' `sdl'
+ 25.     display "`v': p = " %6.4f `p' " on `npan' corridors; left out: `ncon' constant, `none' constant in one window"
+ 26.     if substr("`v'", 1, 5) == "attr_" {
+ 27.         local a = substr("`v'", 6, .)
+ 28.         if `p' >= `alpha' {
+ 29.             gen double use_`a' = D.`v'
+ 30.             display "   attr_`a' enters as its yearly change"
+ 31.             * the yearly change is tested with the same test on 2016-2025 (the
+.             * change in 2016 reads the recorded 2015 level)
+.             quietly xtunitroot fisher use_`a' if year >= 2017 & source < target, pperron lags(1)
+ 32.             local pd = r(p_P)
+ 33.             if missing(`pd') {
+ 34.                 display as error "D.`v': the unit-root test returned no p value"
+ 35.                 exit 459
+ 36.             }
+ 37.             assert r(df_P) == 2 * `npan'
+ 38.             post `ur' ("D.`v'") (`pd') (`npan') (0) (0)
+ 39.             display "   D.`v': p = " %9.3e `pd'
+ 40.         }
+ 41.         else {
+ 42.             gen double use_`a' = `v'
+ 43.             display "   attr_`a' enters in levels"
+ 44.         }
+ 45.         local A "`A' use_`a'"
+ 46.     }
+ 47. }
+export_41: p = 0.0000 on 284 corridors; left out: 17 constant, 5 constant in one window
+export_42: p = 0.0000 on 306 corridors; left out: 0 constant, 0 constant in one window
+export_43: p = 0.0000 on 280 corridors; left out: 20 constant, 6 constant in one window
+export_50: p = 0.0000 on 238 corridors; left out: 59 constant, 9 constant in one window
+export_51: p = 0.0000 on 286 corridors; left out: 19 constant, 1 constant in one window
+export_52: p = 0.0000 on 304 corridors; left out: 2 constant, 0 constant in one window
+export_53: p = 0.0000 on 300 corridors; left out: 6 constant, 0 constant in one window
+export_54: p = 0.0000 on 304 corridors; left out: 1 constant, 1 constant in one window
+export_56: p = 0.0000 on 305 corridors; left out: 1 constant, 0 constant in one window
+export_57: p = 0.0000 on 301 corridors; left out: 5 constant, 0 constant in one window
+export_58: p = 0.0000 on 306 corridors; left out: 0 constant, 0 constant in one window
+export_59: p = 0.0000 on 306 corridors; left out: 0 constant, 0 constant in one window
+export_60: p = 0.0000 on 302 corridors; left out: 3 constant, 1 constant in one window
+export_61: p = 0.0000 on 306 corridors; left out: 0 constant, 0 constant in one window
+export_62: p = 0.0000 on 306 corridors; left out: 0 constant, 0 constant in one window
+export_63: p = 0.0000 on 306 corridors; left out: 0 constant, 0 constant in one window
+export_64: p = 0.0000 on 306 corridors; left out: 0 constant, 0 constant in one window
+export_65: p = 0.0000 on 306 corridors; left out: 0 constant, 0 constant in one window
+attr_prod: p = 0.4896 on 153 corridors; left out: 0 constant, 0 constant in one window
+(306 missing values generated)
+   attr_prod enters as its yearly change
+   D.attr_prod: p =  3.2e-145
+attr_fin: p = 0.0000 on 153 corridors; left out: 0 constant, 0 constant in one window
+   attr_fin enters in levels
+attr_elec: p = 0.0000 on 153 corridors; left out: 0 constant, 0 constant in one window
+   attr_elec enters in levels
+
+. postclose `ur'
+
+. sort cid year
+
+. drop if year == 2015
+(306 observations deleted)
+
+. xtset cid year
+
+Panel variable: cid (strongly balanced)
+ Time variable: year, 2016 to 2025
+         Delta: 1 unit
+
+. assert _N == `nE' * 10
+
+. assert !missing(use_prod, use_fin, use_elec)
+
+. 
+. *----------------------------------------------------------------------------
+. * 3. Models: export_a on export_b and the controls, reghdfe
+. *----------------------------------------------------------------------------
+. tempname res
+
+. postfile `res' str2 y_sector str2 x_sector str7 model ///
+>     double(b_x se_x p_x b_prod se_prod p_prod b_fin se_fin p_fin ///
+>            b_elec se_elec p_elec r2_within N N_clust) ///
+>     using "results/screen_models.dta", replace
+(file results/screen_models.dta not found)
+
+. 
+. local nm = 0
+
+. foreach a of local HS {
+  2.     foreach b of local HS {
+  3.         if "`a'" == "`b'" continue
+  4.         local x "export_`b'"
+  5.         capture quietly reghdfe export_`a' `x' `A', absorb(cid) vce(cluster cid)
+  6.         local rc = _rc
+  7.         if `rc' == 1 exit 1                               // Break
+  8.         foreach t in x prod fin elec {
+  9.             local b_`t' = .
+ 10.             local s_`t' = .
+ 11.             local p_`t' = .
+ 12.         }
+ 13.         local r2   = .
+ 14.         local nobs = .
+ 15.         local ncl  = .
+ 16.         local model "failed"
+ 17.         if `rc' == 0 {
+ 18.             local model "reghdfe"
+ 19.             local df = e(df_r)
+ 20.             foreach v in `x' `A' {
+ 21.                 if "`v'" == "`x'" local t "x"
+ 22.                 else local t = substr("`v'", 5, .)
+ 23.                 capture local bb = _b[`v']
+ 24.                 if _rc local bb = .
+ 25.                 capture local ss = _se[`v']
+ 26.                 if _rc local ss = .
+ 27.                 * an omitted regressor keeps b, se and p missing
+.                 if `ss' < . & `ss' > 0 {
+ 28.                     local b_`t' = `bb'
+ 29.                     local s_`t' = `ss'
+ 30.                     local p_`t' = 2 * ttail(`df', abs(`bb' / `ss'))
+ 31.                 }
+ 32.             }
+ 33.             local r2   = e(r2_within)
+ 34.             local nobs = e(N)
+ 35.             local ncl  = e(N_clust)
+ 36.         }
+ 37.         post `res' ("`a'") ("`b'") ("`model'") ///
+>             (`b_x') (`s_x') (`p_x') (`b_prod') (`s_prod') (`p_prod') ///
+>             (`b_fin') (`s_fin') (`p_fin') (`b_elec') (`s_elec') (`p_elec') ///
+>             (`r2') (`nobs') (`ncl')
+ 38.         local ++nm
+ 39.     }
+ 40.     display "sector `a' done"
+ 41. }
+sector 41 done
+sector 42 done
+sector 43 done
+sector 50 done
+sector 51 done
+sector 52 done
+sector 53 done
+sector 54 done
+sector 56 done
+sector 57 done
+sector 58 done
+sector 59 done
+sector 60 done
+sector 61 done
+sector 62 done
+sector 63 done
+sector 64 done
+sector 65 done
+
+. postclose `res'
+
+. assert `nm' == `nHS' * (`nHS' - 1)
+
+. 
+. *----------------------------------------------------------------------------
+. * 4. Results (5% level, corridor clustering; MRQAP in mrqap.py)
+. *----------------------------------------------------------------------------
+. use "results/unit_roots.dta", clear
+
+. export delimited using "results/unit_roots.csv", replace
+(file results/unit_roots.csv not found)
+file results/unit_roots.csv saved
+
+. list, noobs clean
+
+       variable   p_fishe~p   n_panels   n_cons~t   n_one_~w  
+      export_41   2.50e-120        284         17          5  
+      export_42   3.801e-31        306          0          0  
+      export_43   5.38e-117        280         20          6  
+      export_50   1.35e-163        238         59          9  
+      export_51   1.168e-95        286         19          1  
+      export_52   1.977e-89        304          2          0  
+      export_53   1.31e-117        300          6          0  
+      export_54   1.158e-44        304          1          1  
+      export_56   3.236e-39        305          1          0  
+      export_57   9.639e-71        301          5          0  
+      export_58   6.322e-47        306          0          0  
+      export_59   3.857e-44        306          0          0  
+      export_60   5.071e-61        302          3          1  
+      export_61   1.363e-08        306          0          0  
+      export_62   7.922e-07        306          0          0  
+      export_63   1.973e-38        306          0          0  
+      export_64   8.731e-15        306          0          0  
+      export_65   2.483e-46        306          0          0  
+      attr_prod   .48961463        153          0          0  
+    D.attr_prod   3.23e-145        153          0          0  
+       attr_fin   1.513e-25        153          0          0  
+      attr_elec   9.989e-09        153          0          0  
+
+. use "results/screen_models.dta", clear
+
+. export delimited using "results/screen_models.csv", replace
+(file results/screen_models.csv not found)
+file results/screen_models.csv saved
+
+. tabulate model
+
+      model |      Freq.     Percent        Cum.
+------------+-----------------------------------
+    reghdfe |        306      100.00      100.00
+------------+-----------------------------------
+      Total |        306      100.00
+
+. gen byte sig = p_x < 0.05 if !missing(p_x)
+
+. gen byte sign = cond(b_x > 0, 1, -1) if sig == 1
+(240 missing values generated)
+
+. label define sign -1 "negative" 1 "positive"
+
+. label values sign sign
+
+. tabulate sig, missing
+
+        sig |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |        240       78.43       78.43
+          1 |         66       21.57      100.00
+------------+-----------------------------------
+      Total |        306      100.00
+
+. tabulate sign
+
+       sign |      Freq.     Percent        Cum.
+------------+-----------------------------------
+   negative |          1        1.52        1.52
+   positive |         65       98.48      100.00
+------------+-----------------------------------
+      Total |         66      100.00
+
+. * significant models, by dependent sector
+. list y_sector x_sector b_x p_x if sig == 1, noobs sepby(y_sector)
+
+  +----------------------------------------------+
+  | y_sector   x_sector          b_x         p_x |
+  |----------------------------------------------|
+  |       41         52    .07268196   .03959097 |
+  |       41         54    .11476136   .00774525 |
+  |       41         56    .16602225   .04219723 |
+  |----------------------------------------------|
+  |       42         43    .07172895   .02055295 |
+  |       42         61    .27315676   .00071465 |
+  |       42         62    .26774435     .000178 |
+  |       42         63    .27255497   .00113771 |
+  |       42         64    .36763024   .00008317 |
+  |       42         65    .14245904   .01819085 |
+  |----------------------------------------------|
+  |       43         52    .21230337   .04091063 |
+  |----------------------------------------------|
+  |       50         54    .55429543   .00012732 |
+  |       50         58    .68848298   .01877187 |
+  |----------------------------------------------|
+  |       51         64    .17519719   .02288673 |
+  |----------------------------------------------|
+  |       52         41    .09438279   .03187582 |
+  |       52         43    .07540234   .00852274 |
+  |       52         58    .13104081   .02627012 |
+  |----------------------------------------------|
+  |       53         64    .33025126   .01754022 |
+  |       53         65    .17015001    .0437232 |
+  |----------------------------------------------|
+  |       54         56     1.129235    .0157744 |
+  |       54         60    .11019194   .02408133 |
+  |----------------------------------------------|
+  |       56         54    .28709223   1.548e-06 |
+  |       56         60    .12451698   .00994805 |
+  |----------------------------------------------|
+  |       57         61     .3405275    .0042366 |
+  |       57         63    .42695007   .00317359 |
+  |       57         64    .06919217   .04156598 |
+  |       57         65    .12579804   .02005694 |
+  |----------------------------------------------|
+  |       58         50    .05425285    .0041278 |
+  |       58         52    .05652247   .02061354 |
+  |       58         54     .0779909   .00068372 |
+  |       58         56    .12880422   .00084452 |
+  |----------------------------------------------|
+  |       60         56    .16410798     .008324 |
+  |       60         65    .07152698   .04137228 |
+  |----------------------------------------------|
+  |       61         42    .21802999   .01190491 |
+  |       61         57     .3308864   .04864172 |
+  |       61         62    .80047135   1.049e-08 |
+  |       61         63    .51424805   .00589422 |
+  |       61         64    .32250272   .00002277 |
+  |       61         65    .36170198   4.462e-07 |
+  |----------------------------------------------|
+  |       62         42    .16621647   .01545361 |
+  |       62         59   -.11246704   .01526846 |
+  |       62         61    .62258011   3.667e-26 |
+  |       62         63    .45042312    .0001262 |
+  |       62         64    .34048199   1.230e-08 |
+  |       62         65    .26744025   9.541e-07 |
+  |----------------------------------------------|
+  |       63         42    .13095686   .01684678 |
+  |       63         57     .2497317   .00033797 |
+  |       63         61    .30955834   2.572e-08 |
+  |       63         62      .348611   3.453e-06 |
+  |       63         64    .14907421   .00289542 |
+  |       63         65    .18089905   .00009017 |
+  |----------------------------------------------|
+  |       64         42    .25127259   .00592899 |
+  |       64         51    .08453889   .01695931 |
+  |       64         53    .07595613    .0089339 |
+  |       64         57    .05757226   .04900196 |
+  |       64         58    .11681036   .04755306 |
+  |       64         61     .2761614   .00661942 |
+  |       64         62    .37486449    .0001179 |
+  |       64         63    .21206171   .00197164 |
+  |       64         65     .2158021   .00005078 |
+  |----------------------------------------------|
+  |       65         53    .06894971   .04601129 |
+  |       65         57    .18442184   .00473229 |
+  |       65         60    .10066348    .0392305 |
+  |       65         61    .54571091   9.804e-08 |
+  |       65         62    .51878697   6.508e-09 |
+  |       65         63    .45339652   .00002358 |
+  |       65         64     .3802225   .00003651 |
+  +----------------------------------------------+
+
+. * pairs significant in both directions
+. preserve
+
+. keep if sig == 1
+(240 observations deleted)
+
+. keep y_sector x_sector b_x
+
+. tempfile s
+
+. save `s'
+file ST_4850_000002.tmp saved as .dta format
+
+. rename (y_sector x_sector b_x) (x_sector y_sector b_rev)
+
+. merge 1:1 y_sector x_sector using `s', keep(match) nogenerate
+
+    Result                      Number of obs
+    -----------------------------------------
+    Not matched                             0
+    Matched                                56  
+    -----------------------------------------
+
+. keep if y_sector < x_sector
+(28 observations deleted)
+
+. list y_sector x_sector b_x b_rev, noobs clean
+
+    y_sector   x_sector         b_x       b_rev  
+          41         52   .07268196   .09438279  
+          42         61   .27315676   .21802999  
+          42         62   .26774435   .16621647  
+          42         63   .27255497   .13095686  
+          42         64   .36763024   .25127259  
+          43         52   .21230337   .07540234  
+          50         58   .68848298   .05425285  
+          51         64   .17519719   .08453889  
+          52         58   .13104081   .05652247  
+          53         64   .33025126   .07595613  
+          53         65   .17015001   .06894971  
+          54         56    1.129235   .28709223  
+          56         60   .12451698   .16410798  
+          57         61    .3405275    .3308864  
+          57         63   .42695007    .2497317  
+          57         64   .06919217   .05757226  
+          57         65   .12579804   .18442184  
+          60         65   .07152698   .10066348  
+          61         62   .80047135   .62258011  
+          61         63   .51424805   .30955834  
+          61         64   .32250272    .2761614  
+          61         65   .36170198   .54571091  
+          62         63   .45042312     .348611  
+          62         64   .34048199   .37486449  
+          62         65   .26744025   .51878697  
+          63         64   .14907421   .21206171  
+          63         65   .18089905   .45339652  
+          64         65    .2158021    .3802225  
+
+. restore
+
+. foreach v in prod fin elec {
+  2.     count if p_`v' < 0.05 & !missing(p_`v')
+  3. }
+  2
+  16
+  41
+
+. log close
+      name:  <unnamed>
+       log:  estimation.log
+  log type:  text
+ closed on:  27 Sep 2026, 03:36:34
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

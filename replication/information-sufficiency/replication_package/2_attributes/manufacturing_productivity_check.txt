@@ -1,0 +1,20 @@
+BE: missing quarters - | flags ['p'] | growth vs annual accounts: 9 years, max |diff| 0.0000, mean 0.0000
+BG: missing quarters - | flags ['p'] | growth vs annual accounts: 9 years, max |diff| 0.0000, mean 0.0000
+DE: missing quarters - | flags ['p'] | growth vs annual accounts: 9 years, max |diff| 0.0224, mean 0.0051
+DK: missing quarters - | flags - | growth vs annual accounts: 10 years, max |diff| 0.0000, mean 0.0000
+EE: missing quarters - | flags - | growth vs annual accounts: 10 years, max |diff| 0.0467, mean 0.0251
+EL: missing quarters - | flags ['p'] | growth vs annual accounts: 9 years, max |diff| 0.0000, mean 0.0000
+ES: missing quarters - | flags ['p'] | growth vs annual accounts: 9 years, max |diff| 0.0103, mean 0.0014
+FR: missing quarters - | flags - | growth vs annual accounts: 10 years, max |diff| 0.0000, mean 0.0000
+HR: missing quarters - | flags ['p'] | growth vs annual accounts: 9 years, max |diff| 0.0000, mean 0.0000
+HU: missing quarters - | flags ['p'] | growth vs annual accounts: 9 years, max |diff| 0.0000, mean 0.0000
+IE: missing quarters - | flags - | growth vs annual accounts: 9 years, max |diff| 0.0164, mean 0.0050
+IT: missing quarters - | flags - | growth vs annual accounts: 10 years, max |diff| 0.0000, mean 0.0000
+LT: missing quarters - | flags - | growth vs annual accounts: 9 years, max |diff| 0.0000, mean 0.0000
+LU: missing quarters - | flags ['p'] | growth vs annual accounts: 9 years, max |diff| 0.0021, mean 0.0010
+LV: missing quarters - | flags - | growth vs annual accounts: 9 years, max |diff| 0.0000, mean 0.0000
+PL: missing quarters - | flags ['b', 'p'] | growth vs annual accounts: 9 years, max |diff| 0.0027, mean 0.0003
+PT: missing quarters - | flags ['p'] | growth vs annual accounts: 9 years, max |diff| 0.0014, mean 0.0005
+RO: missing quarters - | flags ['p'] | growth vs annual accounts: 9 years, max |diff| 0.0000, mean 0.0000
+SE: missing quarters - | flags - | growth vs annual accounts: 9 years, max |diff| 0.0085, mean 0.0009
+SI: missing quarters - | flags - | growth vs annual accounts: 10 years, max |diff| 0.0000, mean 0.0000

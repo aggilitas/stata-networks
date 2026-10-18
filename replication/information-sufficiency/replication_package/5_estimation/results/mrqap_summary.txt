@@ -1,0 +1,30 @@
+MRQAP, double semi-partialling, 10000 node permutations (seed 20260927), the same in every year;
+specification from results/unit_roots.csv: prod yearly change, fin levels, elec levels
+coefficients, clustered standard errors and p values equal those of results/screen_models.csv (largest differences 2.0e-15 absolute, 3.4e-15 relative; p 3.4e-15 absolute)
+
+MRQAP: 70 of 306 significant at 5 per cent (69 positive, 1 negative); 30 pairs significant in both directions
+  finished goods, within: 42 ordered pairs, 38 positive, 0 negative, density 0.90
+  other group, within: 110 ordered pairs, 20 positive, 0 negative, density 0.18
+  finished goods on the other group: 77 ordered pairs, 6 positive, 1 negative, density 0.09
+  other group on finished goods: 77 ordered pairs, 5 positive, 0 negative, density 0.06
+  reciprocal pairs: 41-52 42-43 42-61 42-62 42-63 42-64 42-65 43-52 50-58 51-64 52-58 53-64 53-65 54-56 56-60 57-61 57-63 57-64 57-65 60-65 61-62 61-63 61-64 61-65 62-63 62-64 62-65 63-64 63-65 64-65
+  unordered pairs significant in at least one direction 40, in one only 10
+
+p values from corridor-clustered standard errors, G-1 df: 66 of 306 significant at 5 per cent (65 positive, 1 negative); 28 pairs significant in both directions
+  finished goods, within: 42 ordered pairs, 37 positive, 0 negative, density 0.88
+  other group, within: 110 ordered pairs, 18 positive, 0 negative, density 0.16
+  finished goods on the other group: 77 ordered pairs, 6 positive, 1 negative, density 0.09
+  other group on finished goods: 77 ordered pairs, 4 positive, 0 negative, density 0.05
+  reciprocal pairs: 41-52 42-61 42-62 42-63 42-64 43-52 50-58 51-64 52-58 53-64 53-65 54-56 56-60 57-61 57-63 57-64 57-65 60-65 61-62 61-63 61-64 61-65 62-63 62-64 62-65 63-64 63-65 64-65
+  unordered pairs significant in at least one direction 38, in one only 10
+
+significant with corridor-clustered standard errors but not under MRQAP: none
+significant under MRQAP but not with corridor-clustered standard errors: 43<-42 50<-56 59<-60 65<-42
+Spearman correlation of the two p values over the 306 models: 0.999
+correlation of the t statistics of the two directions over 153 unordered pairs: 0.90
+
+attribute edges significant at 5 per cent, by dependent chapter (of its 17 models): MRQAP | corridor-clustered standard errors
+  57: prod 0 | 2+
+  61: elec 12+ | 13+
+  62: fin 0 | 1+; elec 9+ | 15+
+  64: fin 0 | 15+; elec 0 | 13+

@@ -1,0 +1,32 @@
+Specification sensitivity of the 306 flow-weight tests (MRQAP, 10,000 node permutations, seed 20260927)
+
+base (as published): attributes prod change, fin levels, elec levels; year effects no
+  70 of 306 significant under MRQAP (66 with corridor-clustered standard errors); lost against the published specification: none; gained: none
+  sign changes among the 70 published ties: 0; correlation of the 306 coefficients with the published ones 1.000
+  ties among the finished goods 38, among the other chapters 20, between the groups 12; structurally equivalent pairs 61-63; distance 61-63 0
+  two positions equal to finished goods / other chapters under average and complete linkage: yes
+
+year effects added: attributes prod change, fin levels, elec levels; year effects yes
+  68 of 306 significant under MRQAP (65 with corridor-clustered standard errors); lost against the published specification: 57<-64 64<-57; gained: none
+  sign changes among the 70 published ties: 0; correlation of the 306 coefficients with the published ones 1.000
+  ties among the finished goods 36, among the other chapters 20, between the groups 12; structurally equivalent pairs 61-63; distance 61-63 0
+  two positions equal to finished goods / other chapters under average and complete linkage: yes
+
+all attributes in levels: attributes prod levels, fin levels, elec levels; year effects no
+  70 of 306 significant under MRQAP (66 with corridor-clustered standard errors); lost against the published specification: none; gained: none
+  sign changes among the 70 published ties: 0; correlation of the 306 coefficients with the published ones 1.000
+  ties among the finished goods 38, among the other chapters 20, between the groups 12; structurally equivalent pairs 61-63; distance 61-63 0
+  two positions equal to finished goods / other chapters under average and complete linkage: yes
+
+all attributes as yearly changes: attributes prod change, fin change, elec change; year effects no
+  69 of 306 significant under MRQAP (65 with corridor-clustered standard errors); lost against the published specification: 64<-58; gained: none
+  sign changes among the 70 published ties: 0; correlation of the 306 coefficients with the published ones 1.000
+  ties among the finished goods 38, among the other chapters 20, between the groups 11; structurally equivalent pairs 61-63; distance 61-63 0
+  two positions equal to finished goods / other chapters under average and complete linkage: yes
+
+level/change choice reversed: attributes prod levels, fin change, elec change; year effects no
+  68 of 306 significant under MRQAP (65 with corridor-clustered standard errors); lost against the published specification: 64<-58 65<-42; gained: none
+  sign changes among the 70 published ties: 0; correlation of the 306 coefficients with the published ones 1.000
+  ties among the finished goods 37, among the other chapters 20, between the groups 11; structurally equivalent pairs 61-63; distance 61-63 0
+  two positions equal to finished goods / other chapters under average and complete linkage: yes
+

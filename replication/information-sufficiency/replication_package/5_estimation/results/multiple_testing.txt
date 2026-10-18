@@ -1,0 +1,26 @@
+Second network under corrections for multiple testing: the 306 flow-weight tests as one family, level 5 per cent;
+p values as reported (100,000 permutations where computed, otherwise 10,000).
+
+no correction: 70 ties, 38 among the finished goods, 20 among the other chapters, 12 between the two groups
+  structurally equivalent pairs (chapters with ties): 61-63; distance 61-63 0; ties between 61 and 63: 61->63, 63->61
+  chapters without ties: none
+  two positions, average linkage: {41, 43, 50, 51, 52, 53, 54, 56, 58, 59, 60}; {42, 57, 61, 62, 63, 64, 65} (equal to finished goods / other chapters: yes)
+  two positions, complete linkage: {41, 43, 50, 51, 52, 53, 54, 56, 58, 59, 60}; {42, 57, 61, 62, 63, 64, 65} (equal to finished goods / other chapters: yes)
+
+Benjamini-Hochberg: 35 ties, 28 among the finished goods, 6 among the other chapters, 1 between the two groups
+  structurally equivalent pairs (chapters with ties): 43-52, 50-56; distance 61-63 2; ties between 61 and 63: 61->63, 63->61
+  chapters without ties: 41 51 59 60
+  two positions, average linkage: {41, 42, 43, 50, 51, 52, 53, 54, 56, 57, 58, 59, 60}; {61, 62, 63, 64, 65} (equal to finished goods / other chapters: no)
+  two positions, complete linkage: {41, 42, 43, 50, 51, 52, 53, 54, 56, 57, 58, 59, 60}; {61, 62, 63, 64, 65} (equal to finished goods / other chapters: no)
+
+Benjamini-Yekutieli: 24 ties, 23 among the finished goods, 1 among the other chapters, 0 between the two groups
+  structurally equivalent pairs (chapters with ties): 56-58; distance 61-63 4; ties between 61 and 63: 61->63
+  chapters without ties: 41 43 50 51 52 53 54 59 60
+  two positions, average linkage: {41, 42, 43, 50, 51, 52, 53, 54, 56, 57, 58, 59, 60}; {61, 62, 63, 64, 65} (equal to finished goods / other chapters: no)
+  two positions, complete linkage: {41, 42, 43, 50, 51, 52, 53, 54, 56, 57, 58, 59, 60}; {61, 62, 63, 64, 65} (equal to finished goods / other chapters: no)
+
+Holm: 16 ties, 16 among the finished goods, 0 among the other chapters, 0 between the two groups
+  structurally equivalent pairs (chapters with ties): none; distance 61-63 3; ties between 61 and 63: 61->63
+  chapters without ties: 41 43 50 51 52 53 54 56 58 59 60
+  two positions, average linkage: {41, 42, 43, 50, 51, 52, 53, 54, 56, 57, 58, 59, 60}; {61, 62, 63, 64, 65} (equal to finished goods / other chapters: no)
+  two positions, complete linkage: {41, 42, 43, 50, 51, 52, 53, 54, 56, 57, 58, 59, 60, 61, 64}; {62, 63, 65} (equal to finished goods / other chapters: no)

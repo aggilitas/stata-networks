@@ -1,0 +1,156 @@
+PART 1. Design of the two numeric checks
+S11 Table A, design: ambient nodes = 9
+S11 Table A, design: layers = 3
+S11 Table A, design: nodes of the regression subnet R = 4
+S11 Table A, design: nodes of the static construction set S_a = 6
+S11 Table A, design, first check: subgroups = 3
+S11 Table A, design, first check: periods = 2
+S11 Table A, design, first check: periods in which S_b changes membership (periods numbered from 1) = [2]
+S11 Table A, design, first check: shock of the second period lambda_t = 3
+S11 Table A, design, second check: periods = 4
+S11 Table A, design, second check: shocks by period = 1, 3, 0.5, 2
+S11 Table A, design, second check: periods in which S_b changes membership (periods numbered from 1) = [2, 3, 4]
+
+PART 2. Numbers quoted in the explanations of S11 Table A
+S11 Table A row 15, C1 and C2 (second check): layers kept by the share filter under S_a (layers numbered from 1) = [2]
+S11 Table A row 15, C1 and C2 (second check): layers kept by the share filter under S_b (layers numbered from 1) = [3]
+S11 Table A row 15, C1 and C2 (second check): layers kept by the share filter under full observation (layers numbered from 1) = [2, 3]
+S11 Table A row 20, C1 and C2 (first check, no ridge term): partial correlation of pair 0-1 under S_a = -0.555 (unrounded -0.555264)
+S11 Table A row 20, C1 and C2 (first check, no ridge term): partial correlation of pair 0-1 under the second-period set of S_b [0, 1, 2, 3, 6, 7] = -0.372 (unrounded -0.372011)
+S11 Table A row 20, C1 and C2 (first check, no ridge term): partial correlation of pair 0-1 under full observation = -0.148 (unrounded -0.147953)
+S11 Table A row 9, C3 (first check): retained cells that are nan or infinite after logarithm, then centring per period = 72 of 72
+S11 Table A row 11, C3 (first check): retained cells that are nan or infinite after closure and log-ratio, offset 0 = 27 of 72
+S11 Table A row 20, C3 (second check, rho = 0.1, lambda = 3): regularised partial correlation of pair 0-1 before the shock = -0.151 (unrounded -0.150839)
+S11 Table A row 20, C3 (second check, rho = 0.1, lambda = 3): regularised partial correlation of pair 0-1 after the shock = -0.087 (unrounded -0.087115)
+S11 Table A row 4, Fs (first check, symmetric distances): largest |g_ij - g_ji| after the z-score = 0
+S11 Table A row 8, Fs (first check, symmetric distances): largest |g_ij - g_ji| after log10 = 0
+S11 Table A row 5, Fs (first check, symmetric distances): largest |g_ij - g_ji| after Frobenius scaling = 0
+S11 Table A row A, Fs (first check, symmetric distances): largest |w_ij - w_ji| of the flow weights of the same edges = 0.0847 (unrounded 0.084670)
+S11 Table A rows 1 to 24 and row A, Fa: source totals of nodes 0 and 2 = 10 and 50, with x_01 = x_21 = 5
+S11 Table A row A, Fa: flow template weight w_01 = 0.5
+S11 Table A row A, Fa: flow template weight w_21 = 0.1
+S11 Table A row 20, Fs and Fa (first check): undirected values kept per node pair = 36
+S11 Table A row 20, Fs and Fa (first check): directed flow weights = 72
+S11 Table A rows 1 to 26, I (first check): shape of the outputs of centring, z-score, log(1 + x), Frobenius scaling and closure with log-ratio, offset 1, on node-by-subgroup counts = 9 by 3
+S11 Table A rows 1 to 26, I (first check): shape of the interaction template weights = 9 by 9
+S11 Table A rows 1 to 26, J (first check): edge-view cases per period N(N-1) = 72
+S11 Table A rows 1 to 26, J (first check): node-view cases N = 9
+
+PART 3. Capability checks behind the rows of S11 Table A
+S11 Table A row 1, C1 (first check, flows with realised zeros): largest change of a retained value between S_a and S_b = 0.289279 -> no
+S11 Table A row 1, C2 (first check, flows with realised zeros): largest difference of a retained value between S_a and full observation = 0.381649 -> no
+S11 Table A row 1, C3 (first check, flows with realised zeros): largest change of a retained value under the shock = 43.7558 -> no
+S11 Table A row 2, C1 (second check, periods as cases): largest change of a retained value between S_a and S_b = 0 -> yes
+S11 Table A row 2, C2 (second check, periods as cases): largest difference of a retained value between S_a and full observation = 0 -> yes
+S11 Table A row 2, C3 (second check, periods as cases): largest change of a retained value under the shock = 17.7717 -> no
+S11 Table A row 3, C1 (second check, periods as cases, strictly positive copy): largest change of a retained value between S_a and S_b = 0 -> yes
+S11 Table A row 3, C2 (second check, periods as cases, strictly positive copy): largest difference of a retained value between S_a and full observation = 0 -> yes
+S11 Table A row 3, C3 (second check, periods as cases, strictly positive copy): largest change of a retained value under the shock = 0.42031 -> no
+S11 Table A row 3, C1 to C3 (second check, periods as cases, realised zeros): undefined, 84 of 144 retained cells are nan or infinite
+S11 Table A row 4, C1 (first check, flows with realised zeros): largest change of a retained value between S_a and S_b = 1.82078 -> no
+S11 Table A row 4, C2 (first check, flows with realised zeros): largest difference of a retained value between S_a and full observation = 2.1877 -> no
+S11 Table A row 4, C3 (first check, flows with realised zeros): largest change of a retained value under the shock = 2.73359 -> no
+S11 Table A row 5, C1 (first check, flows with realised zeros, divisor Frobenius norm): largest change of a retained value between S_a and S_b = 0.083216 -> no
+S11 Table A row 5, C2 (first check, flows with realised zeros, divisor Frobenius norm): largest difference of a retained value between S_a and full observation = 0.108138 -> no
+S11 Table A row 5, C3 (first check, flows with realised zeros, divisor Frobenius norm): largest change of a retained value under the shock = 0.168077 -> no
+S11 Table A row 5, C1 (first check, flows with realised zeros, divisor square root of the block inertia): largest change of a retained value between S_a and S_b = 1.05123 -> no
+S11 Table A row 5, C2 (first check, flows with realised zeros, divisor square root of the block inertia): largest difference of a retained value between S_a and full observation = 1.26307 -> no
+S11 Table A row 5, C3 (first check, flows with realised zeros, divisor square root of the block inertia): largest change of a retained value under the shock = 1.57824 -> no
+S11 Table A row 5, C1 (first check, flows with realised zeros, divisor square root of the largest covariance eigenvalue): largest change of a retained value between S_a and S_b = 0.253872 -> no
+S11 Table A row 5, C2 (first check, flows with realised zeros, divisor square root of the largest covariance eigenvalue): largest difference of a retained value between S_a and full observation = 2.18823 -> no
+S11 Table A row 5, C3 (first check, flows with realised zeros, divisor square root of the largest covariance eigenvalue): largest change of a retained value under the shock = 2.73053 -> no
+S11 Table A row 5, C1 (first check, flows with realised zeros, divisor one standard deviation of the whole view): largest change of a retained value between S_a and S_b = 1.11646 -> no
+S11 Table A row 5, C2 (first check, flows with realised zeros, divisor one standard deviation of the whole view): largest difference of a retained value between S_a and full observation = 2.27737 -> no
+S11 Table A row 5, C3 (first check, flows with realised zeros, divisor one standard deviation of the whole view): largest change of a retained value under the shock = 3.49342 -> no
+S11 Table A row 6, C1 (first check, flows with realised zeros): largest change of a retained value between S_a and S_b = 0.578557 -> no
+S11 Table A row 6, C2 (first check, flows with realised zeros): largest difference of a retained value between S_a and full observation = 0.672846 -> no
+S11 Table A row 6, C3 (first check, flows with realised zeros): largest change of a retained value under the shock = 42.0983 -> no
+S11 Table A row 7, C1 (first check, flows with realised zeros, one group per period): largest change of a retained value between S_a and S_b = 1.3711 -> no
+S11 Table A row 7, C2 (first check, flows with realised zeros, one group per period): largest difference of a retained value between S_a and full observation = 2.83599 -> no
+S11 Table A row 7, C3 (first check, flows with realised zeros, one group per period): largest change of a retained value under the shock = 1.77636e-15 -> yes
+S11 Table A row 7, C1 (second check, flows with realised zeros, two groups nested in each period): largest change of a retained value between S_a and S_b = 1.29587 -> no
+S11 Table A row 7, C2 (second check, flows with realised zeros, two groups nested in each period): largest difference of a retained value between S_a and full observation = 1.31807 -> no
+S11 Table A row 7, C3 (second check, flows with realised zeros, two groups nested in each period): largest change of a retained value under the shock = 4.44089e-16 -> yes
+S11 Table A row 8, C1 to C3 (first check, flows with realised zeros, log10): undefined, 10 of 72 retained cells are nan or infinite
+S11 Table A row 8, C1 (first check, strictly positive copy, log10): largest change of a retained value between S_a and S_b = 0 -> yes
+S11 Table A row 8, C2 (first check, strictly positive copy, log10): largest difference of a retained value between S_a and full observation = 0 -> yes
+S11 Table A row 8, C3 (first check, strictly positive copy, log10): largest change of a retained value under the shock = 0.477121 -> no
+S11 Table A row 8, C1 (first check, flows with realised zeros, log(1 + x)): largest change of a retained value between S_a and S_b = 0 -> yes
+S11 Table A row 8, C2 (first check, flows with realised zeros, log(1 + x)): largest difference of a retained value between S_a and full observation = 0 -> yes
+S11 Table A row 8, C3 (first check, flows with realised zeros, log(1 + x)): largest change of a retained value under the shock = 1.07009 -> no
+S11 Table A row 9, C1 to C3 (first check, flows with realised zeros): undefined, 72 of 72 retained cells are nan or infinite
+S11 Table A row 9, C1 (first check, strictly positive copy): largest change of a retained value between S_a and S_b = 0.218249 -> no
+S11 Table A row 9, C2 (first check, strictly positive copy): largest difference of a retained value between S_a and full observation = 0.256424 -> no
+S11 Table A row 9, C3 (first check, strictly positive copy): largest change of a retained value under the shock = 8.88178e-16 -> yes
+S11 Table A row 10, C1 to C3 (first check, flows with realised zeros): undefined, 27 of 72 retained cells are nan or infinite
+S11 Table A row 10, C1 (first check, strictly positive copy): largest change of a retained value between S_a and S_b = 1.01179 -> no
+S11 Table A row 10, C2 (first check, strictly positive copy): largest difference of a retained value between S_a and full observation = 2.02324 -> no
+S11 Table A row 10, C3 (first check, strictly positive copy): largest change of a retained value under the shock = 12.8663 -> no
+S11 Table A row 10, C3 (second check, strictly positive copy): largest |s_e(lambda x) / s_e(x) - lambda_t(e) / G(lambda)| = 4.44089e-16
+S11 Table A row 10, C3 (second check, strictly positive copy): largest |s_e(lambda x) / s_e(x) - 1| = 1.27951
+S11 Table A row 10, C1 (second check, strictly positive copy, exact logarithm and pooled centring after the size factors): largest change of a retained value between S_a and S_b = 0.328191 -> no
+S11 Table A row 10, C2 (second check, strictly positive copy, exact logarithm and pooled centring after the size factors): largest difference of a retained value between S_a and full observation = 0.21933 -> no
+S11 Table A row 10, C3 (second check, strictly positive copy, exact logarithm and pooled centring after the size factors): largest change of a retained value under the shock = 6.66134e-16 -> yes
+S11 Table A row 10, C1 (second check, strictly positive copy, log(1 + x) and pooled centring after the size factors): largest change of a retained value between S_a and S_b = 0.199357 -> no
+S11 Table A row 10, C2 (second check, strictly positive copy, log(1 + x) and pooled centring after the size factors): largest difference of a retained value between S_a and full observation = 0.12312 -> no
+S11 Table A row 10, C3 (second check, strictly positive copy, log(1 + x) and pooled centring after the size factors): largest change of a retained value under the shock = 0.1109 -> no
+S11 Table A row 11, C1 to C3 (first check, flows with realised zeros): undefined, 27 of 72 retained cells are nan or infinite
+S11 Table A row 11, C1 (first check, strictly positive copy): largest change of a retained value between S_a and S_b = 0 -> yes
+S11 Table A row 11, C2 (first check, strictly positive copy): largest difference of a retained value between S_a and full observation = 0 -> yes
+S11 Table A row 11, C3 (first check, strictly positive copy): largest change of a retained value under the shock = 4.44089e-16 -> yes
+S11 Table A row 12, C1 (first check, flows with realised zeros, offset 1): largest change of a retained value between S_a and S_b = 0 -> yes
+S11 Table A row 12, C2 (first check, flows with realised zeros, offset 1): largest difference of a retained value between S_a and full observation = 0 -> yes
+S11 Table A row 12, C3 (first check, flows with realised zeros, offset 1): largest change of a retained value under the shock = 0.611717 -> no
+S11 Table A row 13, C1 (first check, flows with realised zeros, covariate = distance): largest change of a retained value between S_a and S_b = 0.753041 -> no
+S11 Table A row 13, C2 (first check, flows with realised zeros, covariate = distance): largest difference of a retained value between S_a and full observation = 0.746555 -> no
+S11 Table A row 13, C3 (first check, flows with realised zeros, covariate = distance): largest change of a retained value under the shock = 43.754 -> no
+S11 Table A row 15, C1 and C2 (second check, strictly positive copy): layers kept under S_a, S_b and full observation (layers numbered from 1) = [2], [3], [2, 3]
+S11 Table A row 16, C1 (second check, strictly positive copy, keep indicator): largest change of a retained value between S_a and S_b = 0 -> yes
+S11 Table A row 16, C2 (second check, strictly positive copy, keep indicator): largest difference of a retained value between S_a and full observation = 0 -> yes
+S11 Table A row 16, C3 (second check, strictly positive copy, keep indicator): largest change of a retained value under the shock = 1 -> no
+S11 Table A row 17, C1 (second check, flows with realised zeros): largest change of a retained value between S_a and S_b = 0 -> yes
+S11 Table A row 17, C2 (second check, flows with realised zeros): largest difference of a retained value between S_a and full observation = 0 -> yes
+S11 Table A row 17, C3 (second check, flows with realised zeros): largest change of a retained value under the shock = 0.724156 -> no
+S11 Table A row 18, C1 (first check, flows with realised zeros): largest change of a retained value between S_a and S_b = 0.434016 -> no
+S11 Table A row 18, C2 (first check, flows with realised zeros): largest difference of a retained value between S_a and full observation = 0.45406 -> no
+S11 Table A row 18, C3 (first check, flows with realised zeros): largest change of a retained value under the shock = 0.8724 -> no
+S11 Table A row 20, C1 (first check, no ridge term): change of the partial correlation of pair 0-1 between S_a and S_b = 0.183253 -> no
+S11 Table A row 20, C2 (first check, no ridge term): difference of the partial correlation of pair 0-1 between S_a and full observation = 0.407311 -> no
+S11 Table A row 20, C3 (first check, no ridge term): change of the partial correlation of pair 0-1 under a common shock of 3 = 3.12805e-14 -> yes
+S11 Table A row 20, C3 (second check, ridge rho = 0.1 on the raw covariance): change of the partial correlation of pair 0-1 under a common shock of 3 = 0.0637241 -> no
+S11 Table A row 20, C3 (second check, ridge rho = 0.1 after normalising the covariance): change under a common shock of 3 = 3.05311e-16 -> yes
+S11 Table A row 21, C1 (second check, flows with realised zeros, corridors as subjects): largest change of a retained value between S_a and S_b = 0 -> yes
+S11 Table A row 21, C2 (second check, flows with realised zeros, corridors as subjects): largest difference of a retained value between S_a and full observation = 0 -> yes
+S11 Table A row 21, C3 (second check, flows with realised zeros, corridors as subjects): largest change of a retained value under the shock = 17.7717 -> no
+S11 Table A row 22, C1 (second check, flows with realised zeros, retained cells after mean imputation): largest change of a retained value between S_a and S_b = 0 -> yes
+S11 Table A row 22, C2 (second check, flows with realised zeros, retained cells after mean imputation): largest difference of a retained value between S_a and full observation = 0 -> yes
+S11 Table A row 22, C3 (second check, flows with realised zeros, retained cells after mean imputation): largest change of a retained value under the shock = 23.6363 -> no
+S11 Table A row 23, C1 (first check, flows with realised zeros): largest change of a retained value between S_a and S_b = 0 -> yes
+S11 Table A row 23, C2 (first check, flows with realised zeros): largest difference of a retained value between S_a and full observation = 0 -> yes
+S11 Table A row 23, C3 (first check, flows with realised zeros): largest change of a retained value under the shock = 45.4133 -> no
+S11 Table A row 24, C1 (second check, flows with realised zeros): largest change of a retained value between S_a and S_b = 0 -> yes
+S11 Table A row 24, C2 (second check, flows with realised zeros): largest difference of a retained value between S_a and full observation = 0 -> yes
+S11 Table A row 24, C3 (second check, flows with realised zeros): largest change of a retained value under the shock = 23.6363 -> no
+S11 Table A row 25, C1 (second check, flows with realised zeros, divisor = published total of the source): largest change of a retained value between S_a and S_b = 1.38778e-17 -> yes
+S11 Table A row 25, C2 (second check, flows with realised zeros, divisor = published total of the source): largest difference of a retained value between S_a and full observation = 1.38778e-17 -> yes
+S11 Table A row 25, C3 (second check, flows with realised zeros, divisor = published total of the source): largest change of a retained value under the shock = 5.55112e-17 -> yes
+S11 Table A row 25, C1 (second check, flows with realised zeros, divisor = sum of the source's records in the graph): largest change of a retained value between S_a and S_b = 0.266741 -> no
+S11 Table A row 25, C2 (second check, flows with realised zeros, divisor = sum of the source's records in the graph): largest difference of a retained value between S_a and full observation = 0.510579 -> no
+S11 Table A row 25, C3 (second check, flows with realised zeros, divisor = sum of the source's records in the graph): largest change of a retained value under the shock = 5.55112e-17 -> yes
+S11 Table A row 26, C1 (second check, strictly positive copy with internal flows, transition distribution): largest change of a retained value between S_a and S_b = 0.167769 -> no
+S11 Table A row 26, C2 (second check, strictly positive copy with internal flows, transition distribution): largest difference of a retained value between S_a and full observation = 0.327997 -> no
+S11 Table A row 26, C3 (second check, strictly positive copy with internal flows, transition distribution): largest change of a retained value under the shock = 5.55112e-17 -> yes
+S11 Table A row 26, C1 (second check, strictly positive copy with internal flows, cosine graph): largest change of a retained value between S_a and S_b = 0.56642 -> no
+S11 Table A row 26, C2 (second check, strictly positive copy with internal flows, cosine graph): largest difference of a retained value between S_a and full observation = 0.324795 -> no
+S11 Table A row 26, C3 (second check, strictly positive copy with internal flows, cosine graph): largest change of a retained value under the shock = 1.11022e-16 -> yes
+S11 Table A row 26 (second check, full observation): largest difference between the transition distribution and the flow weight, internal flows nonzero = 0.0844379
+S11 Table A row 26 (second check, full observation): largest difference between the transition distribution and the flow weight, internal flows zero = 5.55112e-17
+S11 Table A row 26, Fs (second check, symmetric distances): largest |c_ij - c_ji| of the cosine-similarity graph = 0
+S11 Table A row A, C1 (first check, flows with realised zeros, flow template with REST): largest change of a retained value between S_a and S_b = 1.38778e-17 -> yes
+S11 Table A row A, C2 (first check, flows with realised zeros, flow template with REST): largest difference of a retained value between S_a and full observation = 1.38778e-17 -> yes
+S11 Table A row A, C3 (first check, flows with realised zeros, flow template with REST): largest change of a retained value under the shock = 5.55112e-17 -> yes
+S11 Table A rows 1 to 24, Fa: largest difference between the outputs for edges 0->1 and 2->1 after centring, z-score, Frobenius scaling and log(1 + x) = 0
+S11 Table A rows 11 and 12, I (first check): zero node-by-subgroup counts in the first period = 1
+S11 Table A rows 1 to 26, A (first check): attribute template values form a 9 by 9 array, largest |a_ij + a_ji| = 2.22045e-16
+S11 Table A row 11, A (first check, nodes 1 and 4 closed as a two-part composition, an arrangement no source documents): target component of the log-ratio = -0.246772, half of ln(z_j / z_i) = -0.246772
+S11 Table A row 24, J (first check): case names shared by an edge view and a node view = 0, rows of their union = 81

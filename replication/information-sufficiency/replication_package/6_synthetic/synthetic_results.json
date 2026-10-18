@@ -1,0 +1,114 @@
+{
+ "herfindahl_t2_coeff_matches_formula": true,
+ "herfindahl_t2_coeff_example": 2.0,
+ "nonrep_closeness_i": [
+  0.5625,
+  0.5714285714285714
+ ],
+ "nonrep_betweenness_j": [
+  0.41666666666666663,
+  0.5
+ ],
+ "nonrep_pagerank_i": [
+  0.331283442275755,
+  0.3602931288531304
+ ],
+ "nonrep_pagerank_j": [
+  0.3073130489523154,
+  0.23905458076457975
+ ],
+ "prop6_closeness_i": [
+  0.5625,
+  0.5714285714285714
+ ],
+ "prop6_betweenness_j": [
+  0.41666666666666663,
+  0.5
+ ],
+ "prop6_nodes": [
+  5,
+  5
+ ],
+ "error_sample": {
+  "reference_nodes": 20,
+  "positive_flow_reference_edges": 32,
+  "reference_nodes_with_positive_betweenness": 8
+ },
+ "boundary_rows": [
+  {
+   "coverage": 0.16666666666666666,
+   "share_admissible": 0.0,
+   "interaction_admissible": 3.698240804561262e-17,
+   "share_inadmissible": 4.601666906255238,
+   "herfindahl_partial": 0.7764278823427747,
+   "herfindahl_interval_width": 6.433509154552188,
+   "closeness_subgraph": 0.6662258628539663,
+   "betweenness_subgraph": 0.7575266858470584,
+   "pagerank_subgraph": 7.931129826553763
+  },
+  {
+   "coverage": 0.3333333333333333,
+   "share_admissible": 0.0,
+   "interaction_admissible": 1.7650325368445363e-17,
+   "share_inadmissible": 1.3637548252331126,
+   "herfindahl_partial": 0.6037929584472754,
+   "herfindahl_interval_width": 4.0663949201263865,
+   "closeness_subgraph": 0.5296610454283852,
+   "betweenness_subgraph": 2.9017891919103764,
+   "pagerank_subgraph": 2.112800130467216
+  },
+  {
+   "coverage": 0.5,
+   "share_admissible": 0.0,
+   "interaction_admissible": 1.8916010665405817e-17,
+   "share_inadmissible": 0.8714409544463675,
+   "herfindahl_partial": 0.4510548500760244,
+   "herfindahl_interval_width": 2.2552719688202494,
+   "closeness_subgraph": 0.36807794272388394,
+   "betweenness_subgraph": 2.499204294223051,
+   "pagerank_subgraph": 0.950506068048339
+  },
+  {
+   "coverage": 0.6666666666666666,
+   "share_admissible": 0.0,
+   "interaction_admissible": 0.0,
+   "share_inadmissible": 0.49727014041584,
+   "herfindahl_partial": 0.27117018106155044,
+   "herfindahl_interval_width": 0.94092025344012,
+   "closeness_subgraph": 0.17024664202881498,
+   "betweenness_subgraph": 1.9561910910568199,
+   "pagerank_subgraph": 0.4691919008953353
+  },
+  {
+   "coverage": 0.8333333333333334,
+   "share_admissible": 0.0,
+   "interaction_admissible": 0.0,
+   "share_inadmissible": 0.17912324247092268,
+   "herfindahl_partial": 0.13504219573619017,
+   "herfindahl_interval_width": 0.2595689246200724,
+   "closeness_subgraph": 0.0738565576709008,
+   "betweenness_subgraph": 0.2643465777260659,
+   "pagerank_subgraph": 0.1833132798400471
+  },
+  {
+   "coverage": 1.0,
+   "share_admissible": 0.0,
+   "interaction_admissible": 0.0,
+   "share_inadmissible": 5.558365921460583e-17,
+   "herfindahl_partial": 0.0,
+   "herfindahl_interval_width": 0.0,
+   "closeness_subgraph": 0.0,
+   "betweenness_subgraph": 0.0,
+   "pagerank_subgraph": 0.0
+  }
+ ],
+ "fixed_subnet": {
+  "R_nodes": 37,
+  "R_edges_per_period": 1332,
+  "C_t_nodes": 60,
+  "C_t_edges_per_period": 3540,
+  "periods": 10,
+  "entries_exits_per_period": 4,
+  "max_abs_diff_node_vs_folded": 1.3877787807814457e-17
+ }
+}

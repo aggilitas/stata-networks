@@ -1,0 +1,30 @@
+Zero cells in the trade inputs and flags in the attribute inputs, eighteen-country subnet
+export_41: 534 zero edge-years of 3060; 17 edges zero in all years
+export_42: 6 zero edge-years of 3060; 0 edges zero in all years
+export_43: 712 zero edge-years of 3060; 20 edges zero in all years
+export_50: 1272 zero edge-years of 3060; 59 edges zero in all years
+export_51: 436 zero edge-years of 3060; 19 edges zero in all years
+export_52: 143 zero edge-years of 3060; 2 edges zero in all years
+export_53: 309 zero edge-years of 3060; 6 edges zero in all years
+export_54: 93 zero edge-years of 3060; 1 edges zero in all years
+export_56: 36 zero edge-years of 3060; 1 edges zero in all years
+export_57: 330 zero edge-years of 3060; 5 edges zero in all years
+export_58: 32 zero edge-years of 3060; 0 edges zero in all years
+export_59: 75 zero edge-years of 3060; 0 edges zero in all years
+export_60: 139 zero edge-years of 3060; 3 edges zero in all years
+export_61: 1 zero edge-years of 3060; 0 edges zero in all years
+export_62: 0 zero edge-years of 3060; 0 edges zero in all years
+export_63: 3 zero edge-years of 3060; 0 edges zero in all years
+export_64: 14 zero edge-years of 3060; 0 edges zero in all years
+export_65: 25 zero edge-years of 3060; 0 edges zero in all years
+electricity MWH2000-19999 HU 2017: S1 e
+electricity MWH2000-19999 RO 2022: S1 d, S2 d
+finance: BE 2015: MIR status -, PPI flag p
+finance: BE 2016: MIR status -, PPI flag p
+finance: BE 2017: MIR status -, PPI flag p
+finance: BE 2018: MIR status -, PPI flag p
+finance: BE 2019: MIR status -, PPI flag p
+finance: BE 2020: MIR status -, PPI flag p
+finance: BE 2021: MIR status -, PPI flag p
+finance: LT 2024: MIR status -, PPI flag p
+finance: LT 2025: MIR status -, PPI flag p

@@ -1,0 +1,8 @@
+MRQAP Monte Carlo precision: 1224 tests (306 models x 4); 6 have an exact 95 per cent interval, from 10000 draws, that contains 0.05; these are recomputed with 100000 draws (seed 20260927, the first 10000 draws those of mrqap.py, whose p values they reproduce)
+  57<-61 productivity: p 0.0542 with 10000 draws, 0.0570 with 100000 (95 per cent interval 0.0556-0.0584); significance unchanged
+  61<-65 electricity price: p 0.0533 with 10000 draws, 0.0559 with 100000 (95 per cent interval 0.0545-0.0574); significance unchanged
+  62<-58 electricity price: p 0.0523 with 10000 draws, 0.0503 with 100000 (95 per cent interval 0.0489-0.0516); significance unchanged
+  62<-60 electricity price: p 0.0473 with 10000 draws, 0.0453 with 100000 (95 per cent interval 0.0440-0.0466); significance unchanged
+  62<-65 electricity price: p 0.0462 with 10000 draws, 0.0465 with 100000 (95 per cent interval 0.0452-0.0478); significance unchanged
+  65<-42 network weight: p 0.0471 with 10000 draws, 0.0462 with 100000 (95 per cent interval 0.0449-0.0475); significance unchanged
+changes of significance at 0.05: 0

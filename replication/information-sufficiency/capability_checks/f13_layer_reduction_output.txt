@@ -1,0 +1,38 @@
+F13 multilayer-network layer reduction: Supplementary Section S11.4, S11 Table D
+Retained nodes R = {0, 1, 2}; S_a = {0, ..., 4}; S_b = S_a plus node 5; full observation = {0, ..., 8}
+
+Table D row 7, C1: largest change of a retained layer-total share between S_a and S_b (node 5 enters) = 0.0556
+Table D row 7, C2: largest difference of a retained layer-total share between S_a and full observation = 0.135
+Table D row 8, C2: random layers in which the retained 90th-percentile links differ between S_a and full observation = 44 of 200
+Table D row 10, C1 and C2: influence d(2|3) over the assets {0, 1, 2, 3} = 0.0307
+Table D row 10, C1 and C2: influence d(2|3) over the assets {0, 1, 2, 3, 4} = 0.0644
+Table D row 10, C1 and C2: change of d(2|3) when asset 4 enters or is unobserved = 0.0337
+Table D row 10, C1 and C2: correlation of the retained pair (0, 1) = -0.001; weakest pair among the five assets = (0, 1)
+Table D row 10, C1 and C2: PMFG links among four assets = 6, 3(n - 2) = 6; pair (0, 1) linked = yes
+Table D row 10, C1 and C2: PMFG links among five assets = 9, 3(n - 2) = 9; pair (0, 1) linked = no
+
+Table D row 1, C3: largest change of a retained value (all 72 edges retained) under the common shock lambda = 3.7 = 18.86
+Table D rows 4 and 6, C3: largest change of a retained value of W + W^T (all 72 edges retained) under the common shock lambda = 3.7 = 22.04
+Table D row 3, C3: links of the values 8, 30, 6, 4, 12 and 7 = 5
+Table D row 3, C3: links after the common shock lambda = 0.5 = 2
+
+Table D rows 1 to 15, Fs: AIMNER flow weight w_01 from the symmetric mesh D = 0.0941
+Table D rows 1 to 15, Fs: AIMNER flow weight w_10 from the symmetric mesh D = 0.0996
+Table D row 2, Fs: links after binarising the symmetric mesh D = 72 of 72 (complete graph); D and D2 differ = yes; their binary layers are equal = yes
+Table D row 3, Fs and Fa: largest AIMNER flow weight = 0.4705; links after dividing the flow layer by 10 and rounding = 0 of 72
+Table D rows 4 and 6, Fa: W + W^T unchanged when x_01 and x_10 are swapped = yes
+Table D rows 4 and 6, Fa: AIMNER flow weight w_01 = 0.0027
+Table D rows 4 and 6, Fa: AIMNER flow weight w_10 = 0.2028
+Table D rows 4 and 6, Fa: value of W + W^T for this flow layer, 0 -> 1 = 0.2056, 1 -> 0 = 0.2056
+Table D row 7, Fs: largest |s_ij - s_ji| of the layer-total shares of the symmetric mesh D = 0.0
+Table D row 7, Fa: smallest row sum of the layer-total shares = 0.055
+Table D row 7, Fa: largest row sum of the layer-total shares = 0.196
+Table D row 7, Fa: layer-total share w_01 = 0.0073
+Table D row 7, Fa: AIMNER flow weight x_01 / F_0 = 0.0950
+
+Table D row 11, I: AIMNER interaction weight I_01 (papers as subgroups) = 0.667
+Table D row 11, I: AIMNER interaction weight I_10 (papers as subgroups) = 0.500
+Table D row 11, I: co-authorship projection weight w_01 in layer 0 = 1.5
+Table D row 11, I: co-authorship projection weight w_10 in layer 0 = 1.5
+
+Table D rows 4 and 6, A: largest |entry| of W + W^T for the AIMNER attribute layer ln(z_j / z_i) = 0.0

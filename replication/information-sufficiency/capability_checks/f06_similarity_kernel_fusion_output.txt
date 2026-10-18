@@ -1,0 +1,133 @@
+S11 Table B (F06, similarity-network and multiple-kernel fusion): capability checks
+Random seed = 20261018
+
+Setup quoted in Section S11.2
+Setup: number of nodes in the ambient system N = 10
+Setup: number of nodes in the represented sets N, S_a, S_b = 10, 8, 6
+Setup: retained pair = nodes 0 and 1
+Setup: common shock lambda = 3
+Table B: number of F06 pre-construction rows = 16
+
+Row 1: Complete-case and complete-feature filtering, view deletion and feature intersection
+Table B row 1: a feature is dropped when it is missing in more than 20% of the represented cases
+Table B row 1, C1 and C2: represented set N (10 nodes): share of cases missing feature 2 = 0.300, features kept = 1
+Table B row 1, C1 and C2: distance of nodes 0 and 1 after the feature filter, represented set N (10 nodes) = 3   [3]
+Table B row 1, C1 and C2: represented set S_b (6 nodes): share of cases missing feature 2 = 0.167, features kept = 2
+Table B row 1, C1 and C2: distance of nodes 0 and 1 after the feature filter, represented set S_b (6 nodes) = 5   [5]
+Table B row 1, C3: filtered output of lambda*X equals lambda times the filtered output of X: True
+Table B row 1, C3: filtered output of lambda*X equals the filtered output of X: False
+
+Row 2: KNN imputation
+Table B row 2, C3: KNN fill of feature 3 of node 0 (treated as missing), no shock = 1.5853   [1.5853391576]
+Table B row 2, C3: KNN fill of feature 3 of node 0 (treated as missing), lambda = 3 = 4.7560   [4.7560174728]
+Table B row 2, C3: ratio of the two fills = 3.0000   [3]
+
+Row 3: Per-feature z-score
+Table B row 3, C1 and C2: distance of nodes 0 and 1 after the per-feature z-score, represented set N (10 nodes) = 1.3916   [1.391625209]
+Table B row 3, C1 and C2: distance of nodes 0 and 1 after the per-feature z-score, represented set S_a (8 nodes) = 1.3639   [1.36388124065]
+Table B row 3, C1 and C2: distance of nodes 0 and 1 after the per-feature z-score, represented set S_b (6 nodes) = 1.3736   [1.37363666634]
+Table B row 3, C2: with feature moments over N (not documented) the distance is the same for N, S_a and S_b: True
+
+Row 4: Pair-local distance of case vectors
+Table B row 4, C3: Euclidean distance of nodes 0 and 1, no shock = 0.5732   [0.573186705424]
+Table B row 4, C3: Euclidean distance of nodes 0 and 1, lambda = 3 = 1.7196   [1.71956011627]
+Table B row 4, C3: ratio of the two distances = 3.0000   [3]
+Table B row 4, C3: symmetrisation (D + D^T)/2 of lambda*f equals lambda times that of f: True
+
+Row 5: SNF chi-squared distance for discrete variables
+Table B row 5, C1 and C2: chi-squared distance of nodes 0 and 1, column masses over the represented cases (documented), represented set N (10 nodes) = 0.8920   [0.892008916969]
+Table B row 5, C1 and C2: chi-squared distance of nodes 0 and 1, column masses over the represented cases (documented), represented set S_a (8 nodes) = 0.9099   [0.909892344965]
+Table B row 5, C1 and C2: chi-squared distance of nodes 0 and 1, column masses over the represented cases (documented), represented set S_b (6 nodes) = 0.9135   [0.913483314554]
+Table B row 5, C1 and C2: chi-squared distance of nodes 0 and 1, column masses over N (not documented), represented set N (10 nodes) = 0.8920   [0.892008916969]
+Table B row 5, C1 and C2: chi-squared distance of nodes 0 and 1, column masses over N (not documented), represented set S_a (8 nodes) = 0.8920   [0.892008916969]
+Table B row 5, C1 and C2: chi-squared distance of nodes 0 and 1, column masses over N (not documented), represented set S_b (6 nodes) = 0.8920   [0.892008916969]
+Table B row 5, I: chi-squared distance is equal in both directions: True
+
+Row 6: Scaled exponential kernel with local scaling
+Table B row 6, C1 and C2: SNF eq. (1) kernel of nodes 0 and 1, represented set N (10 nodes) = 0.2997   [0.299665824196]
+Table B row 6, C1 and C2: SNF eq. (1) kernel of nodes 0 and 1, represented set S_a (8 nodes) = 0.3139   [0.313938028428]
+Table B row 6, C1 and C2: SNF eq. (1) kernel of nodes 0 and 1, represented set S_b (6 nodes) = 0.3860   [0.386035989439]
+Table B row 6, C3: SNF eq. (1) kernel of nodes 0 and 1, no shock = 0.2997   [0.299665824196]
+Table B row 6, C3: SNF eq. (1) kernel of nodes 0 and 1, lambda = 3 = 0.0269   [0.0269098730017]
+Table B row 6, C3: ratio of the squared distance under the shock = 9.0000   [9]
+Table B row 6, C3: ratio of the local scale eps under the shock = 3.0000   [3]
+Table B row 6, C3: SNFtool affinityMatrix value of nodes 0 and 1, no shock = 0.1605   [0.160507636688]
+Table B row 6, C3: SNFtool affinityMatrix value of nodes 0 and 1, lambda = 3 = 0.0535   [0.0535025455627]
+Table B row 6, C3: ratio of the SNFtool exponent under the shock = 1.0000   [1]
+Table B row 6, C3: ratio of the SNFtool prefactor without and with the shock = 3.0000   [3]
+Table B row 6, C3: NEMO kernel of nodes 0 and 1, no shock = 0.4219   [0.421850241749]
+Table B row 6, C3: NEMO kernel of nodes 0 and 1, lambda = 3 = 0.1406   [0.14061674725]
+Table B rows 4 and 6, Fa: SNFtool affinityMatrix of f equals that of f^T: True
+
+Row 8: Unit-diagonal linear (cosine) kernel of case vectors
+Table B row 8, A: smallest unit-diagonal linear kernel value over all pairs on the scalar attribute z = 1   [1]
+Table B row 8, A: largest unit-diagonal linear kernel value over all pairs on the scalar attribute z = 1   [1]
+
+Row 9: Gaussian kernels with fixed widths
+Table B row 9, C3: Gaussian kernel with width sqrt(D_m) of nodes 0 and 1, no shock = 0.8963   [0.89626931796]
+Table B row 9, C3: Gaussian kernel with width sqrt(D_m) of nodes 0 and 1, lambda = 3 = 0.3732   [0.373204408333]
+
+Row 10: Kernel centring and trace-one normalisation
+Table B row 10, C1 and C2: centred, trace-one linear kernel of nodes 0 and 1, represented set N (10 nodes) = 0.00185   [0.00184761689704]
+Table B row 10, C1 and C2: centred, trace-one linear kernel of nodes 0 and 1, represented set S_a (8 nodes) = 0.00283   [0.0028253866426]
+Table B row 10, C1 and C2: centred, trace-one linear kernel of nodes 0 and 1, represented set S_b (6 nodes) = 0.0318   [0.0318330787687]
+
+Row 11: Unit-diagonal empirical kernel map of a full-mesh score matrix
+Table B row 11, C1 and C2: unit-diagonal empirical kernel map of nodes 0 and 1, represented set N (10 nodes) = 0.7353   [0.735344660348]
+Table B row 11, C1 and C2: unit-diagonal empirical kernel map of nodes 0 and 1, represented set S_a (8 nodes) = 0.6459   [0.645934587348]
+Table B row 11, C1 and C2: unit-diagonal empirical kernel map of nodes 0 and 1, represented set S_b (6 nodes) = 0.5492   [0.549247365545]
+Table B row 11, C2: unit-diagonal empirical kernel map of nodes 0 and 1 with a REST column, represented set S_a (8 nodes) = 0.7451   [0.745096674281]
+Table B row 11, Fa: empirical kernel map gives K_01 = K_10: True
+Table B row 11, Fa: AIMNER flow weight from node 0 to node 1 on asymmetric f = 0.0893   [0.08929493822]
+Table B row 11, Fa: AIMNER flow weight from node 1 to node 0 on asymmetric f = 0.2082   [0.208179173641]
+
+Row 12: K_LI from the centred interaction matrix
+Table B row 12, C1 and C2: K_LI of nodes 0 and 1 on weighted symmetric d, represented set N (10 nodes) = -0.1354   [-0.135410706284]
+Table B row 12, C1 and C2: K_LI of nodes 0 and 1 on weighted symmetric d, represented set S_a (8 nodes) = -0.0639   [-0.0638769205333]
+Table B row 12, C1 and C2: K_LI of nodes 0 and 1 on weighted symmetric d, represented set S_b (6 nodes) = 0.1398   [0.139773955179]
+
+Row 13: Diffusion kernel exp(beta H)
+Table B row 13, C1 and C2: diffusion kernel of nodes 0 and 1 on the binary graph induced on the represented set, represented set N (10 nodes) = 0.1192   [0.11920719492]
+Table B row 13, C1 and C2: diffusion kernel of nodes 0 and 1 on the binary graph induced on the represented set, represented set S_a (8 nodes) = 0.1367   [0.136735349348]
+Table B row 13, C1 and C2: diffusion kernel of nodes 0 and 1 on the binary graph induced on the represented set, represented set S_b (6 nodes) = 0.1548   [0.154806582345]
+Table B row 13, C2: diffusion kernel of nodes 0 and 1 with a REST node, represented set S_a (8 nodes) = 0.1203   [0.120310173676]
+Table B row 13, C3: diffusion kernel of nodes 0 and 1 on weighted input d/10, no shock = 0.0788   [0.0788104308269]
+Table B row 13, C3: diffusion kernel of nodes 0 and 1 on weighted input d/10, lambda = 3 = 0.0990   [0.0989926565499]
+Table B row 13, Fa: exp(beta H) on asymmetric f is symmetric: False
+Table B row 13, Fa: largest |K_ij - K_ji| of exp(beta H) on asymmetric f = 0.06555   [0.0655502747528]
+
+Row 14: pairwiseMKL base kernels, Kronecker pairwise kernels and centring
+Table B row 14, C1 and C2: Gaussian kernel of nodes 0 and 1 with the width at the median distance, represented set N (10 nodes) = 0.8671   [0.867148117558]
+Table B row 14, C1 and C2: Gaussian kernel of nodes 0 and 1 with the width at the median distance, represented set S_a (8 nodes) = 0.8753   [0.875332181706]
+Table B row 14, C1 and C2: Gaussian kernel of nodes 0 and 1 with the width at the median distance, represented set S_b (6 nodes) = 0.8224   [0.822425819467]
+
+Row 15: GeneMANIA network construction
+Table B row 15: links kept per gene = 50; each node has at most 9 links, so every link is kept
+Table B row 15, C1 and C2: GeneMANIA normalisation x_ij/sqrt(r_i c_j) of nodes 0 and 1 on symmetric d, represented set N (10 nodes) = 0.1069   [0.106948562071]
+Table B row 15, C1 and C2: GeneMANIA normalisation x_ij/sqrt(r_i c_j) of nodes 0 and 1 on symmetric d, represented set S_a (8 nodes) = 0.1300   [0.129964353797]
+Table B row 15, C1 and C2: GeneMANIA normalisation x_ij/sqrt(r_i c_j) of nodes 0 and 1 on symmetric d, represented set S_b (6 nodes) = 0.1761   [0.17610580944]
+
+Row 16: Randomized PCA of the z-scored view
+Table B row 16, C1 and C2: difference of the first principal-component scores of nodes 0 and 1 after the z-score, represented set N (10 nodes) = -1.2806   [-1.28058658707]
+Table B row 16, C1 and C2: difference of the first principal-component scores of nodes 0 and 1 after the z-score, represented set S_a (8 nodes) = -1.2732   [-1.27320436544]
+Table B row 16, C1 and C2: difference of the first principal-component scores of nodes 0 and 1 after the z-score, represented set S_b (6 nodes) = -1.2505   [-1.25051808373]
+
+Rows 4 to 6, 8 to 13 and 15 against row A, Fs: flow template on symmetric full-mesh data d
+Table B row A, Fs: AIMNER flow weight from node 0 to node 1 on symmetric d = 0.1160   [0.116034720772]
+Table B row A, Fs: AIMNER flow weight from node 1 to node 0 on symmetric d = 0.0986   [0.0985738997165]
+Table B row 15, Fs: GeneMANIA value x_01/sqrt(r_0 c_1) over N = 0.1069   [0.106948562071]
+Table B row 15, Fs: geometric mean of the two AIMNER flow weights = 0.1069   [0.106948562071]
+
+Rows 4 to 6 and 8 to 15 against row A, I: interaction template on node-by-subgroup counts
+Table B row A, I: AIMNER interaction weight from node 0 to node 1 = 0.0890   [0.0889553715056]
+Table B row A, I: AIMNER interaction weight from node 1 to node 0 = 0.0812   [0.0811565988698]
+Table B rows 4, 8 and 9, I: Gaussian kernel of the composition shares of nodes 0 and 1 = 0.7579   [0.75785352225]
+Table B rows 4, 8 and 9, I: the kernel is equal in both directions: True
+Table B rows 4, 8 and 9, I: Gaussian kernel of the composition shares of nodes 0 and 1 after the rest of the system changes = 0.7579   [0.75785352225]
+Table B row A, I: AIMNER interaction weight from node 0 to node 1 after the rest of the system changes = 0.0536   [0.053578983188]
+
+Rows 4 to 6 and 8 to 15 against row A, A: attribute template on the scalar attribute z
+Table B row A, A: AIMNER attribute edge value ln(z_j/z_i) is antisymmetric: True
+Table B rows 4, 5, 6 and 9, A: a kernel of |z_i - z_j| is symmetric: True
+Table B row A, A: AIMNER attribute edge value from node 0 to node 1 = -0.7496   [-0.749621748129]
+Table B row A, A: AIMNER attribute edge value from node 1 to node 0 = 0.7496   [0.749621748129]
