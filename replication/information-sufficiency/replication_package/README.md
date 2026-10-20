@@ -182,14 +182,14 @@ files, which are the ones behind the results.
 
 | File | Content | Article |
 |---|---|---|
-| `1_selection/selection_result.txt` | member states observed per chapter; the chapter and member-state trade-off; largest shares of exports declared without an importer and the gap of the 1% threshold | Section 4.2; Supplementary Section S5; Table S3 |
+| `1_selection/selection_result.txt` | member states observed per chapter; the chapter and member-state trade-off; largest shares of exports declared without an importer and the gap of the 1% threshold | Section 4.2; Supplementary Section S5; Table S4 |
 | `1_selection/window_check_result.txt` | the same rule over longer windows | Section 4.2 |
 | `2_attributes/real_credit_cost.csv`, `real_credit_cost_flags.txt` | rate, producer-price change and gross real factor per member state and year | Section 4.3; Supplementary Section S6 |
 | `2_attributes/manufacturing_productivity.csv`, `manufacturing_productivity_check.txt` | value added per hour worked per member state and year; completeness, flags, comparison with the annual accounts | Section 4.3; Supplementary Section S6 |
-| `3_inputs/input_notes.txt` | zero cells per chapter; electricity and finance flags | Section 4; Supplementary Section S5; Table S3 |
+| `3_inputs/input_notes.txt` | zero cells per chapter; electricity and finance flags | Section 4; Supplementary Section S5; Table S4 |
 | `3_inputs/check_weights.csv` | weight x_ij / X_i by the direct formula | check in estimation.do |
-| `4_declaration_check/compare_declarations_result.txt` | exporter- against importer-declared weights, ten member states | Section 4.2; Table S2 |
-| `5_estimation/results/unit_roots.csv` | Fisher-type Phillips-Perron tests | Section 4.4; Supplementary Section S7.1; Table S4 |
+| `4_declaration_check/compare_declarations_result.txt` | exporter- against importer-declared weights, ten member states | Section 4.2; Table S3 |
+| `5_estimation/results/unit_roots.csv` | Fisher-type Phillips-Perron tests | Section 4.4; Supplementary Section S7.1; Table S5 |
 | `5_estimation/results/screen_models.csv` | the 306 models, corridor-clustered inference | Supplementary Data 1 |
 | `5_estimation/results/mrqap.csv`, `mrqap_summary.txt` | MRQAP p values of the flow weight and the attribute edge values | Section 5; Table 4; Supplementary Data 1 |
 | `5_estimation/results/mrqap_precision.csv`, `mrqap_precision.txt` | Monte Carlo intervals; the tests near 0.05 with 100,000 permutations | Section 5; Supplementary Data 1 |
@@ -199,7 +199,7 @@ files, which are the ones behind the results.
 | `5_estimation/results/multiple_testing.txt` | the second network under the Benjamini-Hochberg, Benjamini-Yekutieli and Holm corrections | Section 4.6; Supplementary Section S8.1 |
 | `5_estimation/results/specification_sensitivity.txt` | the flow-weight tests with year effects and under other level/change choices of the attribute edge values | Supplementary Section S8.1 |
 | `5_estimation/descriptive_statistics_result.txt` | shares of the EU27's TCLF exports; REST shares; the factor of equation (8); cell counts; producer prices in 2022 | Sections 4, 5 and 7; Table 4; Supplementary Sections S5-S8 |
-| `6_synthetic/synthetic_results.json`, `figure1_boundary.pdf` | examples of Propositions 5-7, nested-boundary errors, fixed-subnet check | Supplementary Section S3; Fig. 2; Table S5; Supplementary Section S4 |
+| `6_synthetic/synthetic_results.json`, `figure1_boundary.pdf` | examples of Propositions 5-7, nested-boundary errors, fixed-subnet check | Supplementary Section S3; Fig. 2; Table S2; Supplementary Section S4 |
 
 Supplementary Section S8.1 also states that the structurally equivalent pair is the
 same under the p values from corridor-clustered standard errors: the rule of
@@ -217,11 +217,11 @@ The scripts, the log and the result files use the labels in the left column. The
 | Label in the package | Item in the article |
 |---|---|
 | section 4 (examples of Propositions 4-6) | Propositions 5-7; Section 3.4; Supplementary Section S3 |
-| section 5; Figure 1; Table 3 | Fig. 2; Table S5; Section 4.1; Supplementary Section S4 |
+| section 5; Figure 1; Table 3 | Fig. 2; Table S2; Section 4.1; Supplementary Section S4 |
 | section 6; Appendix A | Section 4; Supplementary Sections S5-S8 |
-| section 6.1; Tables A1, A2 | Sections 4.2, 5.3 and 5.4; Supplementary Section S5; Tables S2 and S3 |
+| section 6.1; Tables A1, A2 | Sections 4.2, 5.3 and 5.4; Supplementary Section S5; Tables S3 and S4 |
 | section 6.2 | Sections 4.3, 5.3 and 7; Supplementary Section S6 |
-| section 6.3; Table A3 | Sections 4.4 and 4.6; Supplementary Section S7; Table S4 |
+| section 6.3; Table A3 | Sections 4.4 and 4.6; Supplementary Section S7; Table S5 |
 | section 6.4; Table 4; Figure 2 | Section 5; Table 4; Fig. 3; Supplementary Section S8 |
 | Table 5 (layer_positions.py) | Table S6; Section 4.5 |
 | section 6.5 | Section 5.3; Supplementary Section S8.3 |
