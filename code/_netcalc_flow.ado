@@ -66,7 +66,7 @@ program define _netcalc_flow, rclass
     
     * A flow can be zero, meaning nothing travelled along that edge,
     * but it cannot be negative. A negative value is a fault in the
-    * data, and a share taken over a total that mixes signs would mean
+    * data, and a weight taken over a total that mixes signs would mean
     * nothing.
     qui count if `vsrc' < 0
     if r(N) > 0 {
@@ -82,7 +82,7 @@ program define _netcalc_flow, rclass
     tempvar netcalc_fratio
 
     qui {
-        * The weight is the share of the edge in what leaves its
+        * The weight is the quantity of the edge over what leaves its
         * node. Under subnet(multi) that is read inside the subnet,
         * so the weights of a subnet add up to one on their own and
         * the subnet is a network in its own right.

@@ -768,22 +768,18 @@ frame networks_multi: confirm variable abcdefghijklmnopqrstuvwxy_fratio
 di as res "6l refuses a multi-subnet name too long for its ratio column"
 
 * a frame that holds the ratio column of a name refuses the name,
-* even after the network itself was dropped. With abbreviation on,
-* w alone would already match w_fratio, so abbreviation is switched
-* off to test the check on the ratio column itself.
+* even after the network itself was dropped. The name check is
+* exact, so w is not taken for w_fratio: the refusal comes from the
+* check on the ratio column itself.
 frames reset
 use `flowdat', clear
 network_calc, type(flow) subnet(multi) feature(feature) name(w)
 frame networks_multi: drop w
 frame networks_single: drop w
-local va = c(varabbrev)
-set varabbrev off
 use `flowdat', clear
 capture network_calc, type(flow) subnet(multi) feature(feature) ///
     name(w)
-local rc = _rc
-set varabbrev `va'
-assert `rc' == 110
+assert _rc == 110
 di as res "6m refuses a name whose ratio column the frame holds"
 
 * an edge that appears twice in a period, or twice in a subnet
@@ -849,6 +845,43 @@ frame networks_single {
     assert a == b & a == c
 }
 di as res "6q option values ignore case and may be shortened"
+
+* the name check is exact: a name that only abbreviates a variable
+* already in a frame is a new name. Abbreviation is switched on, as
+* it is by default, so that the test fails without the exact check.
+frames reset
+local va = c(varabbrev)
+set varabbrev on
+use `flowsgl', clear
+network_calc, type(flow) subnet(single) name(w_l1)
+use `flowsgl', clear
+capture network_calc, type(flow) subnet(single) name(w)
+local rc = _rc
+set varabbrev `va'
+assert `rc' == 0
+frame networks_single {
+    confirm variable w, exact
+    confirm variable w_l1, exact
+    assert reldif(w, w_l1) < 1e-12
+}
+di as res "6r accepts a name that abbreviates a variable in a frame"
+
+* the join records its matches in _merge: a frame that already holds
+* a variable of that name refuses the call before either frame is
+* written
+frames reset
+use `flowdat', clear
+network_calc, type(flow) subnet(multi) feature(feature) name(w)
+frame networks_single: generate byte _merge = 3
+use `flowdat', clear
+capture network_calc, type(flow) subnet(multi) feature(feature) ///
+    name(v)
+assert _rc == 110
+capture frame networks_multi: confirm variable v, exact
+assert _rc != 0
+capture frame networks_single: confirm variable v, exact
+assert _rc != 0
+di as res "6s refuses a frame that holds _merge, and writes nothing"
 
 *==============================================================
 * 7. Known answers

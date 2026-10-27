@@ -3,7 +3,7 @@
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\tests\network_
 > calc_cert.log
   log type:  text
- opened on:  27 Oct 2026, 20:19:18
+ opened on:  27 Oct 2026, 23:52:53
 
 . 
 . which network_calc
@@ -1048,7 +1048,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 90 edges
-  Mean weight: -0.000000
+  Mean weight:  0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -1616,7 +1616,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 90 edges
-  Mean weight:  0.000000
+  Mean weight: -0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -2966,9 +2966,9 @@ To view the networks:
 
 . 
 . * a frame that holds the ratio column of a name refuses the name,
-. * even after the network itself was dropped. With abbreviation on,
-. * w alone would already match w_fratio, so abbreviation is switched
-. * off to test the check on the ratio column itself.
+. * even after the network itself was dropped. The name check is
+. * exact, so w is not taken for w_fratio: the refusal comes from the
+. * check on the ratio column itself.
 . frames reset
 
 . use `flowdat', clear
@@ -3012,20 +3012,12 @@ To view the networks:
 
 . frame networks_single: drop w
 
-. local va = c(varabbrev)
-
-. set varabbrev off
-
 . use `flowdat', clear
 
 . capture network_calc, type(flow) subnet(multi) feature(feature) ///
 >     name(w)
 
-. local rc = _rc
-
-. set varabbrev `va'
-
-. assert `rc' == 110
+. assert _rc == 110
 
 . di as res "6m refuses a name whose ratio column the frame holds"
 6m refuses a name whose ratio column the frame holds
@@ -3232,6 +3224,130 @@ To view the networks:
 
 . di as res "6q option values ignore case and may be shortened"
 6q option values ignore case and may be shortened
+
+. 
+. * the name check is exact: a name that only abbreviates a variable
+. * already in a frame is a new name. Abbreviation is switched on, as
+. * it is by default, so that the test fails without the exact check.
+. frames reset
+
+. local va = c(varabbrev)
+
+. set varabbrev on
+
+. use `flowsgl', clear
+
+. network_calc, type(flow) subnet(single) name(w_l1)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      w_l1
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w_l1' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. use `flowsgl', clear
+
+. capture network_calc, type(flow) subnet(single) name(w)
+
+. local rc = _rc
+
+. set varabbrev `va'
+
+. assert `rc' == 0
+
+. frame networks_single {
+.     confirm variable w, exact
+.     confirm variable w_l1, exact
+.     assert reldif(w, w_l1) < 1e-12
+. }
+
+. di as res "6r accepts a name that abbreviates a variable in a frame"
+6r accepts a name that abbreviates a variable in a frame
+
+. 
+. * the join records its matches in _merge: a frame that already holds
+. * a variable of that name refuses the call before either frame is
+. * written
+. frames reset
+
+. use `flowdat', clear
+
+. network_calc, type(flow) subnet(multi) feature(feature) name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 subnet-edge rows (90 edges)
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. frame networks_single: generate byte _merge = 3
+
+. use `flowdat', clear
+
+. capture network_calc, type(flow) subnet(multi) feature(feature) ///
+>     name(v)
+
+. assert _rc == 110
+
+. capture frame networks_multi: confirm variable v, exact
+
+. assert _rc != 0
+
+. capture frame networks_single: confirm variable v, exact
+
+. assert _rc != 0
+
+. di as res "6s refuses a frame that holds _merge, and writes nothing"
+6s refuses a frame that holds _merge, and writes nothing
 
 . 
 . *==============================================================
@@ -3698,5 +3814,5 @@ all network_calc certification tests passed
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\tests\network_
 > calc_cert.log
   log type:  text
- closed on:  27 Oct 2026, 20:19:19
+ closed on:  27 Oct 2026, 23:52:54
 -------------------------------------------------------------------------------

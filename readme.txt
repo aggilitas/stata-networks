@@ -21,12 +21,14 @@ panel side by side.
 
 Three templates are available.
 
-  interaction   the share of the target node in what a subnet holds
-                outside the source. Requires the panel to be split into
-                subnets by a feature; it has no single-subnet form.
+  interaction   the quantity of a subnet at the target over its quantity
+                at every node but the source, with the subnets added up
+                in proportion to their size at the source. Requires the
+                panel to be split into subnets by a feature; it has no
+                single-subnet form.
 
-  flow          the share of an edge in the total leaving its node in
-                that period. For quantities that move between nodes:
+  flow          the quantity of an edge over the total leaving its node
+                in that period. For quantities that move between nodes:
                 migration, trade, capital.
 
   attribute     the log ratio of the two node values. For levels that
@@ -140,7 +142,8 @@ failure. Its eight sections check:
      attribute network must reach every edge of its frame, that a
      refused join writes neither frame, and that r() returns the counts
   6. that the command refuses each input it cannot make a network of,
-     self-loops included, and that option values ignore case
+     self-loops included, that option values ignore case, that a name
+     is checked exactly, and that a frame holding _merge is refused
   7. that the weights of one edge equal the numbers worked out by hand
      from the formulas that build the data
   8. that r() reports the call, and that the data in memory come back
@@ -150,8 +153,8 @@ failure. Its eight sections check:
 Citation
 --------
 
-Citation is a condition of the licence. Any work that uses this command,
-or results derived from it, must cite:
+If you use network_calc, please cite the article that sets out the
+framework it implements:
 
     Talay, N., H. Acaroglu, A. Gunal, and F. P. Garcia Marquez. 2026.
     Algebraic invariant multilayer-network edge regression: Multi-source

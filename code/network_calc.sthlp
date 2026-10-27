@@ -25,7 +25,7 @@ node pairs and periods
 {cmd:network_calc}{cmd:,}
 {opt t:ype(template)}
 {opt s:ubnet(scope)}
-{opt n:ame(netname)}
+{opt n:ame(newvar)}
 [{it:options}]
 
 {synoptset 26 tabbed}{...}
@@ -36,7 +36,7 @@ node pairs and periods
 {cmd:interaction}, {cmd:flow} or {cmd:attribute}{p_end}
 {synopt :{opt s:ubnet(scope)}}{cmd:single} for one network,
 {cmd:multi} for one network per feature{p_end}
-{synopt :{opt n:ame(netname)}}name of the network; must be a valid
+{synopt :{opt n:ame(newvar)}}name of the network; must be a valid
 variable name{p_end}
 
 {syntab:Optional}
@@ -113,16 +113,17 @@ single-subnet copy; see {help network_calc##output:Output frames}.
 {cmd:type(attribute)} takes {cmd:subnet(single)} only.
 
 {phang}
-{opt n:ame(netname)} is required and names the network. The name
+{opt n:ame(newvar)} is required and names the network. The name
 becomes the variable that holds the weights in the output frames, so it
 must be a valid Stata variable name and must not already be taken in
 either output frame: {cmd:networks_single} and {cmd:networks_multi} are
 both checked, whichever of them the call writes. The same holds for
-{it:netname}{cmd:_fratio}, the column a {cmd:subnet(multi)} call writes
+{it:newvar}{cmd:_fratio}, the column a {cmd:subnet(multi)} call writes
 beside the network, and under {cmd:subnet(multi)} the name has at most
-25 characters, so that {it:netname}{cmd:_fratio} fits in 32. The name
+25 characters, so that {it:newvar}{cmd:_fratio} fits in 32. The name
 cannot be {cmd:netcalc_fratio} or {cmd:_merge}, which the command uses
-on its own.
+on its own. The check is exact: a name that only abbreviates a variable
+in a frame is a new name.
 
 {phang}
 {opt f:eature(varname)} names the variable that splits the network into
@@ -231,8 +232,8 @@ identifier stays unambiguous. Data that break either rule are refused.
 {pstd}
 {cmd:type(interaction)} requires {cmd:subnet(multi)}: it compares two
 subnets of two nodes and has no single-subnet form. The weight is the
-share of the target node in what the subnet holds outside the source,
-read from {cmd:value}:
+quantity of the subnet at the target over its quantity at every node
+but the source, read from {cmd:value}:
 
 {p 8 8 2}
 ω(ij,X) = v(j,X) / sum over k != i of v(k,X)
@@ -248,13 +249,14 @@ the copy written to {cmd:networks_single}.
 
 {pstd}
 {cmd:type(flow)} accepts either scope. Under {cmd:subnet(single)} the
-weight is the share of the edge in what leaves its node in that period:
+weight is the quantity of the edge over the total that leaves its node
+in that period:
 
 {p 8 8 2}
 w(ij) = v(ij) / sum over k != i of v(ik)
 
 {pstd}
-Under {cmd:subnet(multi)} the same share is taken inside the subnet, so
+Under {cmd:subnet(multi)} the same division is made inside the subnet, so
 a subnet is a network in its own right and its weights add up to one on
 their own:
 
@@ -324,7 +326,7 @@ before building the second.
 Every call adds the network, named by {cmd:name()}, to the frame or
 frames it writes, and a {cmd:subnet(multi)} call writes two columns
 into {cmd:networks_multi}: the network and, beside it,
-{it:netname}{cmd:_fratio}.
+{it:newvar}{cmd:_fratio}.
 
 {p2colset 9 34 36 2}{...}
 {p2col :{cmd:subnet(single)}}{cmd:networks_single}{p_end}
@@ -358,10 +360,10 @@ reach every edge of the frame it joins, and a frame that holds an
 would break either rule is refused.
 
 {pstd}
-Whatever could stop a join, these rules and a key of another storage
-type than the frame has, is checked against every frame a call writes
-before the first of them changes, so a call writes both frames or
-neither.
+Whatever could stop a join, these rules, a key that is a string on one
+side and numeric on the other, and a variable named {cmd:_merge} in the
+frame, is checked against every frame a call writes before the first of
+them changes, so a call writes both frames or neither.
 
 {pstd}
 A network that shares no edge at all with the frame is reported as
@@ -507,8 +509,8 @@ Necmi Talay{break}
 {title:Citation}
 
 {pstd}
-Citation is a condition of the licence. Any work that uses this
-command, or results derived from it, must cite:
+If you use {cmd:network_calc}, please cite the article that sets out
+the framework it implements:
 
 {phang}
 Talay, N., H. Acaroglu, A. Gunal, and F. P. Garcia Marquez. 2026.

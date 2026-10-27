@@ -119,15 +119,16 @@ program define network_calc, rclass
     * whatever the call writes, and before anything is computed, so
     * that a name means one network wherever it appears and nothing
     * is half written. The ratio column a name would bring is
-    * checked the same way.
+    * checked the same way. The check is exact: a name that only
+    * abbreviates a variable in a frame is a new name.
     foreach fr in networks_single networks_multi {
-        capture frame `fr': confirm variable `name'
+        capture frame `fr': confirm variable `name', exact
         if _rc == 0 {
             di as error "`name' is already in frame `fr'"
             di as error "Drop it, or choose another name()"
             exit 110
         }
-        capture frame `fr': confirm variable `name'_fratio
+        capture frame `fr': confirm variable `name'_fratio, exact
         if _rc == 0 {
             di as error "`name'_fratio is already in frame `fr'"
             di as error "Drop it, or choose another name()"
@@ -359,6 +360,16 @@ program define network_calc, rclass
             continue
         }
 
+        * the join records its matches in _merge, so the frame must
+        * not hold a variable of that name
+        capture frame `fr': confirm variable _merge, exact
+        if _rc == 0 {
+            di as error "frame `fr' holds a variable named _merge," ///
+                        " which the join uses"
+            di as error "Drop or rename it. Nothing has been written"
+            exit 110
+        }
+
         * the key must join: present in the frame, and string or
         * numeric on both sides alike
         foreach k of local keys {
@@ -472,7 +483,7 @@ program define network_calc, rclass
 
         * The single-subnet copy adds the subnet weights up after
         * each has been scaled by the ratio its subnet holds at the
-        * node. A subnet weight is a share of what leaves the node, in
+        * node. A subnet weight is a part of what leaves the node, in
         * flow and interaction alike, and the ratios of a node add up
         * to one, so the copy is a weight again.
         di as text "  Aggregating to single-subnet..."
