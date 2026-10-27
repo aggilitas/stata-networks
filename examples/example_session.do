@@ -1,7 +1,14 @@
 *! netcalc example session
 *! Run from the examples directory of the repository, where the input
-*! files are. Each call computes one network and adds it to the edge
-*! panel, so the calls together build a multi-network panel.
+*! files are; generate_test_data.do builds them. Each call computes
+*! one network and adds it to the edge panel, so the calls together
+*! build a multi-network panel, and the session ends with an
+*! estimation on that panel. The estimation needs reghdfe and ftools.
+*!
+*! Outputs, written to the working directory and checked at the end
+*! of the run: example_session.log, the log the article quotes, and
+*! example_estimates.csv, the coefficients, standard errors, number
+*! of observations and R-squared of the estimation in section 6.5.
 
 version 16.0
 clear all
@@ -17,35 +24,39 @@ log using example_session.log, text replace
 *--------------------------------------------------------------
 * The input: a long panel of ordered node pairs split into subnets
 *
-* Five provinces, three years, and the migrants grouped by the
-* province they were born in. size gives the subnet its ratio and
-* value is the quantity being measured.
+* Five provinces, three years, and the people grouped by the
+* province they were born in. size gives the subnet its ratio at
+* the node and value is the quantity being measured; the two
+* differ in every multi-subnet file.
 *--------------------------------------------------------------
 
-import delimited test_interaction_multi.csv, clear varnames(1)
-describe
-format feature source target %4s
-format source_size source_value target_size target_value %8.0g
-list in 1/6, noobs abbreviate(16)
+foreach f in interaction_multi flow_multi flow_single attribute_single {
+    import delimited test_`f'.csv, clear varnames(1)
+    display as text _n "test_`f'.csv"
+    list in 1, noobs abbreviate(16)
+}
 
 *--------------------------------------------------------------
 * An interaction network
 *
-* The share of the target node in what the subnet holds outside
-* the source. A subnet is a network of its own, so its weights add
-* up to one. It has no single-subnet form, so subnet(multi) is
-* required.
+* How the employed members of a birthplace group outside the
+* source are distributed over the targets. A subnet is a network of
+* its own, so its weights add up to one; the subnets are weighed
+* by population when they are put back together.
 *--------------------------------------------------------------
 
+import delimited test_interaction_multi.csv, clear varnames(1)
 network_calc, type(interaction) subnet(multi) feature(feature) ///
     name(bplace)
+return list
 
 *--------------------------------------------------------------
 * A flow network over the same subnets
 *
-* The share of the edge in what the subnet sends from its node.
-* Both frames are written: the subnet weights, and beside them the
-* ratio size gives each subnet, which the reduced copy uses.
+* The weight of the edge in the migrants the subnet sends from its
+* node, as the sending node records them. Both frames are written:
+* the subnet weights, and beside them the population ratio of each
+* subnet, which the single-subnet copy uses.
 *--------------------------------------------------------------
 
 import delimited test_flow_multi.csv, clear varnames(1)
@@ -53,7 +64,10 @@ network_calc, type(flow) subnet(multi) feature(feature) ///
     name(mig_out)
 
 *--------------------------------------------------------------
-* The same flow network read from the other end of the edge
+* The inflow network
+*
+* The weight of the source in the migrants that arrive at the
+* target, as the receiving node records them.
 *--------------------------------------------------------------
 
 import delimited test_flow_multi.csv, clear varnames(1)
@@ -68,71 +82,126 @@ network_calc, type(flow) subnet(multi) feature(feature) ///
 *--------------------------------------------------------------
 
 import delimited test_attribute_single.csv, clear varnames(1)
-format source target %4s
-format source_value target_value %8.4f
-list in 1/6, noobs abbreviate(16)
-
 network_calc, type(attribute) subnet(single) name(sch)
 
 *--------------------------------------------------------------
-* The panel the four calls have built
+* The flow network computed from the pooled file
+*
+* Since size and value differ, it is not the single-subnet copy of
+* mig_out: the copy weighs each subnet by its population, the
+* pooled network by the migrants it sends.
+*--------------------------------------------------------------
+
+import delimited test_flow_single.csv, clear varnames(1)
+network_calc, type(flow) subnet(single) name(mig_pool)
+
+*--------------------------------------------------------------
+* The panel the calls have built
 *--------------------------------------------------------------
 
 frame change networks_single
-format source target %4s
-format bplace mig_out mig_in sch %8.4f
-list in 1/8, noobs abbreviate(16)
+format bplace mig_out mig_in sch mig_pool %8.4f
+list year source target bplace mig_out mig_in sch in 1/8, ///
+    noobs abbreviate(16)
 
-* a flow weight is a share, so the weights leaving a node add up
-* to one in every year
+* the weights leaving a node add up to one in every year
 preserve
-    split edge_id, parse("_") gen(node)
-    collapse (sum) mig_out, by(year node1)
+    collapse (sum) mig_out, by(year source)
     format mig_out %8.4f
+    list, noobs abbreviate(16)
+restore
+
+* the inflow weights entering a node add up to one in every year
+preserve
+    collapse (sum) mig_in, by(year target)
+    format mig_in %8.4f
     list, noobs abbreviate(16)
 restore
 
 * an attribute edge value is a log ratio, so it cancels along the
 * reversed edge
 preserve
-    split edge_id, parse("_") gen(node)
-    generate str24 pair = cond(node1 < node2, ///
-                               node1 + "|" + node2, ///
-                               node2 + "|" + node1)
+    generate str24 pair = cond(source < target, ///
+                               source + "|" + target, ///
+                               target + "|" + source)
     collapse (sum) sch, by(year pair)
     summarize sch
 restore
+
+* the single-subnet copy and the pooled network differ
+generate double gap = abs(mig_out - mig_pool)
+summarize gap
+drop gap
 
 *--------------------------------------------------------------
 * The subnet weights themselves, in the multi-subnet frame
 *--------------------------------------------------------------
 
 frame change networks_multi
-format feature source target %4s
 format bplace_fratio bplace %7.4f
 format mig_out_fratio mig_out %7.4f
 format mig_in_fratio mig_in %7.4f
 * every network in the frame, and beside each the ratio its subnet
 * takes at the node
-list in 1/9, noobs abbreviate(16)
+list year feature source target bplace_fratio bplace ///
+    mig_out_fratio mig_out in 1/9, noobs abbreviate(16)
 
 * a subnet is a network of its own, so its weights add up to one
 preserve
-    split edge_id, parse("_") gen(node)
-    collapse (sum) mig_out, by(year feature node1)
+    collapse (sum) mig_out, by(year feature source)
     format mig_out %8.4f
-    list if year == 2018 & node1 == "van", noobs abbreviate(16)
+    list if year == 2018 & source == "van", noobs abbreviate(16)
 restore
 
 * and the ratios those subnets hold at the node add up to one
 preserve
-    split edge_id, parse("_") gen(node)
-    bysort year feature node1: keep if _n == 1
-    collapse (sum) mig_out_fratio, by(year node1)
+    bysort year feature source: keep if _n == 1
+    collapse (sum) mig_out_fratio, by(year source)
     format mig_out_fratio %8.4f
     list, noobs abbreviate(16)
 restore
 
+*--------------------------------------------------------------
+* An estimation on the panel
+*
+* The outcome comes from a file of its own, on the same key as the
+* panel. It was generated with known coefficients: 2 on the
+* single-subnet copy of the flow network, mig_out, and 0.5 on the
+* schooling log-ratio, sch. The ordered pair and the period are
+* absorbed: source-period and target-period effects together would
+* absorb sch entirely, since a log-ratio is the difference of a
+* target-period and a source-period term. With five nodes no
+* cluster-robust variance is reliable, so the standard errors are
+* robust to heteroskedasticity only.
+*--------------------------------------------------------------
+
+frame create outcome
+frame outcome: import delimited test_outcome.csv, clear varnames(1)
+frame change networks_single
+frlink 1:1 year source target, frame(outcome)
+frget y, from(outcome)
+egen pair = group(source target)
+reghdfe y mig_out sch, absorb(pair year) vce(robust)
+
+* the estimates, written for the article
+frame create estimates str16 term double(estimate se)
+foreach t in mig_out sch {
+    frame post estimates ("`t'") (_b[`t']) (_se[`t'])
+}
+frame post estimates ("N") (e(N)) (.)
+frame post estimates ("r2") (e(r2)) (.)
+frame estimates: list, noobs abbreviate(16)
+frame estimates: export delimited using example_estimates.csv, replace
+
 frame change default
+
+*--------------------------------------------------------------
+* What this run wrote
+*--------------------------------------------------------------
+
+confirm file example_estimates.csv
+display as text _n "Files written to `c(pwd)':"
+display as text "  example_session.log"
+display as text "  example_estimates.csv"
 
 log close

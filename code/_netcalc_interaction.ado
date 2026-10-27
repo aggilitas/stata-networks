@@ -1,4 +1,4 @@
-*! _netcalc_interaction 2.0.0
+*! _netcalc_interaction 2.1.0
 *! Helper function for calculating interaction network edge weights
 *! Formula: e_ij^X = v_j^X / sum_{k!=i} v_k^X, with S_i^X / S_i
 *! carried alongside for the reduction to a single subnet

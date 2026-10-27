@@ -1,107 +1,79 @@
 -------------------------------------------------------------------------------
       name:  <unnamed>
-       log:  C:\Users\ntnta\gm\networks-ado-project\examples\example_session.lo
-> g
+       log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\examp
+> le_session.log
   log type:  text
- opened on:  23 Sep 2026, 05:07:50
+ opened on:  27 Oct 2026, 20:24:05
 
 . 
 . *--------------------------------------------------------------
 . * The input: a long panel of ordered node pairs split into subnets
 . *
-. * Five provinces, three years, and the migrants grouped by the
-. * province they were born in. size gives the subnet its ratio and
-. * value is the quantity being measured.
+. * Five provinces, three years, and the people grouped by the
+. * province they were born in. size gives the subnet its ratio at
+. * the node and value is the quantity being measured; the two
+. * differ in every multi-subnet file.
 . *--------------------------------------------------------------
 . 
-. import delimited test_interaction_multi.csv, clear varnames(1)
+. foreach f in interaction_multi flow_multi flow_single attribute_single {
+  2.     import delimited test_`f'.csv, clear varnames(1)
+  3.     display as text _n "test_`f'.csv"
+  4.     list in 1, noobs abbreviate(16)
+  5. }
 (8 vars, 300 obs)
 
-. describe
-
-Contains data
- Observations:           300                  
-    Variables:             8                  
--------------------------------------------------------------------------------
-Variable      Storage   Display    Value
-    name         type    format    label      Variable label
--------------------------------------------------------------------------------
-year            int     %8.0g                 
-feature         str4    %9s                   
-source          str4    %9s                   
-target          str4    %9s                   
-source_size     long    %12.0g                
-source_value    long    %12.0g                
-target_size     long    %12.0g                
-target_value    long    %12.0g                
--------------------------------------------------------------------------------
-Sorted by: 
-     Note: Dataset has changed since last saved.
-
-. format feature source target %4s
-
-. format source_size source_value target_size target_value %8.0g
-
-. list in 1/6, noobs abbreviate(16)
+test_interaction_multi.csv
 
   +---------------------------------------------------------------+
   | year | feature | source | target | source_size | source_value |
-  | 2018 |     van |    van |   kars |       40000 |        40000 |
+  | 2018 |     van |    van |   kars |       40000 |        17407 |
   |---------------------------------------------------------------|
   |         target_size          |          target_value          |
-  |               29769          |                 29769          |
+  |                8605          |                  4520          |
   +---------------------------------------------------------------+
+(8 vars, 300 obs)
+
+test_flow_multi.csv
 
   +---------------------------------------------------------------+
   | year | feature | source | target | source_size | source_value |
-  | 2018 |     van |    van |   bolu |       40000 |        40000 |
+  | 2018 |     van |    van |   kars |       40000 |         2476 |
   |---------------------------------------------------------------|
   |         target_size          |          target_value          |
-  |                9329          |                  9329          |
+  |                8605          |                  2308          |
   +---------------------------------------------------------------+
+(5 vars, 60 obs)
 
-  +---------------------------------------------------------------+
-  | year | feature | source | target | source_size | source_value |
-  | 2018 |     van |    van |   rize |       40000 |        40000 |
-  |---------------------------------------------------------------|
-  |         target_size          |          target_value          |
-  |               42239          |                 42239          |
-  +---------------------------------------------------------------+
+test_flow_single.csv
 
-  +---------------------------------------------------------------+
-  | year | feature | source | target | source_size | source_value |
-  | 2018 |     van |    van |   ordu |       40000 |        40000 |
-  |---------------------------------------------------------------|
-  |         target_size          |          target_value          |
-  |               39071          |                 39071          |
-  +---------------------------------------------------------------+
+  +------------------------------------------------------+
+  | target   year   source   source_value   target_value |
+  |------------------------------------------------------|
+  |   kars   2018      van           6008           5737 |
+  +------------------------------------------------------+
+(5 vars, 60 obs)
 
-  +---------------------------------------------------------------+
-  | year | feature | source | target | source_size | source_value |
-  | 2018 |     van |   kars |    van |       29769 |        29769 |
-  |---------------------------------------------------------------|
-  |         target_size          |          target_value          |
-  |               40000          |                 40000          |
-  +---------------------------------------------------------------+
+test_attribute_single.csv
 
-  +---------------------------------------------------------------+
-  | year | feature | source | target | source_size | source_value |
-  | 2018 |     van |   kars |   bolu |       29769 |        29769 |
-  |---------------------------------------------------------------|
-  |         target_size          |          target_value          |
-  |                9329          |                  9329          |
-  +---------------------------------------------------------------+
+  +------------------------------------------------------+
+  | target   year   target_value   source   source_value |
+  |------------------------------------------------------|
+  |   kars   2018         8.2232      van         7.8524 |
+  +------------------------------------------------------+
 
 . 
 . *--------------------------------------------------------------
 . * An interaction network
 . *
-. * The share of the target node in what the subnet holds outside
-. * the source. A subnet is a network of its own, so its weights add
-. * up to one. It has no single-subnet form, so subnet(multi) is
-. * required.
+. * How the employed members of a birthplace group outside the
+. * source are distributed over the targets. A subnet is a network of
+. * its own, so its weights add up to one; the subnets are weighed
+. * by population when they are put back together.
 . *--------------------------------------------------------------
 . 
+. import delimited test_interaction_multi.csv, clear varnames(1)
+(8 vars, 300 obs)
+
 . network_calc, type(interaction) subnet(multi) feature(feature) ///
 >     name(bplace)
 
@@ -117,7 +89,7 @@ NETWORK_CALC: Calculating interaction network
 ------------------------------------------------------------------------------
 
 Calculating network weights...
-  Calculated 300 edges
+  Calculated 300 subnet-edge rows (60 edges)
   Mean weight:  0.250000
 
 Managing network frames...
@@ -138,13 +110,32 @@ To view the networks:
 ------------------------------------------------------------------------------
 
 
+. return list
+
+scalars:
+     r(new_only_multi) =  300
+   r(frame_only_multi) =  0
+      r(matched_multi) =  0
+    r(new_only_single) =  60
+  r(frame_only_single) =  0
+     r(matched_single) =  0
+        r(mean_weight) =  .25
+            r(n_pairs) =  60
+            r(n_edges) =  300
+
+macros:
+        r(subnet_type) : "multi"
+       r(network_type) : "interaction"
+       r(network_name) : "bplace"
+
 . 
 . *--------------------------------------------------------------
 . * A flow network over the same subnets
 . *
-. * The share of the edge in what the subnet sends from its node.
-. * Both frames are written: the subnet weights, and beside them the
-. * ratio size gives each subnet, which the reduced copy uses.
+. * The weight of the edge in the migrants the subnet sends from its
+. * node, as the sending node records them. Both frames are written:
+. * the subnet weights, and beside them the population ratio of each
+. * subnet, which the single-subnet copy uses.
 . *--------------------------------------------------------------
 . 
 . import delimited test_flow_multi.csv, clear varnames(1)
@@ -165,7 +156,7 @@ NETWORK_CALC: Calculating flow network
 ------------------------------------------------------------------------------
 
 Calculating network weights...
-  Calculated 300 edges
+  Calculated 300 subnet-edge rows (60 edges)
   Mean weight:  0.250000
 
 Managing network frames...
@@ -188,7 +179,10 @@ To view the networks:
 
 . 
 . *--------------------------------------------------------------
-. * The same flow network read from the other end of the edge
+. * The inflow network
+. *
+. * The weight of the source in the migrants that arrive at the
+. * target, as the receiving node records them.
 . *--------------------------------------------------------------
 . 
 . import delimited test_flow_multi.csv, clear varnames(1)
@@ -209,7 +203,7 @@ NETWORK_CALC: Calculating flow network
 ------------------------------------------------------------------------------
 
 Calculating network weights...
-  Calculated 300 edges
+  Calculated 300 subnet-edge rows (60 edges)
   Mean weight:  0.250000
 
 Managing network frames...
@@ -241,25 +235,6 @@ To view the networks:
 . import delimited test_attribute_single.csv, clear varnames(1)
 (5 vars, 60 obs)
 
-. format source target %4s
-
-. format source_value target_value %8.4f
-
-. list in 1/6, noobs abbreviate(16)
-
-  +------------------------------------------------------+
-  | year   source   target   source_value   target_value |
-  |------------------------------------------------------|
-  | 2018      van     kars         8.4359        11.2296 |
-  | 2018      van     bolu         8.4359         9.9712 |
-  | 2018      van     rize         8.4359         7.7594 |
-  | 2018      van     ordu         8.4359        10.4053 |
-  | 2018     kars      van        11.2296         8.4359 |
-  |------------------------------------------------------|
-  | 2018     kars     bolu        11.2296         9.9712 |
-  +------------------------------------------------------+
-
-. 
 . network_calc, type(attribute) subnet(single) name(sch)
 
 ------------------------------------------------------------------------------
@@ -274,7 +249,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 60 edges
-  Mean weight:  0.000000
+  Mean weight: -0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -292,66 +267,136 @@ To view the networks:
 
 . 
 . *--------------------------------------------------------------
-. * The panel the four calls have built
+. * The flow network computed from the pooled file
+. *
+. * Since size and value differ, it is not the single-subnet copy of
+. * mig_out: the copy weighs each subnet by its population, the
+. * pooled network by the migrants it sends.
+. *--------------------------------------------------------------
+. 
+. import delimited test_flow_single.csv, clear varnames(1)
+(5 vars, 60 obs)
+
+. network_calc, type(flow) subnet(single) name(mig_pool)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      mig_pool
+  Obs:       60
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 60 edges
+  Mean weight:  0.250000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'mig_pool' has been calculated and added to:
+  - Frame 'networks_single':       60 obs, 9 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. 
+. *--------------------------------------------------------------
+. * The panel the calls have built
 . *--------------------------------------------------------------
 . 
 . frame change networks_single
 
-. format source target %4s
+. format bplace mig_out mig_in sch mig_pool %8.4f
 
-. format bplace mig_out mig_in sch %8.4f
+. list year source target bplace mig_out mig_in sch in 1/8, ///
+>     noobs abbreviate(16)
 
-. list in 1/8, noobs abbreviate(16)
-
-  +--------------------------------------------------------------------------+
-  | year   source   target     edge_id   bplace   mig_out   mig_in       sch |
-  |--------------------------------------------------------------------------|
-  | 2018     bolu     kars   bolu_kars   0.2970    0.2514   0.2553    0.1189 |
-  | 2018     bolu     ordu   bolu_ordu   0.2679    0.2141   0.2401    0.0426 |
-  | 2018     bolu     rize   bolu_rize   0.2397    0.2509   0.2915   -0.2508 |
-  | 2018     bolu      van    bolu_van   0.1954    0.2836   0.2321   -0.1672 |
-  | 2018     kars     bolu   kars_bolu   0.2286    0.2553   0.2514   -0.1189 |
-  |--------------------------------------------------------------------------|
-  | 2018     kars     ordu   kars_ordu   0.2709    0.1847   0.2750   -0.0762 |
-  | 2018     kars     rize   kars_rize   0.2352    0.2300   0.2616   -0.3696 |
-  | 2018     kars      van    kars_van   0.2654    0.3301   0.1898   -0.2861 |
-  +--------------------------------------------------------------------------+
+  +--------------------------------------------------------------+
+  | year   source   target   bplace   mig_out   mig_in       sch |
+  |--------------------------------------------------------------|
+  | 2018     bolu     kars   0.1923    0.2179   0.3537   -0.0088 |
+  | 2018     bolu     ordu   0.2518    0.3966   0.3119    0.2627 |
+  | 2018     bolu     rize   0.2890    0.1895   0.1892    0.3392 |
+  | 2018     bolu      van   0.2669    0.1960   0.1837   -0.0549 |
+  | 2018     kars     bolu   0.2667    0.1185   0.2234    0.0088 |
+  |--------------------------------------------------------------|
+  | 2018     kars     ordu   0.2012    0.3064   0.2958    0.2715 |
+  | 2018     kars     rize   0.3058    0.2504   0.2864    0.3480 |
+  | 2018     kars      van   0.2263    0.3247   0.2811   -0.0461 |
+  +--------------------------------------------------------------+
 
 . 
-. * a flow weight is a share, so the weights leaving a node add up
-. * to one in every year
+. * the weights leaving a node add up to one in every year
 . preserve
 
-.     split edge_id, parse("_") gen(node)
-variables created as string: 
-node1  node2
-
-.     collapse (sum) mig_out, by(year node1)
+.     collapse (sum) mig_out, by(year source)
 
 .     format mig_out %8.4f
 
 .     list, noobs abbreviate(16)
 
+  +-------------------------+
+  | year   source   mig_out |
+  |-------------------------|
+  | 2018     bolu    1.0000 |
+  | 2018     kars    1.0000 |
+  | 2018     ordu    1.0000 |
+  | 2018     rize    1.0000 |
+  | 2018      van    1.0000 |
+  |-------------------------|
+  | 2019     bolu    1.0000 |
+  | 2019     kars    1.0000 |
+  | 2019     ordu    1.0000 |
+  | 2019     rize    1.0000 |
+  | 2019      van    1.0000 |
+  |-------------------------|
+  | 2020     bolu    1.0000 |
+  | 2020     kars    1.0000 |
+  | 2020     ordu    1.0000 |
+  | 2020     rize    1.0000 |
+  | 2020      van    1.0000 |
+  +-------------------------+
+
+. restore
+
+. 
+. * the inflow weights entering a node add up to one in every year
+. preserve
+
+.     collapse (sum) mig_in, by(year target)
+
+.     format mig_in %8.4f
+
+.     list, noobs abbreviate(16)
+
   +------------------------+
-  | year   node1   mig_out |
+  | year   target   mig_in |
   |------------------------|
-  | 2018    bolu    1.0000 |
-  | 2018    kars    1.0000 |
-  | 2018    ordu    1.0000 |
-  | 2018    rize    1.0000 |
-  | 2018     van    1.0000 |
+  | 2018     bolu   1.0000 |
+  | 2018     kars   1.0000 |
+  | 2018     ordu   1.0000 |
+  | 2018     rize   1.0000 |
+  | 2018      van   1.0000 |
   |------------------------|
-  | 2019    bolu    1.0000 |
-  | 2019    kars    1.0000 |
-  | 2019    ordu    1.0000 |
-  | 2019    rize    1.0000 |
-  | 2019     van    1.0000 |
+  | 2019     bolu   1.0000 |
+  | 2019     kars   1.0000 |
+  | 2019     ordu   1.0000 |
+  | 2019     rize   1.0000 |
+  | 2019      van   1.0000 |
   |------------------------|
-  | 2020    bolu    1.0000 |
-  | 2020    kars    1.0000 |
-  | 2020    ordu    1.0000 |
-  | 2020    rize    1.0000 |
-  | 2020     van    1.0000 |
+  | 2020     bolu   1.0000 |
+  | 2020     kars   1.0000 |
+  | 2020     ordu   1.0000 |
+  | 2020     rize   1.0000 |
+  | 2020      van   1.0000 |
   +------------------------+
 
 . restore
@@ -361,13 +406,9 @@ node1  node2
 . * reversed edge
 . preserve
 
-.     split edge_id, parse("_") gen(node)
-variables created as string: 
-node1  node2
-
-.     generate str24 pair = cond(node1 < node2, ///
->                                node1 + "|" + node2, ///
->                                node2 + "|" + node1)
+.     generate str24 pair = cond(source < target, ///
+>                                source + "|" + target, ///
+>                                target + "|" + source)
 
 .     collapse (sum) sch, by(year pair)
 
@@ -375,9 +416,21 @@ node1  node2
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
-         sch |         30    1.80e-17    7.76e-17  -1.25e-16   1.39e-16
+         sch |         30   -1.47e-18    6.58e-17  -1.11e-16   1.11e-16
 
 . restore
+
+. 
+. * the single-subnet copy and the pooled network differ
+. generate double gap = abs(mig_out - mig_pool)
+
+. summarize gap
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+         gap |         60     .023597    .0205213   .0000577   .0829326
+
+. drop gap
 
 . 
 . *--------------------------------------------------------------
@@ -385,8 +438,6 @@ node1  node2
 . *--------------------------------------------------------------
 . 
 . frame change networks_multi
-
-. format feature source target %4s
 
 . format bplace_fratio bplace %7.4f
 
@@ -396,103 +447,100 @@ node1  node2
 
 . * every network in the frame, and beside each the ratio its subnet
 . * takes at the node
-. list in 1/9, noobs abbreviate(16)
+. list year feature source target bplace_fratio bplace ///
+>     mig_out_fratio mig_out in 1/9, noobs abbreviate(16)
 
-  +-----------------------------------------------------------------------+
-  | year | feature | source | target |   edge_id | bplace_fratio | bplace |
-  | 2018 |    bolu |   bolu |   kars | bolu_kars |        0.3502 | 0.3119 |
-  |-----------------------------------------------------------------------|
-  |   mig_out_fratio    |   mig_out    |   mig_in_fratio    |   mig_in    |
-  |           0.1499    |    0.0458    |          0.2348    |   0.2684    |
-  +-----------------------------------------------------------------------+
+  +-----------------------------------------------------------+
+  | year | feature | source | target | bplace_fratio | bplace |
+  | 2018 |    bolu |   bolu |   kars |        0.2926 | 0.1029 |
+  |-----------------------------------------------------------|
+  |         mig_out_fratio         |         mig_out          |
+  |                 0.2926         |          0.0650          |
+  +-----------------------------------------------------------+
 
-  +-----------------------------------------------------------------------+
-  | year | feature | source | target |   edge_id | bplace_fratio | bplace |
-  | 2018 |    bolu |   bolu |   ordu | bolu_ordu |        0.3502 | 0.2564 |
-  |-----------------------------------------------------------------------|
-  |   mig_out_fratio    |   mig_out    |   mig_in_fratio    |   mig_in    |
-  |           0.1499    |    0.5333    |          0.1676    |   0.2324    |
-  +-----------------------------------------------------------------------+
+  +-----------------------------------------------------------+
+  | year | feature | source | target | bplace_fratio | bplace |
+  | 2018 |    bolu |   bolu |   ordu |        0.2926 | 0.3872 |
+  |-----------------------------------------------------------|
+  |         mig_out_fratio         |         mig_out          |
+  |                 0.2926         |          0.5746          |
+  +-----------------------------------------------------------+
 
-  +-----------------------------------------------------------------------+
-  | year | feature | source | target |   edge_id | bplace_fratio | bplace |
-  | 2018 |    bolu |   bolu |   rize | bolu_rize |        0.3502 | 0.1631 |
-  |-----------------------------------------------------------------------|
-  |   mig_out_fratio    |   mig_out    |   mig_in_fratio    |   mig_in    |
-  |           0.1499    |    0.0595    |          0.0827    |   0.4190    |
-  +-----------------------------------------------------------------------+
+  +-----------------------------------------------------------+
+  | year | feature | source | target | bplace_fratio | bplace |
+  | 2018 |    bolu |   bolu |   rize |        0.2926 | 0.1773 |
+  |-----------------------------------------------------------|
+  |         mig_out_fratio         |         mig_out          |
+  |                 0.2926         |          0.0652          |
+  +-----------------------------------------------------------+
 
-  +-----------------------------------------------------------------------+
-  | year | feature | source | target |   edge_id | bplace_fratio | bplace |
-  | 2018 |    bolu |   bolu |    van |  bolu_van |        0.3502 | 0.2687 |
-  |-----------------------------------------------------------------------|
-  |   mig_out_fratio    |   mig_out    |   mig_in_fratio    |   mig_in    |
-  |           0.1499    |    0.3614    |          0.2692    |   0.0711    |
-  +-----------------------------------------------------------------------+
+  +-----------------------------------------------------------+
+  | year | feature | source | target | bplace_fratio | bplace |
+  | 2018 |    bolu |   bolu |    van |        0.2926 | 0.3325 |
+  |-----------------------------------------------------------|
+  |         mig_out_fratio         |         mig_out          |
+  |                 0.2926         |          0.2952          |
+  +-----------------------------------------------------------+
 
-  +-----------------------------------------------------------------------+
-  | year | feature | source | target |   edge_id | bplace_fratio | bplace |
-  | 2018 |    bolu |   kars |   bolu | kars_bolu |        0.2829 | 0.2889 |
-  |-----------------------------------------------------------------------|
-  |   mig_out_fratio    |   mig_out    |   mig_in_fratio    |   mig_in    |
-  |           0.2348    |    0.2684    |          0.1499    |   0.0458    |
-  +-----------------------------------------------------------------------+
+  +-----------------------------------------------------------+
+  | year | feature | source | target | bplace_fratio | bplace |
+  | 2018 |    bolu |   kars |   bolu |        0.0364 | 0.5020 |
+  |-----------------------------------------------------------|
+  |         mig_out_fratio         |         mig_out          |
+  |                 0.0364         |          0.5103          |
+  +-----------------------------------------------------------+
 
-  +-----------------------------------------------------------------------+
-  | year | feature | source | target |   edge_id | bplace_fratio | bplace |
-  | 2018 |    bolu |   kars |   ordu | kars_ordu |        0.2829 | 0.2649 |
-  |-----------------------------------------------------------------------|
-  |   mig_out_fratio    |   mig_out    |   mig_in_fratio    |   mig_in    |
-  |           0.2348    |    0.1148    |          0.1676    |   0.1478    |
-  +-----------------------------------------------------------------------+
+  +-----------------------------------------------------------+
+  | year | feature | source | target | bplace_fratio | bplace |
+  | 2018 |    bolu |   kars |   ordu |        0.0364 | 0.2150 |
+  |-----------------------------------------------------------|
+  |         mig_out_fratio         |         mig_out          |
+  |                 0.0364         |          0.0600          |
+  +-----------------------------------------------------------+
 
-  +-----------------------------------------------------------------------+
-  | year | feature | source | target |   edge_id | bplace_fratio | bplace |
-  | 2018 |    bolu |   kars |   rize | kars_rize |        0.2829 | 0.1685 |
-  |-----------------------------------------------------------------------|
-  |   mig_out_fratio    |   mig_out    |   mig_in_fratio    |   mig_in    |
-  |           0.2348    |    0.2776    |          0.0827    |   0.5186    |
-  +-----------------------------------------------------------------------+
+  +-----------------------------------------------------------+
+  | year | feature | source | target | bplace_fratio | bplace |
+  | 2018 |    bolu |   kars |   rize |        0.0364 | 0.0985 |
+  |-----------------------------------------------------------|
+  |         mig_out_fratio         |         mig_out          |
+  |                 0.0364         |          0.2454          |
+  +-----------------------------------------------------------+
 
-  +-----------------------------------------------------------------------+
-  | year | feature | source | target |   edge_id | bplace_fratio | bplace |
-  | 2018 |    bolu |   kars |    van |  kars_van |        0.2829 | 0.2777 |
-  |-----------------------------------------------------------------------|
-  |   mig_out_fratio    |   mig_out    |   mig_in_fratio    |   mig_in    |
-  |           0.2348    |    0.3393    |          0.2692    |   0.2290    |
-  +-----------------------------------------------------------------------+
+  +-----------------------------------------------------------+
+  | year | feature | source | target | bplace_fratio | bplace |
+  | 2018 |    bolu |   kars |    van |        0.0364 | 0.1846 |
+  |-----------------------------------------------------------|
+  |         mig_out_fratio         |         mig_out          |
+  |                 0.0364         |          0.1843          |
+  +-----------------------------------------------------------+
 
-  +-----------------------------------------------------------------------+
-  | year | feature | source | target |   edge_id | bplace_fratio | bplace |
-  | 2018 |    bolu |   ordu |   bolu | ordu_bolu |        0.2323 | 0.2732 |
-  |-----------------------------------------------------------------------|
-  |   mig_out_fratio    |   mig_out    |   mig_in_fratio    |   mig_in    |
-  |           0.1676    |    0.2324    |          0.1499    |   0.5333    |
-  +-----------------------------------------------------------------------+
+  +-----------------------------------------------------------+
+  | year | feature | source | target | bplace_fratio | bplace |
+  | 2018 |    bolu |   ordu |   bolu |        0.0884 | 0.5960 |
+  |-----------------------------------------------------------|
+  |         mig_out_fratio         |         mig_out          |
+  |                 0.0884         |          0.2500          |
+  +-----------------------------------------------------------+
 
 . 
 . * a subnet is a network of its own, so its weights add up to one
 . preserve
 
-.     split edge_id, parse("_") gen(node)
-variables created as string: 
-node1  node2
-
-.     collapse (sum) mig_out, by(year feature node1)
+.     collapse (sum) mig_out, by(year feature source)
 
 .     format mig_out %8.4f
 
-.     list if year == 2018 & node1 == "van", noobs abbreviate(16)
+.     list if year == 2018 & source == "van", noobs abbreviate(16)
 
-  +----------------------------------+
-  | year   feature   node1   mig_out |
-  |----------------------------------|
-  | 2018      bolu     van    1.0000 |
-  | 2018      kars     van    1.0000 |
-  | 2018      ordu     van    1.0000 |
-  | 2018      rize     van    1.0000 |
-  | 2018       van     van    1.0000 |
-  +----------------------------------+
+  +-----------------------------------+
+  | year   feature   source   mig_out |
+  |-----------------------------------|
+  | 2018      bolu      van    1.0000 |
+  | 2018      kars      van    1.0000 |
+  | 2018      ordu      van    1.0000 |
+  | 2018      rize      van    1.0000 |
+  | 2018       van      van    1.0000 |
+  +-----------------------------------+
 
 . restore
 
@@ -500,51 +548,148 @@ node1  node2
 . * and the ratios those subnets hold at the node add up to one
 . preserve
 
-.     split edge_id, parse("_") gen(node)
-variables created as string: 
-node1  node2
-
-.     bysort year feature node1: keep if _n == 1
+.     bysort year feature source: keep if _n == 1
 (225 observations deleted)
 
-.     collapse (sum) mig_out_fratio, by(year node1)
+.     collapse (sum) mig_out_fratio, by(year source)
 
 .     format mig_out_fratio %8.4f
 
 .     list, noobs abbreviate(16)
 
-  +-------------------------------+
-  | year   node1   mig_out_fratio |
-  |-------------------------------|
-  | 2018    bolu           1.0000 |
-  | 2018    kars           1.0000 |
-  | 2018    ordu           1.0000 |
-  | 2018    rize           1.0000 |
-  | 2018     van           1.0000 |
-  |-------------------------------|
-  | 2019    bolu           1.0000 |
-  | 2019    kars           1.0000 |
-  | 2019    ordu           1.0000 |
-  | 2019    rize           1.0000 |
-  | 2019     van           1.0000 |
-  |-------------------------------|
-  | 2020    bolu           1.0000 |
-  | 2020    kars           1.0000 |
-  | 2020    ordu           1.0000 |
-  | 2020    rize           1.0000 |
-  | 2020     van           1.0000 |
-  +-------------------------------+
+  +--------------------------------+
+  | year   source   mig_out_fratio |
+  |--------------------------------|
+  | 2018     bolu           1.0000 |
+  | 2018     kars           1.0000 |
+  | 2018     ordu           1.0000 |
+  | 2018     rize           1.0000 |
+  | 2018      van           1.0000 |
+  |--------------------------------|
+  | 2019     bolu           1.0000 |
+  | 2019     kars           1.0000 |
+  | 2019     ordu           1.0000 |
+  | 2019     rize           1.0000 |
+  | 2019      van           1.0000 |
+  |--------------------------------|
+  | 2020     bolu           1.0000 |
+  | 2020     kars           1.0000 |
+  | 2020     ordu           1.0000 |
+  | 2020     rize           1.0000 |
+  | 2020      van           1.0000 |
+  +--------------------------------+
 
 . restore
+
+. 
+. *--------------------------------------------------------------
+. * An estimation on the panel
+. *
+. * The outcome comes from a file of its own, on the same key as the
+. * panel. It was generated with known coefficients: 2 on the
+. * single-subnet copy of the flow network, mig_out, and 0.5 on the
+. * schooling log-ratio, sch. The ordered pair and the period are
+. * absorbed: source-period and target-period effects together would
+. * absorb sch entirely, since a log-ratio is the difference of a
+. * target-period and a source-period term. With five nodes no
+. * cluster-robust variance is reliable, so the standard errors are
+. * robust to heteroskedasticity only.
+. *--------------------------------------------------------------
+. 
+. frame create outcome
+
+. frame outcome: import delimited test_outcome.csv, clear varnames(1)
+(4 vars, 60 obs)
+
+. frame change networks_single
+
+. frlink 1:1 year source target, frame(outcome)
+  (all observations in frame networks_single matched)
+
+. frget y, from(outcome)
+  (1 variable copied from linked frame)
+
+. egen pair = group(source target)
+
+. reghdfe y mig_out sch, absorb(pair year) vce(robust)
+(MWFE estimator converged in 2 iterations)
+
+HDFE Linear regression                            Number of obs   =         60
+Absorbing 2 HDFE groups                           F(   2,     36) =     248.00
+                                                  Prob > F        =     0.0000
+                                                  R-squared       =     0.9505
+                                                  Adj R-squared   =     0.9188
+                                                  Within R-sq.    =     0.9162
+                                                  Root MSE        =     0.0448
+
+------------------------------------------------------------------------------
+             |               Robust
+           y | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+     mig_out |    1.77928   .1007267    17.66   0.000     1.574996    1.983563
+         sch |   .5014369    .036074    13.90   0.000     .4282754    .5745984
+       _cons |   1.059602   .0265174    39.96   0.000     1.005823    1.113382
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+        pair |        20           0          20     |
+        year |         3           1           2     |
+-----------------------------------------------------+
+
+. 
+. * the estimates, written for the article
+. frame create estimates str16 term double(estimate se)
+
+. foreach t in mig_out sch {
+  2.     frame post estimates ("`t'") (_b[`t']) (_se[`t'])
+  3. }
+
+. frame post estimates ("N") (e(N)) (.)
+
+. frame post estimates ("r2") (e(r2)) (.)
+
+. frame estimates: list, noobs abbreviate(16)
+
+  +---------------------------------+
+  |    term    estimate          se |
+  |---------------------------------|
+  | mig_out   1.7792796   .10072674 |
+  |     sch   .50143689   .03607402 |
+  |       N          60           . |
+  |      r2   .95046695           . |
+  +---------------------------------+
+
+. frame estimates: export delimited using example_estimates.csv, replace
+file example_estimates.csv saved
 
 . 
 . frame change default
 
 . 
+. *--------------------------------------------------------------
+. * What this run wrote
+. *--------------------------------------------------------------
+. 
+. confirm file example_estimates.csv
+
+. display as text _n "Files written to `c(pwd)':"
+
+Files written to C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples:
+
+. display as text "  example_session.log"
+  example_session.log
+
+. display as text "  example_estimates.csv"
+  example_estimates.csv
+
+. 
 . log close
       name:  <unnamed>
-       log:  C:\Users\ntnta\gm\networks-ado-project\examples\example_session.lo
-> g
+       log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\examp
+> le_session.log
   log type:  text
- closed on:  23 Sep 2026, 05:07:50
+ closed on:  27 Oct 2026, 20:24:06
 -------------------------------------------------------------------------------

@@ -1,0 +1,5 @@
+file,year,feature,source,target,source_size,source_value,target_size,target_value
+test_interaction_multi,2018,van,van,kars,40000,17407,8605,4520
+test_flow_multi,2018,van,van,kars,40000,2476,8605,2308
+test_flow_single,2018,,van,kars,,6008,,5737
+test_attribute_single,2018,,van,kars,,7.8524,,8.2232

@@ -2,10 +2,14 @@
 
 A Stata package for calculating network edge weights from a panel of ordered node pairs. Supports multiple network types (interaction, flow, attribute) and outputs panel-ready datasets for econometric analysis.
 
+Version 2.1.0. The package is called `netcalc`, its one command is
+`network_calc`, and `stata-networks` is the name of the repository in which
+it is developed.
+
 ## Features
 
 - **Three Network Types**: Interaction, Flow, and Attribute networks
-- **Multi-subnet Support**: Feature-based and aggregate calculations
+- **Multi-subnet Support**: Feature-based and aggregate calculations for interaction and flow
 - **Bidirectional Networks**: Outflow and inflow direction options
 - **Automatic Frame Management**: Seamless data organization
 - **Ready for Regression**: Compatible with ivreghdfe, reghdfe, and other panel estimators
@@ -20,13 +24,14 @@ A Stata package for calculating network edge weights from a panel of ordered nod
 ### 2. Flow Network (Single or Multi-subnet)
 - **Formula**: w_ij = v_ij / Σ_{k≠i} v_ik, taken inside each subnet under `subnet(multi)`; the single-subnet copy scales each subnet by the ratio it holds at the node before adding them up
 - **Use Case**: Migration flows, trade flows, capital flows
-- **Direction**: outflow, or inflow, which exchanges the two indices: the weight written on edge i,j is the one the same formula gives edge j,i
+- **Values**: `source_value` is the quantity of the edge i,j as recorded at i, and `target_value` the quantity of the same edge as recorded at j, as with exports declared by the exporter and imports declared by the importer; where a single record exists, the same figure goes into both columns
+- **Direction**: outflow, or inflow, which anchors the weight at the target: the weight of edge i,j is the value j records for it over the values j records for every edge entering it, w_ij = u_ij / Σ_{k≠j} u_kj with u read from `target_value`, the weight of i in what arrives at j
 
-### 3. Attribute Network (Single or Multi-subnet)
+### 3. Attribute Network (Single-subnet)
 - **Formula**: w_ij = ln(A_j / A_i) for outflow
 - **Use Case**: Economic disparities (GDP, unemployment, education)
 - **Direction**: outflow (target/source) or inflow (source/target)
-- **Subnets**: an attribute network with subnets stays in `networks_multi`; it is not reduced to a single subnet, since the ratios that would weigh the subnets differ at the two ends of an edge and the copy would lose its antisymmetry
+- **Subnets**: none. An attribute describes the node, so `type(attribute)` takes `subnet(single)` only; levels recorded for groups within a node are reduced to the node before the call
 
 ## Installation
 
@@ -106,6 +111,14 @@ year  feature  source  target  source_size  source_value
 who live there, passengers carried by a mode), read as a ratio of the
 subnet to the node; `value` is the quantity the network is about.
 
+The templates are defined on the complete directed mesh of each period:
+every ordered pair of distinct nodes, one value for each node, and a zero
+for a flow that did not happen. Laying the data out that way is part of
+preparing the input; the command computes on the rows it is given. It
+refuses a missing value, a self-loop, an edge that appears twice in a
+period, and a source or target that is not a string or holds an
+underscore.
+
 The examples read the data files in `examples/` and run from that
 directory. In the files split into subnets, `feature` holds the province
 people were born in.
@@ -135,17 +148,27 @@ network_calc, type(attribute) subnet(single) name(sch)
 
 ### Example 4: Regression Analysis
 
-```stata
-* Single-subnet regression
-frame change networks_single
-ivreghdfe y mig_out mig_in bplace sch, absorb(edge_id)
+The estimation lies outside `network_calc`, and so does the outcome: it
+comes from a file of its own and is linked to the panel on its key.
 
-* Multi-subnet regression: bplace_fratio is the ratio the subnet holds
-* within the feature at its node, which a multi-subnet call writes
-* beside the weights
-frame change networks_multi
-ivreghdfe y bplace bplace_fratio, absorb(edge_id feature)
+```stata
+frame create outcome
+frame outcome: import delimited test_outcome.csv, clear varnames(1)
+frame change networks_single
+frlink 1:1 year source target, frame(outcome)
+frget y, from(outcome)
+egen pair = group(source target)
+reghdfe y mig_out sch, absorb(pair year) vce(robust)
 ```
+
+An attribute value is the difference of a target-period and a
+source-period term, so source-period and target-period fixed effects
+together would absorb `sch` entirely; the example absorbs the ordered pair
+and the period instead.
+
+The whole example, from the data to the estimation, is
+`examples/example_session.do`; `examples/generate_test_data.do` builds its
+data.
 
 ## Command Syntax
 
@@ -160,6 +183,10 @@ network_calc, type(interaction|flow|attribute) subnet(single|multi) name(network
 - `feature()`: Feature variable (required for multi-subnet)
 - `direction()`: Outflow or inflow (default: outflow)
 - `debug`: Display detailed output
+
+The values of `type()`, `subnet()` and `direction()` may be typed in any
+case and shortened to an unambiguous leading part, as in `type(Flow)`,
+`type(f)` or `direction(IN)`. `type(attribute)` takes `subnet(single)` only.
 
 ## Output Frames
 
@@ -178,6 +205,16 @@ year  feature  source  target  edge_id  network1_fratio  network1  ...
 A multi-subnet call writes two columns into `networks_multi`: the network
 and, beside it, the ratio of each subnet within the feature at its node.
 
+Weight networks need not reach the same edges: on an edge a flow or
+interaction network does not reach, its column weighs zero, which changes no
+weight already in the frame. An attribute cannot be absent on an edge, since
+a node is never without its attribute: an attribute network must reach every
+edge of its frame, and a frame that holds an attribute column takes no edge
+the column lacks. Every join is checked against both frames before either
+is written, so a call writes both frames or neither. Each call returns in
+`r()` the rows and edges it computed and, for each frame it writes, the
+edges matched, those only in the frame, and those only in the call.
+
 ## Project Structure
 
 ```
@@ -190,9 +227,16 @@ stata-networks/
 │   ├── _netcalc_attribute.ado    # attribute template
 │   ├── _netcalc_join.ado         # creates a frame or joins to it
 │   └── _netcalc_aggregate.ado    # sums subnet weights (interaction, flow)
-├── examples/                      # example session, its log and data
+├── examples/
+│   ├── example_session.do        # the session of the article, ending in an estimation
+│   ├── example_session.log       # its log
+│   ├── example_estimates.csv     # the estimates the session writes
+│   ├── generate_test_data.do     # builds the data files below, with its log
+│   ├── test_*.csv                 # the input files and the outcome
+│   └── article_table2.csv        # the first row of each input file
 ├── tests/
-│   └── network_calc_cert.do      # certification script
+│   ├── network_calc_cert.do      # certification script
+│   └── network_calc_cert.log     # its log, run on Stata 17
 ├── netcalc.pkg                    # package descriptor
 ├── stata.toc                      # net install index
 ├── LICENSE                        # Academic and Research Use License

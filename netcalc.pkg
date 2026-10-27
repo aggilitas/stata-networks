@@ -4,12 +4,12 @@ d
 d Author: Necmi TALAY
 d Support: https://github.com/aggilitas/stata-networks/issues
 d
-d Distribution-Date: 20260913
+d Distribution-Date: 20261027
 d
 d Turns a long panel of ordered node pairs and periods into a
 d panel of directed edge weights, ready for a fixed-effects
-d estimator. Three templates: interaction, flow and attribute,
-d each with an optional split into subnets.
+d estimator. Three templates: interaction, flow and attribute;
+d interaction and flow split into subnets by a feature.
 d
 d Requires: Stata version 16 or higher (for frame support)
 d

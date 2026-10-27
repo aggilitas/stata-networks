@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 2.0.0  12sep2026}{...}
+{* *! version 2.1.0  27oct2026}{...}
 {viewerjumpto "Syntax" "network_calc##syntax"}{...}
 {viewerjumpto "Description" "network_calc##description"}{...}
 {viewerjumpto "Options" "network_calc##options"}{...}
@@ -8,6 +8,7 @@
 {viewerjumpto "Output frames" "network_calc##output"}{...}
 {viewerjumpto "Examples" "network_calc##examples"}{...}
 {viewerjumpto "Stored results" "network_calc##results"}{...}
+{viewerjumpto "Characteristics" "network_calc##chars"}{...}
 {viewerjumpto "Author" "network_calc##author"}{...}
 
 {title:Title}
@@ -73,10 +74,15 @@ The command refuses data it cannot make a network of, rather than
 returning a weight that reads as defined. It stops on a missing value
 in any required variable; on a negative size, a negative flow or a
 negative {cmd:interaction} value; on an {cmd:attribute} value that is
-zero or negative, the log ratio being undefined there; on an edge that
-appears more than once in a period, or in a subnet; and on a
-{cmd:source} or {cmd:target} that is not a string or holds an
-underscore, from which no {cmd:edge_id} can be built. A zero
+zero or negative, the log ratio being undefined there; on a row whose
+{cmd:source} and {cmd:target} are the same node, which is not one of
+its own alternatives; on an edge that appears more than once in a
+period, or in a subnet; and on a {cmd:source} or {cmd:target} that is
+not a string or holds an underscore, from which no {cmd:edge_id} can be
+built. It also stops, before either output frame is written, on a join
+the frames cannot take: a key of another storage type than the frame
+has, and an {cmd:attribute} column that would be absent on an edge of
+its frame (see {help network_calc##output:Output frames}). A zero
 denominator is not refused. A node out of which nothing travels, a
 subnet the node does not hold, and a subnet absent from every node but
 its source all come to zero, and their weights are written as zero.
@@ -92,14 +98,19 @@ over a mesh quietly missing one of its alternatives.
 
 {phang}
 {opt t:ype(template)} selects the weight template and is required. See
-{help network_calc##templates:Templates} for the three formulas.
+{help network_calc##templates:Templates} for the three formulas. The
+values of {cmd:type()}, {cmd:subnet()} and {cmd:direction()} may be
+typed in any case and shortened to any unambiguous leading part, as in
+{cmd:type(Flow)}, {cmd:type(f)} or {cmd:direction(IN)}.
 
 {phang}
 {opt s:ubnet(scope)} is required. {cmd:single} computes one weight per
 edge and period from single-subnet data. {cmd:multi} computes one
-weight per edge, period and level of {cmd:feature()}, and for
-{cmd:interaction} and {cmd:flow} also a single-subnet copy; see
-{help network_calc##output:Output frames}.
+weight per edge, period and level of {cmd:feature()}, and a
+single-subnet copy; see {help network_calc##output:Output frames}.
+{cmd:multi} is for {cmd:interaction} and {cmd:flow}. An
+{cmd:attribute} describes the node and has no subnets, so
+{cmd:type(attribute)} takes {cmd:subnet(single)} only.
 
 {phang}
 {opt n:ame(netname)} is required and names the network. The name
@@ -122,14 +133,16 @@ ignored, and a note says so.
 {phang}
 {opt d:irection(direction)} chooses which node anchors the weight. With
 {cmd:outflow}, the default, the weights of the edges leaving a node are
-computed relative to that node. {cmd:inflow} exchanges the two indices
-and nothing else: the weight written on edge i,j is the weight the same
-formula gives to edge j,i. For {cmd:interaction} and {cmd:flow} that
-decides which of the two sums equals one, so the weights of a node add
-up over the edges entering it rather than those leaving it; for
-{cmd:attribute} it flips the sign of the log ratio. Nothing in the data
-moves either way and the edge keeps its own orientation: only which
-columns are read as the source changes.
+computed relative to that node. With {cmd:inflow} the weight is anchored
+at the target. Under {cmd:flow}, the weight of edge i,j is then the
+value of that edge as recorded at j, read from {cmd:target_value}, over
+the values recorded at j for every edge entering it: the weight of i in
+what arrives at j. It is not the outflow weight of the reversed edge.
+Under {cmd:interaction} the two endpoints exchange their roles in the
+same way, and for {cmd:attribute} the log ratio changes sign. For
+{cmd:interaction} and {cmd:flow} the weights of a node then add up over
+the edges entering it rather than those leaving it. Nothing in the data
+moves either way and the edge keeps its own orientation.
 
 {phang}
 {opt debug} displays the intermediate quantities of the template and a
@@ -151,6 +164,20 @@ edge and period. Without a feature it must hold:
 {p2col :{cmd:source_value}}quantity measured at {cmd:source}{p_end}
 {p2col :{cmd:target_value}}quantity measured at {cmd:target}{p_end}
 {p2colreset}{...}
+
+{pstd}
+Under {cmd:flow}, both value columns describe the edge itself:
+{cmd:source_value} is the quantity of the edge i,j as recorded at i,
+and {cmd:target_value} the quantity of the same edge as recorded at j,
+as with exports declared by the exporter and imports declared by the
+importer. Where a single record exists, the same figure goes into both
+columns. {cmd:outflow} reads the first and {cmd:inflow} the second.
+
+{pstd}
+The templates are defined on the complete directed mesh of each
+period, every ordered pair i,j with j != i, and each node carries one
+value; a flow that did not happen is a row with value zero. Laying the
+data out that way is part of preparing the input.
 
 {pstd}
 With {cmd:subnet(multi)} the panel holds one observation per period,
@@ -181,13 +208,13 @@ kilometres meaningless and a fare or a tonnage meaningful.
 {pstd}
 Under {cmd:interaction}, {cmd:size} must be constant within a period,
 subnet and node: the template reads it once for each subnet, because it
-describes the node. Under {cmd:flow} and {cmd:attribute} it is added up
-over the rows of the subnet, so it may describe the node and be the
-same on every row, or describe the edge and change from one target to
-the next, as the migrants of one group sent along each edge would.
+describes the node. Under {cmd:flow} it is added up over the rows of
+the subnet, so it may describe the edge and change from one target to
+the next, as the migrants of one group sent along each edge would, or
+describe the node and be the same on every row of a complete mesh.
 {cmd:value} is constant within a period, subnet and node when it
-describes a node, as in {cmd:attribute}, and varies over the edge when
-it travels along it, as in {cmd:flow}.
+describes a node, as in {cmd:interaction} and {cmd:attribute}, and
+varies over the edge when it travels along it, as in {cmd:flow}.
 
 {pstd}
 {cmd:source} and {cmd:target} must be string variables, because the
@@ -235,6 +262,13 @@ their own:
 w(ij,X) = v(ij,X) / sum over k != i of v(ik,X)
 
 {pstd}
+Under {cmd:direction(inflow)} the weight is anchored at the target and
+read from {cmd:target_value}, u below:
+
+{p 8 8 2}
+w(ij) = u(ij) / sum over k != j of u(kj)
+
+{pstd}
 {cmd:size} does not enter that weight. It enters where the subnets are
 put back together: each subnet is scaled by its ratio at the node before
 the copy in {cmd:networks_single} is added up.
@@ -246,17 +280,17 @@ capital.
 {dlgtab:attribute}
 
 {pstd}
-{cmd:type(attribute)} accepts either scope. The weight is the log ratio
-of the two node values:
+{cmd:type(attribute)} takes {cmd:subnet(single)}: an attribute
+describes the node and has no subnets. The value is the log ratio of
+the two node values:
 
 {p 8 8 2}
 w(ij) = ln[A(j) / A(i)]     under {cmd:direction(outflow)}
 
 {pstd}
-Under {cmd:subnet(multi)} the ratio is taken between the same subnet at
-the two nodes. {cmd:size} does not enter that value; it is read, as
-under the other templates, into the {cmd:_fratio} column written beside
-it in {cmd:networks_multi}.
+Where the levels are recorded for groups within a node, reduce them to
+the node before the call, for instance as a mean weighted by the size
+of each group, and pass the node level.
 
 {pstd}
 Use it for levels that describe nodes rather than travel between them:
@@ -280,6 +314,12 @@ first call and merging into it on later calls:
 {p2colreset}{...}
 
 {pstd}
+The two names are reserved for this output: a frame of either name is
+taken to hold the output of earlier calls. To keep two panels apart in
+one session, rename the frames of the first with {help frame rename}
+before building the second.
+
+{pstd}
 {cmd:edge_id} is {cmd:source} and {cmd:target} joined by an underscore.
 Every call adds the network, named by {cmd:name()}, to the frame or
 frames it writes, and a {cmd:subnet(multi)} call writes two columns
@@ -290,41 +330,38 @@ into {cmd:networks_multi}: the network and, beside it,
 {p2col :{cmd:subnet(single)}}{cmd:networks_single}{p_end}
 {p2col :{cmd:interaction}, {cmd:subnet(multi)}}both{p_end}
 {p2col :{cmd:flow}, {cmd:subnet(multi)}}both{p_end}
-{p2col :{cmd:attribute}, {cmd:subnet(multi)}}{cmd:networks_multi}
-only{p_end}
 {p2colreset}{...}
 
 {pstd}
 A frame is a panel of edges, and every network in it is a column of
-that panel, so the networks must be computed over the same edges. The
-merge keeps the union of the two edge sets, so no row is ever lost,
-and the call reports how many edges matched and how many were on one
-side only.
+that panel. The merge keeps the union of the two edge sets, so no row
+is ever lost, and the call reports, and returns in {cmd:r()}, how many
+edges matched and how many were on one side only.
 
 {pstd}
-On an edge a network does not reach, the column of that network is
-filled with zero rather than left missing, so that no row is lost to an
-estimator. Nothing already in the frame moves. For {cmd:interaction}
-and {cmd:flow} the total the weights were divided by never counted that
-edge; an {cmd:attribute} weight is part of no total at all, so its
-cells are filled the same way and nothing moves there either. Only the
-cells the merge itself introduced are filled.
+Weight networks need not reach the same edges. On an edge that a
+{cmd:flow} or {cmd:interaction} network does not reach, its column is
+filled with zero: a weight can be zero on an edge that exists, as the
+flows within a city are on a day of curfew while its interaction
+structure is not. Nothing already in the frame moves, since the total
+the weights were divided by never counted that edge. Only the cells the
+merge itself introduced are filled.
 
 {pstd}
-What that zero means depends on the template. Under {cmd:flow} an edge
-absent from the input is a flow nobody recorded, which is an observed
-zero: the weight there is zero, and a flow layer built from sparse
-counts is used as it stands. That holds while the source leaves out
-only the flows that did not happen; corridors it never collected are a
-gap the template cannot tell from a zero, a property of the source and
-not of the command, and the analyst decides. Under {cmd:interaction}
-and {cmd:attribute} the source describes nodes, and the zero only
-records that the channel does not reach the edge; an {cmd:attribute}
-value of zero would claim that the two nodes stand level. An
-{cmd:interaction} or {cmd:attribute} channel that does not cover the
-edge set of the panel in full is not used as a layer: its filled cells
-would enter the estimation as observations of a relation that was
-never observed.
+An {cmd:attribute} cannot be absent on an edge. It describes the node
+itself, as height and weight describe a person or population and
+output a province, so a node is never without it, and an attribute
+value of zero would claim that the two nodes stand level. The join
+therefore fills no attribute cell: an {cmd:attribute} network must
+reach every edge of the frame it joins, and a frame that holds an
+{cmd:attribute} column takes no edge the column lacks. A call that
+would break either rule is refused.
+
+{pstd}
+Whatever could stop a join, these rules and a key of another storage
+type than the frame has, is checked against every frame a call writes
+before the first of them changes, so a call writes both frames or
+neither.
 
 {pstd}
 A network that shares no edge at all with the frame is reported as
@@ -350,19 +387,6 @@ has been scaled by the ratio its {cmd:size} gives it at the node. A
 subnet of {cmd:interaction} or {cmd:flow} is a network of its own,
 whose weights add up to one; the ratios of a node add up to one as
 well, so the copy is the weight of the edge in the node as a whole.
-
-{pstd}
-An {cmd:attribute} network is not put back together that way. The
-reduction weighs each subnet by its {cmd:_fratio}, which is read at the
-node the weight is anchored on, the source under {cmd:outflow} and the
-target under {cmd:inflow}, so the reversed edge would be reduced with
-the ratios of the other node. Its log ratios change sign, but the
-ratios weighting them change too, and the two reduced values no longer
-cancel: the copy would lose the antisymmetry that defines an attribute
-edge value. So an attribute network with subnets stays in
-{cmd:networks_multi}, and the command says so when it runs. For a
-single-subnet attribute network, reduce the node levels yourself and
-pass them with {cmd:subnet(single)}.
 
 {pstd}
 A network read at the two resolutions is not the same calculation. A
@@ -408,22 +432,23 @@ not steps to run one after the other: whichever comes second finds
 {phang2}{cmd:. import delimited test_attribute_single.csv, clear}{p_end}
 {phang2}{cmd:. network_calc, type(attribute) subnet(single) name(sch)}{p_end}
 
-{pstd}Estimating on the edge panel the calls have built{p_end}
+{pstd}Estimating on the edge panel the calls have built. The
+estimation lies outside {cmd:network_calc}, and so does the outcome: it
+comes from a file of its own, {cmd:test_outcome.csv}, and is linked to
+the panel on its key.{p_end}
+{phang2}{cmd:. frame create outcome}{p_end}
+{phang2}{cmd:. frame outcome: import delimited test_outcome.csv, clear}{p_end}
 {phang2}{cmd:. frame change networks_single}{p_end}
-{phang2}{cmd:. reghdfe y mig_out bplace sch, absorb(edge_id)}{p_end}
-
-{pstd}The multi-subnet panel, with the feature as a second
-dimension{p_end}
-{phang2}{cmd:. frame change networks_multi}{p_end}
-{phang2}{cmd:. reghdfe y bplace mig_out_fratio,}{break}
-{cmd:          absorb(edge_id feature)}{p_end}
+{phang2}{cmd:. frlink 1:1 year source target, frame(outcome)}{p_end}
+{phang2}{cmd:. frget y, from(outcome)}{p_end}
+{phang2}{cmd:. egen pair = group(source target)}{p_end}
+{phang2}{cmd:. reghdfe y mig_out sch, absorb(pair year) vce(robust)}{p_end}
 
 {pstd}
-The two estimations take one derivation of each channel, not all of
-them: {cmd:mig_out_fratio} is there only when {cmd:mig_out} was
-computed with {cmd:subnet(multi)}. {cmd:y} stands for the outcome, which
-{cmd:network_calc} does not write: the analyst merges it into the frame
-on the same key before estimating.
+An attribute value is the difference of a target-period and a
+source-period term, so source-period and target-period fixed effects
+together would absorb {cmd:sch} entirely; the example absorbs the
+ordered pair and the period instead.
 
 
 {marker results}{...}
@@ -434,14 +459,39 @@ on the same key before estimating.
 
 {synoptset 24 tabbed}{...}
 {p2col 5 24 28 2: Scalars}{p_end}
-{synopt:{cmd:r(n_edges)}}number of edge weights calculated{p_end}
-{synopt:{cmd:r(mean_weight)}}mean of the calculated weights{p_end}
+{synopt:{cmd:r(n_edges)}}number of rows calculated; under
+{cmd:subnet(multi)} a row is the edge of one subnet{p_end}
+{synopt:{cmd:r(n_pairs)}}number of distinct edges, ordered pairs within
+a period{p_end}
+{synopt:{cmd:r(mean_weight)}}mean of the calculated weights; on a
+complete mesh it is one over the number of alternatives by
+construction, so it guards against gross errors only{p_end}
+{synopt:{cmd:r(matched_single)}}edges of the call already in
+{cmd:networks_single}{p_end}
+{synopt:{cmd:r(frame_only_single)}}edges of {cmd:networks_single} the
+call does not reach{p_end}
+{synopt:{cmd:r(new_only_single)}}edges the call adds to
+{cmd:networks_single}{p_end}
+{synopt:{cmd:r(matched_multi)}, {cmd:r(frame_only_multi)},
+{cmd:r(new_only_multi)}}the same for {cmd:networks_multi}, under
+{cmd:subnet(multi)}{p_end}
 
 {p2col 5 24 28 2: Macros}{p_end}
 {synopt:{cmd:r(network_name)}}name given in {cmd:name()}{p_end}
 {synopt:{cmd:r(network_type)}}template given in {cmd:type()}{p_end}
 {synopt:{cmd:r(subnet_type)}}scope given in {cmd:subnet()}{p_end}
 {p2colreset}{...}
+
+
+{marker chars}{...}
+{title:Characteristics}
+
+{pstd}
+Every column {cmd:network_calc} writes records the template that
+produced it in the variable characteristic {cmd:netcalc_type}, which
+{cmd:char list} displays: {cmd:interaction}, {cmd:flow} or
+{cmd:attribute}. The join reads it to tell a weight column from an
+attribute column.
 
 
 {marker author}{...}

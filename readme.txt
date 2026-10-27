@@ -4,6 +4,10 @@ netcalc: directed edge weights from a panel of ordered node pairs
 Necmi Talay
 aggilitas@gmail.com
 
+Version 2.1.0. The package is called netcalc, its one command is
+network_calc, and stata-networks is the name of the repository in
+which it is developed.
+
 
 What the package does
 ---------------------
@@ -29,27 +33,31 @@ Three templates are available.
                 describe nodes rather than move between them: GDP,
                 unemployment, schooling.
 
-flow and attribute accept a feature as well. A subnet is a network of
-its own, whose weights add up to one, and size gives it the ratio it
-takes when the subnets are put back together, so the single-subnet copy
-is the weight of the edge in the node as a whole. An attribute network
-is not put back together: the ratios are read at the node the weight is
-anchored on, so an edge and its reverse would be reduced with the ratios
-of two different nodes, and the copy would lose the antisymmetry that
-defines an attribute edge value. An attribute network with subnets
-therefore stays in the multi-subnet frame.
+flow accepts a feature as well. A subnet is a network of its own, whose
+weights add up to one, and size gives it the ratio it takes when the
+subnets are put back together, so the single-subnet copy is the weight
+of the edge in the node as a whole. An attribute describes the node and
+has no subnets: the node level is passed with subnet(single).
 
-Input is a long panel. Without a feature it holds year, source, target,
-source_value and target_value. With a feature it holds the feature and
-two columns more on each side, source_size and target_size, which carry
-what the subnet weighs at that node and are read as a ratio of the
-subnet to the node.
+Input is a long panel on the complete directed mesh of each period,
+every ordered pair with distinct nodes, one value per node, and a zero
+for a flow that did not happen. Without a feature it holds year,
+source, target, source_value and target_value. Under flow both value
+columns describe the edge: source_value as the source records it and
+target_value as the target records it; direction(outflow) reads the
+first and direction(inflow) the second. With a feature the panel holds
+the feature and two columns more on each side, source_size and
+target_size, which carry what the subnet weighs at that node and are
+read as a ratio of the subnet to the node.
 
 Results are written to the frames networks_single and networks_multi,
 keyed on year and edge_id, and on year, feature and edge_id. A
 multi-subnet call writes a second column beside the weights, named
 after the network with _fratio added, holding the ratio of the subnet
-within the feature at its node.
+within the feature at its node. A weight network that does not reach an
+edge of the frame weighs zero there; an attribute network must reach
+every edge of its frame, since a node is never without its attribute.
+Every join is checked against both frames before either is written.
 
 
 Requirements
@@ -75,14 +83,18 @@ meant to be called directly.
   network_calc_cert.do       certification script
   network_calc_cert.log      its log, run on Stata 17
 
-  example_session.do         the session shown in the article
+  example_session.do         the session shown in the article, ending
+                             in an estimation; needs reghdfe and ftools
   example_session.log        its log
+  example_estimates.csv      the estimates the session writes
+  generate_test_data.do      builds the data files below, with its log
   test_interaction_multi.csv
   test_flow_multi.csv
-  test_attribute_single.csv  the three files the session reads
   test_flow_single.csv
-  test_attribute_multi.csv   two more, which the session does not read
-  generate_test_data.py      builds the five data files
+  test_attribute_single.csv  the four files the session reads
+  test_outcome.csv           the outcome the session estimates
+  article_table2.csv         the first row of each file the session
+                             reads, table 2 of the article
 
 
 Installation
@@ -117,14 +129,18 @@ failure. Its eight sections check:
 
   1. that a subnet's weights sum to one, that the ratios of a node sum
      to one, and that the single-subnet copy sums to one
-  2. that attribute weights cancel along a reversed edge
+  2. that attribute values cancel along a reversed edge, and that an
+     attribute with subnets is refused
   3. that scaling the whole input by a positive constant, or by a
      factor that changes from one period to the next, moves no weight
-  4. that direction(inflow) reads the edge from the other end, and that
-     an inflow weight equals the outflow weight of the reversed edge
-  5. that a second network joined into a frame loses no row and weighs
-     zero where it does not reach
-  6. that the command refuses each input it cannot make a network of
+  4. that direction(inflow) anchors the weight at the target, the
+     value recorded there over the total recorded there
+  5. that a second network joined into a frame loses no row, that a
+     weight network weighs zero where it does not reach, that an
+     attribute network must reach every edge of its frame, that a
+     refused join writes neither frame, and that r() returns the counts
+  6. that the command refuses each input it cannot make a network of,
+     self-loops included, and that option values ignore case
   7. that the weights of one edge equal the numbers worked out by hand
      from the formulas that build the data
   8. that r() reports the call, and that the data in memory come back

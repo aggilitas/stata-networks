@@ -1,4 +1,4 @@
-*! _netcalc_join 2.0.0
+*! _netcalc_join 2.1.0
 *! Creates a network frame or joins a network to it
 *! Internal routine of network_calc; not for direct use
 
@@ -99,9 +99,10 @@ program define _netcalc_join
             * network: the weight there is zero. For interaction and
             * flow the total the weights were divided by never counted
             * that edge, so nothing already in the frame moves. An
-            * attribute weight is part of no total at all, so the
-            * cell is filled with zero like the others and nothing
-            * moves there either.
+            * attribute column never reaches this point with a cell to
+            * fill: network_calc refuses, before any frame is written,
+            * an attribute network that does not cover every edge of
+            * the frame, and a new edge in a frame that holds one.
             *
             * Only the rows the merge itself introduced are filled,
             * and only the columns network_calc wrote, which is what
