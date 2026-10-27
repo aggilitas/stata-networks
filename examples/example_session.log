@@ -3,7 +3,7 @@
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\examp
 > le_session.log
   log type:  text
- opened on:  27 Oct 2026, 20:24:05
+ opened on:  27 Oct 2026, 21:00:41
 
 . 
 . *--------------------------------------------------------------
@@ -666,6 +666,40 @@ Absorbed degrees of freedom:
 file example_estimates.csv saved
 
 . 
+. *--------------------------------------------------------------
+. * What one call replaces: the interaction network bplace built
+. * with built-in commands, each taking a total over its own group
+. *--------------------------------------------------------------
+. 
+. frame create byhand
+
+. frame byhand {
+.     import delimited test_interaction_multi.csv, clear varnames(1)
+(8 vars, 300 obs)
+.     * the subnet at the target over the subnet at every node but the
+.     * source: on the mesh, the rows of a source are its alternatives
+.     bysort year feature source: egen double outside = total(target_value)
+.     generate double omega = target_value / outside
+.     * the ratio of the subnet at the source, its size read once
+.     bysort year source feature: generate byte first = _n == 1
+.     bysort year source: egen double node = total(source_size * first)
+.     generate double p = source_size / node
+.     * the subnets put back together
+.     generate double part = p * omega
+.     collapse (sum) bplace_hand = part, by(year source target)
+. }
+
+. frlink 1:1 year source target, frame(byhand)
+  (all observations in frame networks_single matched)
+
+. frget bplace_hand, from(byhand)
+  (1 variable copied from linked frame)
+
+. assert reldif(bplace, bplace_hand) < 1e-12
+
+. drop byhand bplace_hand
+
+. 
 . frame change default
 
 . 
@@ -691,5 +725,5 @@ Files written to C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples:
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\examp
 > le_session.log
   log type:  text
- closed on:  27 Oct 2026, 20:24:06
+ closed on:  27 Oct 2026, 21:00:43
 -------------------------------------------------------------------------------

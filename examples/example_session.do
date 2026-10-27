@@ -193,6 +193,31 @@ frame post estimates ("r2") (e(r2)) (.)
 frame estimates: list, noobs abbreviate(16)
 frame estimates: export delimited using example_estimates.csv, replace
 
+*--------------------------------------------------------------
+* What one call replaces: the interaction network bplace built
+* with built-in commands, each taking a total over its own group
+*--------------------------------------------------------------
+
+frame create byhand
+frame byhand {
+    import delimited test_interaction_multi.csv, clear varnames(1)
+    * the subnet at the target over the subnet at every node but the
+    * source: on the mesh, the rows of a source are its alternatives
+    bysort year feature source: egen double outside = total(target_value)
+    generate double omega = target_value / outside
+    * the ratio of the subnet at the source, its size read once
+    bysort year source feature: generate byte first = _n == 1
+    bysort year source: egen double node = total(source_size * first)
+    generate double p = source_size / node
+    * the subnets put back together
+    generate double part = p * omega
+    collapse (sum) bplace_hand = part, by(year source target)
+}
+frlink 1:1 year source target, frame(byhand)
+frget bplace_hand, from(byhand)
+assert reldif(bplace, bplace_hand) < 1e-12
+drop byhand bplace_hand
+
 frame change default
 
 *--------------------------------------------------------------
