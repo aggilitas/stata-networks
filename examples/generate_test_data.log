@@ -3,7 +3,7 @@
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\gener
 > ate_test_data.log
   log type:  text
- opened on:  27 Oct 2026, 20:19:19
+ opened on:  28 Oct 2026, 08:56:44
 
 . set seed 20260912
 
@@ -26,7 +26,7 @@
 . tempfile nodes
 
 . save `nodes'
-file C:\Users\ntnta\AppData\Local\Temp\ST_4884_000001.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_38a8_000001.tmp saved as .dta
     format
 
 . 
@@ -65,7 +65,7 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_4884_000001.tmp saved as .dta
 . tempfile nodelevel
 
 . save `nodelevel'
-file C:\Users\ntnta\AppData\Local\Temp\ST_4884_000002.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_38a8_000002.tmp saved as .dta
     format
 
 . 
@@ -80,7 +80,7 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_4884_000002.tmp saved as .dta
 . tempfile src
 
 . save `src'
-file C:\Users\ntnta\AppData\Local\Temp\ST_4884_000003.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_38a8_000003.tmp saved as .dta
     format
 
 . 
@@ -107,7 +107,7 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_4884_000003.tmp saved as .dta
 . tempfile edges
 
 . save `edges'
-file C:\Users\ntnta\AppData\Local\Temp\ST_4884_000004.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_38a8_000004.tmp saved as .dta
     format
 
 . 
@@ -184,7 +184,7 @@ file test_flow_single.csv saved
 . tempfile level
 
 . save `level'
-file C:\Users\ntnta\AppData\Local\Temp\ST_4884_000005.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_38a8_000005.tmp saved as .dta
     format
 
 . 
@@ -193,7 +193,7 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_4884_000005.tmp saved as .dta
 . tempfile slevel
 
 . save `slevel'
-file C:\Users\ntnta\AppData\Local\Temp\ST_4884_000006.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_38a8_000006.tmp saved as .dta
     format
 
 . use `level', clear
@@ -230,7 +230,7 @@ file test_attribute_single.csv saved
 . tempfile pop
 
 . save `pop'
-file C:\Users\ntnta\AppData\Local\Temp\ST_4884_000007.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_38a8_000007.tmp saved as .dta
     format
 
 . 
@@ -316,22 +316,22 @@ file test_outcome.csv saved
  10. }
 (8 vars, 300 obs)
 (299 observations deleted)
-(file C:\Users\ntnta\AppData\Local\Temp\ST_4884_000008.tmp not found)
-file C:\Users\ntnta\AppData\Local\Temp\ST_4884_000008.tmp saved as .dta
+(file C:\Users\ntnta\AppData\Local\Temp\ST_38a8_000008.tmp not found)
+file C:\Users\ntnta\AppData\Local\Temp\ST_38a8_000008.tmp saved as .dta
     format
 (8 vars, 300 obs)
 (299 observations deleted)
 (variable source_value was str4, now str5 to accommodate using data's values)
 (variable target_value was str4, now str5 to accommodate using data's values)
-file C:\Users\ntnta\AppData\Local\Temp\ST_4884_000008.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_38a8_000008.tmp saved as .dta
     format
 (5 vars, 60 obs)
 (59 observations deleted)
-file C:\Users\ntnta\AppData\Local\Temp\ST_4884_000008.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_38a8_000008.tmp saved as .dta
     format
 (5 vars, 60 obs)
 (59 observations deleted)
-file C:\Users\ntnta\AppData\Local\Temp\ST_4884_000008.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_38a8_000008.tmp saved as .dta
     format
 
 . use `t2', clear
@@ -419,5 +419,5 @@ Files written to C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples:
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\gener
 > ate_test_data.log
   log type:  text
- closed on:  27 Oct 2026, 20:19:19
+ closed on:  28 Oct 2026, 08:56:44
 -------------------------------------------------------------------------------

@@ -3,4 +3,4 @@ d netcalc
 d Author: Necmi TALAY
 d Distribution-Date: 20261027
 d
-p netcalc directed edge weights from a panel of ordered node pairs
+p netcalc directed edge variables from a panel of ordered node pairs

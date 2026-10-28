@@ -3,7 +3,7 @@
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\tests\network_
 > calc_cert.log
   log type:  text
- opened on:  27 Oct 2026, 23:52:53
+ opened on:  28 Oct 2026, 08:56:43
 
 . 
 . which network_calc
@@ -475,7 +475,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 90 edges
-  Mean weight: -0.000000
+  Mean weight:  0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -772,7 +772,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 90 edges
-  Mean weight: -0.000000
+  Mean weight:  0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -800,7 +800,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 90 edges
-  Mean weight: -0.000000
+  Mean weight:  0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -1020,7 +1020,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 90 edges
-  Mean weight: -0.000000
+  Mean weight:  0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -1268,7 +1268,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 90 edges
-  Mean weight: -0.000000
+  Mean weight:  0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -1583,7 +1583,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 90 edges
-  Mean weight: -0.000000
+  Mean weight:  0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -2192,7 +2192,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 90 edges
-  Mean weight: -0.000000
+  Mean weight:  0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -3558,7 +3558,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 90 edges
-  Mean weight: -0.000000
+  Mean weight:  0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -3711,7 +3711,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 90 edges
-  Mean weight: -0.000000
+  Mean weight:  0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -3814,5 +3814,5 @@ all network_calc certification tests passed
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\tests\network_
 > calc_cert.log
   log type:  text
- closed on:  27 Oct 2026, 23:52:54
+ closed on:  28 Oct 2026, 08:56:44
 -------------------------------------------------------------------------------
