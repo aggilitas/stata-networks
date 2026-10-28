@@ -14,7 +14,7 @@
 {title:Title}
 
 {phang}
-{bf:network_calc} {hline 2} Directed edge weights from a panel of ordered
+{bf:network_calc} {hline 2} Directed edge variables from a panel of ordered
 node pairs and periods
 
 
@@ -32,7 +32,7 @@ node pairs and periods
 {synopthdr}
 {synoptline}
 {syntab:Required}
-{synopt :{opt t:ype(template)}}edge weight template:
+{synopt :{opt t:ype(template)}}construction template:
 {cmd:interaction}, {cmd:flow} or {cmd:attribute}{p_end}
 {synopt :{opt s:ubnet(scope)}}{cmd:single} for one network,
 {cmd:multi} for one network per feature{p_end}
@@ -58,20 +58,20 @@ results into {help frames}.
 {pstd}
 {cmd:network_calc} turns a long panel, one observation per ordered pair
 of nodes and period, and per subnet when the panel is split by a
-feature, into a panel of directed edge weights, ready for a
+feature, into a panel of directed edge variables, ready for a
 fixed-effects estimator such as {help reghdfe} or {cmd:ivreghdfe}. One
 call computes one network and adds it as a variable to a frame, so
 several calls build a multi-network edge panel side by side.
 
 {pstd}
-The data in memory is not the output: the calculated weights are
+The data in memory is not the output: the calculated networks are
 written to the frames described under
 {help network_calc##output:Output frames}, and the data in memory is
 restored when the command finishes, unchanged.
 
 {pstd}
 The command refuses data it cannot make a network of, rather than
-returning a weight that reads as defined. It stops on a missing value
+returning a value that reads as defined. It stops on a missing value
 in any required variable; on a negative size, a negative flow or a
 negative {cmd:interaction} value; on an {cmd:attribute} value that is
 zero or negative, the log ratio being undefined there; on a row whose
@@ -97,14 +97,14 @@ over a mesh quietly missing one of its alternatives.
 {title:Options}
 
 {phang}
-{opt t:ype(template)} selects the weight template and is required. See
+{opt t:ype(template)} selects the template and is required. See
 {help network_calc##templates:Templates} for the three formulas. The
 values of {cmd:type()}, {cmd:subnet()} and {cmd:direction()} may be
 typed in any case and shortened to any unambiguous leading part, as in
 {cmd:type(Flow)}, {cmd:type(f)} or {cmd:direction(IN)}.
 
 {phang}
-{opt s:ubnet(scope)} is required. {cmd:single} computes one weight per
+{opt s:ubnet(scope)} is required. {cmd:single} computes one value per
 edge and period from single-subnet data. {cmd:multi} computes one
 weight per edge, period and level of {cmd:feature()}, and a
 single-subnet copy; see {help network_calc##output:Output frames}.
@@ -114,7 +114,7 @@ single-subnet copy; see {help network_calc##output:Output frames}.
 
 {phang}
 {opt n:ame(newvar)} is required and names the network. The name
-becomes the variable that holds the weights in the output frames, so it
+becomes the variable that holds the network in the output frames, so it
 must be a valid Stata variable name and must not already be taken in
 either output frame: {cmd:networks_single} and {cmd:networks_multi} are
 both checked, whichever of them the call writes. The same holds for
@@ -147,7 +147,7 @@ moves either way and the edge keeps its own orientation.
 
 {phang}
 {opt debug} displays the intermediate quantities of the template and a
-summary of the calculated weights. Use it to see why a weight is not
+summary of the calculated network. Use it to see why a value is not
 what you expected.
 
 
@@ -465,9 +465,10 @@ ordered pair and the period instead.
 {cmd:subnet(multi)} a row is the edge of one subnet{p_end}
 {synopt:{cmd:r(n_pairs)}}number of distinct edges, ordered pairs within
 a period{p_end}
-{synopt:{cmd:r(mean_weight)}}mean of the calculated weights; on a
-complete mesh it is one over the number of alternatives by
-construction, so it guards against gross errors only{p_end}
+{synopt:{cmd:r(mean_weight)}}mean of the calculated variable; on a
+complete mesh it is zero under {cmd:attribute} and, where no total is
+zero, one over the number of alternatives under {cmd:interaction} and
+{cmd:flow}, so it guards against gross errors only{p_end}
 {synopt:{cmd:r(matched_single)}}edges of the call already in
 {cmd:networks_single}{p_end}
 {synopt:{cmd:r(frame_only_single)}}edges of {cmd:networks_single} the
@@ -489,11 +490,12 @@ call does not reach{p_end}
 {title:Characteristics}
 
 {pstd}
-Every column {cmd:network_calc} writes records the template that
-produced it in the variable characteristic {cmd:netcalc_type}, which
-{cmd:char list} displays: {cmd:interaction}, {cmd:flow} or
-{cmd:attribute}. The join reads it to tell a weight column from an
-attribute column.
+Each network column, the variable named in {cmd:name()}, records the
+template that produced it in the variable characteristic
+{cmd:netcalc_type}, which {cmd:char list} displays: {cmd:interaction},
+{cmd:flow} or {cmd:attribute}. The {it:_fratio} columns and the key
+variables carry none. The join reads the characteristic to tell a weight
+column from an attribute column.
 
 
 {marker author}{...}

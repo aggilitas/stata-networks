@@ -1,5 +1,5 @@
-netcalc: directed edge weights from a panel of ordered node pairs
-=================================================================
+netcalc: directed edge variables from a panel of ordered node pairs
+===================================================================
 
 Necmi Talay
 aggilitas@gmail.com
@@ -14,7 +14,7 @@ What the package does
 
 netcalc turns a long panel, one observation per ordered pair of nodes
 and period, and per subnet when the panel is split by a feature, into a
-panel of directed edge weights, ready for a fixed-effects estimator
+panel of directed edge variables, ready for a fixed-effects estimator
 such as reghdfe. One call computes one network and adds it as a
 variable to a Stata frame, so several calls build a multi-network edge
 panel side by side.
