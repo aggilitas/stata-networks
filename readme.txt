@@ -41,9 +41,11 @@ subnets are put back together, so the single-subnet copy is the weight
 of the edge in the node as a whole. An attribute describes the node and
 has no subnets: the node level is passed with subnet(single).
 
-Input is a long panel on the complete directed mesh of each period,
-every ordered pair with distinct nodes, one value per node, and a zero
-for a flow that did not happen. Without a feature it holds year,
+Input is the complete panel of its rows: every period, every ordered
+pair of distinct nodes and, with a feature, every level of the feature,
+with one value per node and a zero, which the data supply, for a flow
+or an interaction that did not happen. A row missing from that panel is
+refused, and the command lists it. Without a feature it holds year,
 source, target, source_value and target_value. Under flow both value
 columns describe the edge: source_value as the source records it and
 target_value as the target records it; direction(outflow) reads the
@@ -56,10 +58,10 @@ Results are written to the frames networks_single and networks_multi,
 keyed on year and edge_id, and on year, feature and edge_id. A
 multi-subnet call writes a second column beside the weights, named
 after the network with _fratio added, holding the ratio of the subnet
-within the feature at its node. A weight network that does not reach an
-edge of the frame weighs zero there; an attribute network must reach
-every edge of its frame, since a node is never without its attribute.
-Every join is checked against both frames before either is written.
+within the feature at its node. A network joins a frame only with the
+rows the frame holds: a call whose rows differ is refused, and the rows
+on either side are listed. Nothing is filled in. Every join is checked
+against both frames before either is written.
 
 
 Requirements
@@ -137,17 +139,32 @@ failure. Its eight sections check:
      factor that changes from one period to the next, moves no weight
   4. that direction(inflow) anchors the weight at the target, the
      value recorded there over the total recorded there
-  5. that a second network joined into a frame loses no row, that a
-     weight network weighs zero where it does not reach, that an
-     attribute network must reach every edge of its frame, that a
-     refused join writes neither frame, and that r() returns the counts
+  5. that a second network joins a frame only with the rows the frame
+     holds, that a network with a node, a period or a subnet more or
+     fewer is refused and writes nothing, and that a call refused at
+     the second frame writes neither
   6. that the command refuses each input it cannot make a network of,
-     self-loops included, that option values ignore case, that a name
-     is checked exactly, and that a frame holding _merge is refused
+     self-loops and a row missing from the complete panel included,
+     that option values ignore case, that a name is checked exactly,
+     and that a frame holding _merge is refused
   7. that the weights of one edge equal the numbers worked out by hand
      from the formulas that build the data
   8. that r() reports the call, and that the data in memory come back
      as they were found, with their file name and changed flag
+
+
+Notes
+-----
+
+Section 6.7 of the article sets out the published application of the
+framework, job-seeking migration between the 81 provinces of Turkiye
+(Talay et al. 2026, cited below), as the network_calc calls that build
+its columns. Its data from the Turkish Statistical Institute are not
+public: the Institute supplies them for a fee, and they cannot be
+distributed. The package therefore holds neither the data of that
+application nor a log of its calls. The example session runs on
+synthetic data instead, built by generate_test_data.do, which serve
+for testing.
 
 
 Citation

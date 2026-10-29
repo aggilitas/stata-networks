@@ -1,5 +1,5 @@
 *! _netcalc_join 2.1.0
-*! Creates a network frame or joins a network to it
+*! Creates a network frame or joins a network with the same rows to it
 *! Internal routine of network_calc; not for direct use
 
 program define _netcalc_join
@@ -46,9 +46,7 @@ program define _netcalc_join
             }
             * Otherwise, data already has the network name (from aggregation)
 
-            * Record the template the column came from. A later join
-            * needs it to know whether an edge the column does not
-            * reach weighs zero or is unknown.
+            * Record the template the column came from.
             char `networkname'[netcalc_type] "`type'"
         }
     }
@@ -79,63 +77,14 @@ program define _netcalc_join
             }
             
             * Every network in a frame is a column of the same edge
-            * panel, so the frame is only a panel while the networks
-            * agree on the edges. The merge keeps the union, which
-            * means the network computed first sets the skeleton and
-            * anything the later one adds arrives with the earlier
-            * columns empty. Report both sides of the difference
-            * rather than let it pass as a successful call.
-            qui merge 1:1 `merge_keys' using `newdata'
-            qui count if _merge == 3
-            local n_both = r(N)
-            qui count if _merge == 1
-            local n_frame = r(N)
-            qui count if _merge == 2
-            local n_new = r(N)
-
-            char `networkname'[netcalc_type] "`type'"
-
-            * An edge a network does not reach is not a gap in that
-            * network: the weight there is zero. For interaction and
-            * flow the total the weights were divided by never counted
-            * that edge, so nothing already in the frame moves. An
-            * attribute column never reaches this point with a cell to
-            * fill: network_calc refuses, before any frame is written,
-            * an attribute network that does not cover every edge of
-            * the frame, and a new edge in a frame that holds one.
-            *
-            * Only the rows the merge itself introduced are filled,
-            * and only the columns network_calc wrote, which is what
-            * the characteristic marks.
-            if `n_frame' > 0 {
-                qui replace `networkname' = 0 if _merge == 1
-            }
-            if `n_new' > 0 {
-                qui ds
-                local allvars `r(varlist)'
-                foreach v of local allvars {
-                    if "`v'" == "`networkname'" continue
-                    local vtype : char `v'[netcalc_type]
-                    if "`vtype'" != "" {
-                        qui replace `v' = 0 if _merge == 2
-                    }
-                }
-            }
+            * panel. network_calc has checked, before any frame was
+            * written, that the call brings exactly the rows the frame
+            * holds, so every row matches and nothing is filled in on
+            * either side.
+            qui merge 1:1 `merge_keys' using `newdata', assert(match)
             qui drop _merge
 
-            if `n_both' == 0 {
-                di as error "  `networkname' shares no edge with the" ///
-                            " networks already in `framename'"
-            }
-            if `n_frame' > 0 | `n_new' > 0 {
-                di as text "  Note: the networks in `framename' do not" ///
-                           " cover the same edges"
-                di as text "    matched:        " as result %8.0f `n_both'
-                di as text "    only in frame:  " as result %8.0f `n_frame'
-                di as text "    only in new:    " as result %8.0f `n_new'
-                di as text "  A network weighs zero on the edges it" ///
-                           " does not reach."
-            }
+            char `networkname'[netcalc_type] "`type'"
         }
     }
     

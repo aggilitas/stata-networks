@@ -1,7 +1,7 @@
 *! network_calc 2.1.0
 *! Main command for calculating network edge weights
 *! Author: Necmi TALAY
-*! Date: 2026-10-27
+*! Date: 2026-10-29
 
 program define network_calc, rclass
     version 16.0
@@ -197,16 +197,25 @@ program define network_calc, rclass
         }
     }
 
+    * The key of an observation: the period, the subnet under
+    * subnet(multi), and the ordered pair.
+    local key year `feature' source target
+    local key : list retokenize key
+
     * A missing input has no place in any of this. Dropping the edge
     * would take it out of its denominator as well and the remaining
     * weights would still add up to one, over a mesh quietly missing
     * one of its alternatives; carrying it through leaves a missing
     * weight that the reduction to a single subnet would then sum
-    * around. Neither is a network, so the command refuses the data.
+    * around. Neither is a network, so the command refuses the data
+    * and lists the rows.
     foreach var of local required_vars {
         qui count if missing(`var')
         if r(N) > 0 {
-            di as error "`var' has " r(N) " missing values"
+            di as error "`var' has " r(N) " missing values, in these rows:"
+            local show : list key | var
+            _netcalc_show if missing(`var'), vars(`show')
+            di as error "Nothing has been written"
             exit 416
         }
     }
@@ -235,8 +244,10 @@ program define network_calc, rclass
     qui count if source == target
     if r(N) > 0 {
         di as error "source and target are the same node in " r(N) ///
-                    " observations"
-        di as error "a node is not one of its own alternatives"
+                    " observations:"
+        _netcalc_show if source == target, vars(`key')
+        di as error "a node is not one of its own alternatives." ///
+                    " Nothing has been written"
         exit 459
     }
 
@@ -244,13 +255,32 @@ program define network_calc, rclass
     * subnet(multi). A second copy would sit inside its own
     * denominator and the frames, which are keyed on the edge, could
     * not hold both.
-    local key year `feature' source target
-    local key : list retokenize key
     capture isid `key'
     if _rc {
-        di as error "`key' do not identify the observations"
-        di as error "an edge appears more than once in a period"
+        tempvar dup
+        qui duplicates tag `key', generate(`dup')
+        qui count if `dup' > 0
+        di as error "`key' do not identify the observations:" ///
+                    " these " r(N) " rows share their key"
+        sort `key'
+        _netcalc_show if `dup' > 0, vars(`key')
+        di as error "an edge appears more than once in a period." ///
+                    " Nothing has been written"
         exit 459
+    }
+
+    * Every row the panel can have must be there: each period, each
+    * level of the feature under subnet(multi), and each ordered pair
+    * of distinct nodes, the nodes being every name the data give as
+    * source or target. A pair with nothing to record is a row with
+    * zero, and the data supply it; the command fills in no row and no
+    * value. A row the data lack therefore stops it, and the rows are
+    * listed.
+    if "`feature'" != "" {
+        _netcalc_mesh, feature(`feature')
+    }
+    else {
+        _netcalc_mesh
     }
 
     *===========================================================================
@@ -323,14 +353,12 @@ program define network_calc, rclass
     * the call writes, before the first of them changes, so that a
     * call writes both frames or neither.
     *
-    * An attribute describes the node, as population or output
-    * describe a province, so a node is never without it and an
-    * attribute column holds a value on every edge of its frame. A
-    * weight can be zero on an edge that exists, as the flows of a
-    * city are on a day of curfew, and the join writes that zero; an
-    * attribute cannot, so the join refuses instead. An attribute
-    * network must reach every edge its frame holds, and a frame that
-    * holds an attribute column takes no edge the column lacks.
+    * A frame is a panel of edges and every network in it is a column
+    * of that panel, so a network joins a frame only with the rows the
+    * frame holds: the same periods, the same edges and, in
+    * networks_multi, the same subnets. Nothing is filled in on either
+    * side. A call with a row the frame lacks, or without a row the
+    * frame holds, is refused, and the rows are listed.
 
     tempname NEWE FRE
     if "`subnet'" == "multi" {
@@ -344,15 +372,12 @@ program define network_calc, rclass
         local tag = cond("`fr'" == "networks_multi", "multi", "single")
         local keys = cond("`tag'" == "multi", ///
                           "year feature edge_id", "year edge_id")
-        local n_both_`tag' = 0
-        local n_frame_`tag' = 0
 
         * the edges this call brings to the frame
         capture frame drop `NEWE'
         frame put `keys', into(`NEWE')
         frame `NEWE' {
             qui duplicates drop
-            local n_new_`tag' = _N
         }
 
         capture frame `fr': describe, short
@@ -394,19 +419,7 @@ program define network_calc, rclass
             }
         }
 
-        * whether the frame already holds an attribute column
-        local frame_attr = 0
-        frame `fr' {
-            qui ds
-            foreach v in `r(varlist)' {
-                local vt : char `v'[netcalc_type]
-                if "`vt'" == "attribute" {
-                    local frame_attr = 1
-                }
-            }
-        }
-
-        * the edges found on one side only
+        * the rows found on one side only
         capture frame drop `FRE'
         frame copy `fr' `FRE'
         frame `FRE' {
@@ -414,35 +427,40 @@ program define network_calc, rclass
             qui frlink 1:1 `keys', frame(`NEWE') ///
                 generate(_netcalc_link)
             qui count if missing(_netcalc_link)
-            local n_frame_`tag' = r(N)
+            local n_lack = r(N)
         }
         frame `NEWE' {
             qui frlink 1:1 `keys', frame(`FRE') ///
                 generate(_netcalc_link)
             qui count if missing(_netcalc_link)
-            local n_only = r(N)
+            local n_more = r(N)
         }
-        local n_both_`tag' = `n_new_`tag'' - `n_only'
-        local n_new_`tag' = `n_only'
-        capture frame drop `FRE'
 
-        if "`type'" == "attribute" & `n_frame_`tag'' > 0 {
-            di as error "`name' does not reach " `n_frame_`tag'' ///
-                        " edges that frame `fr' holds"
-            di as error "An attribute describes the node and cannot be" ///
-                        " absent on an edge;"
-            di as error "build it on every edge of the frame." ///
-                        " Nothing has been written"
+        if `n_lack' > 0 | `n_more' > 0 {
+            di as error "`name' does not have the rows of frame `fr'"
+            if `n_lack' > 0 {
+                di as error "  " `n_lack' " rows of the frame that" ///
+                            " `name' lacks:"
+                frame `FRE' {
+                    sort `keys'
+                    _netcalc_show if missing(_netcalc_link), vars(`keys')
+                }
+            }
+            if `n_more' > 0 {
+                di as error "  " `n_more' " rows of `name' that the" ///
+                            " frame lacks:"
+                frame `NEWE' {
+                    sort `keys'
+                    _netcalc_show if missing(_netcalc_link), vars(`keys')
+                }
+            }
+            di as error "Every network in a frame has the rows of the" ///
+                        " frame. Nothing has been written"
+            capture frame drop `FRE'
+            capture frame drop `NEWE'
             exit 459
         }
-        if `frame_attr' & `n_new_`tag'' > 0 {
-            di as error "`name' brings " `n_new_`tag'' ///
-                        " edges that frame `fr' does not hold"
-            di as error "The frame holds an attribute column, which" ///
-                        " cannot be absent on an edge."
-            di as error "Nothing has been written"
-            exit 459
-        }
+        capture frame drop `FRE'
     }
     capture frame drop `NEWE'
 
@@ -579,13 +597,6 @@ program define network_calc, rclass
     return scalar n_edges = `calc_n_edges'
     return scalar n_pairs = `calc_n_pairs'
     return scalar mean_weight = `calc_mean_weight'
-    foreach tag in single multi {
-        if "`n_new_`tag''" != "" {
-            return scalar matched_`tag' = `n_both_`tag''
-            return scalar frame_only_`tag' = `n_frame_`tag''
-            return scalar new_only_`tag' = `n_new_`tag''
-        }
-    }
     return local network_name "`name'"
     return local network_type "`type'"
     return local subnet_type "`subnet'"
@@ -614,4 +625,133 @@ program define _netcalc_pick, rclass
         local hit
     }
     return local pick `hit'
+end
+
+
+* The rows the input must hold: every period, every level of the
+* feature under subnet(multi), and every ordered pair of distinct
+* nodes, the nodes being every name the data give as source or
+* target. The rows are counted first, which is all a complete input
+* costs: with no self-loop and no key twice, the data hold all of
+* those rows exactly when they hold as many. Only when they fall
+* short is the full set built, to list the rows they lack.
+program define _netcalc_mesh
+    version 16.0
+    syntax [, Feature(string)]
+
+    local cur = c(frame)
+    qui count
+    local n_rows = r(N)
+
+    tempname YR NS NT FT
+    tempfile years sources targets features
+
+    frame put year, into(`YR')
+    frame `YR' {
+        qui duplicates drop
+        local n_years = _N
+        qui save `years'
+    }
+
+    * the nodes: every name that appears at either end of an edge
+    frame put target, into(`NT')
+    frame `NT' {
+        rename target source
+        qui save `targets'
+    }
+    frame put source, into(`NS')
+    frame `NS' {
+        qui append using `targets'
+        qui duplicates drop
+        local n_nodes = _N
+        qui save `sources'
+        rename source target
+        qui save `targets', replace
+    }
+
+    local n_feat = 1
+    if "`feature'" != "" {
+        frame put `feature', into(`FT')
+        frame `FT' {
+            qui duplicates drop
+            local n_feat = _N
+            qui save `features'
+        }
+    }
+
+    capture frame drop `YR'
+    capture frame drop `NS'
+    capture frame drop `NT'
+    capture frame drop `FT'
+
+    local n_need = `n_years' * `n_feat' * `n_nodes' * (`n_nodes' - 1)
+    if `n_rows' == `n_need' {
+        exit
+    }
+
+    * the full set of rows, and those the data lack
+    tempname MS CT
+    frame create `MS'
+    frame `MS' {
+        qui use `years'
+        qui cross using `sources'
+        qui cross using `targets'
+        qui drop if source == target
+        if "`feature'" != "" {
+            qui cross using `features'
+        }
+        qui frlink 1:1 year `feature' source target, frame(`cur') ///
+            generate(_netcalc_in)
+        qui keep if missing(_netcalc_in)
+        drop _netcalc_in
+        local n_lack = _N
+        sort year `feature' source target
+    }
+
+    di as error "the data are not the complete panel of their rows:" ///
+                " `n_lack' of `n_need' rows are missing"
+    frame copy `MS' `CT'
+    frame `CT' {
+        qui contract year, freq(rows_missing)
+        di as error "  missing rows in each period:"
+        list year rows_missing, noobs clean abbreviate(16)
+    }
+    capture frame drop `CT'
+    di as error "  the missing rows:"
+    frame `MS' {
+        _netcalc_show, vars(year `feature' source target)
+    }
+    capture frame drop `MS'
+    if "`feature'" != "" {
+        di as error "Every period needs a row for each ordered pair of" ///
+                    " the `n_nodes' nodes in each of the `n_feat'" ///
+                    " levels of `feature';"
+    }
+    else {
+        di as error "Every period needs a row for each ordered pair of" ///
+                    " the `n_nodes' nodes;"
+    }
+    di as error "enter zero where nothing was recorded." ///
+                " Nothing has been written"
+    exit 459
+end
+
+
+* List the first rows that meet the condition, and say how many more
+* there are, so that a refusal shows the rows it is about.
+program define _netcalc_show
+    version 16.0
+    syntax [if] , Vars(string) [Max(integer 50)]
+    marksample touse, novarlist
+    qui count if `touse'
+    local n = r(N)
+    if `n' == 0 {
+        exit
+    }
+    tempvar k
+    qui gen long `k' = sum(`touse')
+    list `vars' if `touse' & `k' <= `max', noobs clean abbreviate(16)
+    if `n' > `max' {
+        di as error "  ... and " `n' - `max' " more"
+    }
 end

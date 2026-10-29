@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 2.1.0  27oct2026}{...}
+{* *! version 2.1.0  29oct2026}{...}
 {viewerjumpto "Syntax" "network_calc##syntax"}{...}
 {viewerjumpto "Description" "network_calc##description"}{...}
 {viewerjumpto "Options" "network_calc##options"}{...}
@@ -71,21 +71,23 @@ restored when the command finishes, unchanged.
 
 {pstd}
 The command refuses data it cannot make a network of, rather than
-returning a value that reads as defined. It stops on a missing value
-in any required variable; on a negative size, a negative flow or a
-negative {cmd:interaction} value; on an {cmd:attribute} value that is
-zero or negative, the log ratio being undefined there; on a row whose
-{cmd:source} and {cmd:target} are the same node, which is not one of
-its own alternatives; on an edge that appears more than once in a
+returning a value that reads as defined, and lists the rows a refusal
+is about. It stops on a missing value in any required variable; on a
+row missing from the complete panel described under
+{help network_calc##input:Input data}; on a negative size, a negative
+flow or a negative {cmd:interaction} value; on an {cmd:attribute} value
+that is zero or negative, the log ratio being undefined there; on a row
+whose {cmd:source} and {cmd:target} are the same node, which is not one
+of its own alternatives; on an edge that appears more than once in a
 period, or in a subnet; and on a {cmd:source} or {cmd:target} that is
 not a string or holds an underscore, from which no {cmd:edge_id} can be
 built. It also stops, before either output frame is written, on a join
-the frames cannot take: a key of another storage type than the frame
-has, and an {cmd:attribute} column that would be absent on an edge of
-its frame (see {help network_calc##output:Output frames}). A zero
-denominator is not refused. A node out of which nothing travels, a
-subnet the node does not hold, and a subnet absent from every node but
-its source all come to zero, and their weights are written as zero.
+the frames cannot take: a network whose rows are not those of the frame
+it joins, and a key of another storage type than the frame has (see
+{help network_calc##output:Output frames}). A zero denominator is not
+refused. A node out of which nothing travels, a subnet whose size at
+the node is zero, and a subnet whose value is zero at every node but
+the source all come to zero, and their weights are written as zero.
 
 {pstd}
 Dropping the offending edge instead would take it out of its own
@@ -175,10 +177,16 @@ importer. Where a single record exists, the same figure goes into both
 columns. {cmd:outflow} reads the first and {cmd:inflow} the second.
 
 {pstd}
-The templates are defined on the complete directed mesh of each
-period, every ordered pair i,j with j != i, and each node carries one
-value; a flow that did not happen is a row with value zero. Laying the
-data out that way is part of preparing the input.
+The data must be the complete panel of their rows: a row for every
+period, every ordered pair i,j with j != i of the nodes, and, with
+{cmd:subnet(multi)}, every level of the feature. The periods, the nodes
+and the levels are those the data name: every value of {cmd:year},
+every value that appears as {cmd:source} or {cmd:target}, and every
+value of the feature. Each node carries one value. A flow or an
+interaction that did not happen is a row with value zero, which the
+data supply: the command fills in no row and no value. Data with a row
+missing are refused, and the command lists the missing rows and their
+number in each period.
 
 {pstd}
 With {cmd:subnet(multi)} the panel holds one observation per period,
@@ -336,41 +344,20 @@ into {cmd:networks_multi}: the network and, beside it,
 
 {pstd}
 A frame is a panel of edges, and every network in it is a column of
-that panel. The merge keeps the union of the two edge sets, so no row
-is ever lost, and the call reports, and returns in {cmd:r()}, how many
-edges matched and how many were on one side only.
+that panel. A call therefore joins a frame only with the rows the frame
+holds: the same periods and edges and, in {cmd:networks_multi}, the
+same subnets. Nothing is filled in on either side. A call with a row
+the frame lacks, or without a row the frame holds, is refused, and the
+rows on either side are listed. That is what happens when the input
+files name different nodes or periods, or when two multi-subnet
+networks are split by different features.
 
 {pstd}
-Weight networks need not reach the same edges. On an edge that a
-{cmd:flow} or {cmd:interaction} network does not reach, its column is
-filled with zero: a weight can be zero on an edge that exists, as the
-flows within a city are on a day of curfew while its interaction
-structure is not. Nothing already in the frame moves, since the total
-the weights were divided by never counted that edge. Only the cells the
-merge itself introduced are filled.
-
-{pstd}
-An {cmd:attribute} cannot be absent on an edge. It describes the node
-itself, as height and weight describe a person or population and
-output a province, so a node is never without it, and an attribute
-value of zero would claim that the two nodes stand level. The join
-therefore fills no attribute cell: an {cmd:attribute} network must
-reach every edge of the frame it joins, and a frame that holds an
-{cmd:attribute} column takes no edge the column lacks. A call that
-would break either rule is refused.
-
-{pstd}
-Whatever could stop a join, these rules, a key that is a string on one
-side and numeric on the other, and a variable named {cmd:_merge} in the
-frame, is checked against every frame a call writes before the first of
-them changes, so a call writes both frames or neither.
-
-{pstd}
-A network that shares no edge at all with the frame is reported as
-such, and the frame then holds the two of them stacked rather than
-side by side. That is what happens when two multi-subnet networks are
-split by different features, whose labels cannot meet, or when the
-node names differ between the input files.
+Whatever could stop a join, a network whose rows differ from those of
+the frame, a key that is a string on one side and numeric on the
+other, and a variable named {cmd:_merge} in the frame, is checked
+against every frame a call writes before the first of them changes, so
+a call writes both frames or neither.
 
 {pstd}
 A {cmd:subnet(multi)} call writes a second column into
@@ -469,15 +456,6 @@ a period{p_end}
 complete mesh it is zero under {cmd:attribute} and, where no total is
 zero, one over the number of alternatives under {cmd:interaction} and
 {cmd:flow}, so it guards against gross errors only{p_end}
-{synopt:{cmd:r(matched_single)}}edges of the call already in
-{cmd:networks_single}{p_end}
-{synopt:{cmd:r(frame_only_single)}}edges of {cmd:networks_single} the
-call does not reach{p_end}
-{synopt:{cmd:r(new_only_single)}}edges the call adds to
-{cmd:networks_single}{p_end}
-{synopt:{cmd:r(matched_multi)}, {cmd:r(frame_only_multi)},
-{cmd:r(new_only_multi)}}the same for {cmd:networks_multi}, under
-{cmd:subnet(multi)}{p_end}
 
 {p2col 5 24 28 2: Macros}{p_end}
 {synopt:{cmd:r(network_name)}}name given in {cmd:name()}{p_end}
@@ -494,8 +472,7 @@ Each network column, the variable named in {cmd:name()}, records the
 template that produced it in the variable characteristic
 {cmd:netcalc_type}, which {cmd:char list} displays: {cmd:interaction},
 {cmd:flow} or {cmd:attribute}. The {it:_fratio} columns and the key
-variables carry none. The join reads the characteristic to tell a weight
-column from an attribute column.
+variables carry none.
 
 
 {marker author}{...}

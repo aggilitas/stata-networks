@@ -424,107 +424,58 @@ di as res "4g inflow interaction: the ratios and the copy sum at the target"
 * 5. Joining a second network into a frame
 *
 * A frame is a panel of edges and every network in it is a
-* column. Weight networks need not reach the same edges: the merge
-* keeps the union, so no row is lost, an edge a weight network does
-* not reach weighs zero, and the counts are returned in r(). An
-* attribute describes the node and cannot be absent on an edge, so
-* an attribute network must reach every edge of its frame, and a
-* frame that holds one takes no new edge. Whatever stops a join is
-* checked before either frame is written. Two weight networks that
-* share no edge stack rather than sit side by side.
+* column, so a second network joins only with the rows the frame
+* already holds: the same periods, the same edges and, in
+* networks_multi, the same subnets. Nothing is filled in. A call
+* with a row more or a row fewer is refused and writes nothing,
+* and the check runs against every frame a call writes before the
+* first of them changes.
 *==============================================================
 
+* the same rows: the second network sits beside the first
 frames reset
 use `flowsgl', clear
 qui count
 local n_full = r(N)
 network_calc, type(flow) subnet(single) name(wa)
-
-* second network on a subset: one edge taken out
-use `flowsgl', clear
-qui drop if source == "n1" & target == "n2"
-network_calc, type(flow) subnet(single) name(wb)
-assert r(matched_single) == `n_full' - 3
-assert r(frame_only_single) == 3
-assert r(new_only_single) == 0
-
-frame networks_single {
-    qui count
-    assert r(N) == `n_full'
-    assert !missing(wa) & !missing(wb)
-    assert wb == 0 if edge_id == "n1_n2"
-    qui count if edge_id == "n1_n2"
-    assert r(N) == 3
-}
-di as res "5a join: a smaller second network keeps every row"
-
-* the other direction: the frame is built from the subset first
-frames reset
-use `flowsgl', clear
-qui drop if source == "n1" & target == "n2"
-network_calc, type(flow) subnet(single) name(wa)
-use `flowsgl', clear
-network_calc, type(flow) subnet(single) name(wb)
-assert r(matched_single) == `n_full' - 3
-assert r(frame_only_single) == 0
-assert r(new_only_single) == 3
-
-frame networks_single {
-    qui count
-    assert r(N) == `n_full'
-    assert !missing(wa) & !missing(wb)
-    assert !missing(source) & !missing(target)
-    assert edge_id == source + "_" + target
-    assert wa == 0 if edge_id == "n1_n2"
-}
-di as res "5b join: a larger second network fills the older column"
-
-* both directions at once: each side reaches an edge the other
-* does not
-frames reset
-use `flowsgl', clear
-qui drop if source == "n1" & target == "n2"
-network_calc, type(flow) subnet(single) name(wa)
-use `flowsgl', clear
-qui drop if source == "n3" & target == "n4"
-network_calc, type(flow) subnet(single) name(wb)
-
-frame networks_single {
-    qui count
-    assert r(N) == `n_full'
-    assert !missing(wa) & !missing(wb)
-    assert !missing(source) & !missing(target)
-    assert edge_id == source + "_" + target
-    assert wa == 0 if edge_id == "n1_n2"
-    assert wb == 0 if edge_id == "n3_n4"
-}
-di as res "5c join: both sides filled in the same call"
-
-* an attribute network that misses an edge of the frame is refused,
-* and writes nothing; the complete one is then accepted
-frames reset
-use `flowsgl', clear
-network_calc, type(flow) subnet(single) name(wa)
 use `attrsgl', clear
-qui drop if source == "n1" & target == "n2"
-capture network_calc, type(attribute) subnet(single) name(ga)
+network_calc, type(attribute) subnet(single) name(ga)
+frame networks_single {
+    qui count
+    assert r(N) == `n_full'
+    assert !missing(wa, ga)
+    qui describe, short
+    assert r(k) == 6
+}
+di as res "5a join: a network with the same rows sits beside the first"
+
+* a node fewer: the second network is the complete panel of five of
+* the six nodes, so the frame holds rows it lacks
+frames reset
+use `flowsgl', clear
+network_calc, type(flow) subnet(single) name(wa)
+use `flowsgl', clear
+qui drop if source == "n6" | target == "n6"
+capture network_calc, type(flow) subnet(single) name(wb)
 assert _rc == 459
 frame networks_single {
-    capture confirm variable ga
+    capture confirm variable wb
     assert _rc != 0
+    qui count
+    assert r(N) == `n_full'
 }
-use `attrsgl', clear
-network_calc, type(attribute) subnet(single) name(ga)
-assert r(frame_only_single) == 0
-frame networks_single: assert !missing(ga)
-di as res "5d join: an attribute must reach every edge of the frame"
+di as res "5b join: a network with a node fewer is refused, nothing written"
 
-* a frame that holds an attribute column takes no edge the column
-* lacks, and a refused weight network writes nothing
+* a node more: the frame is built on five nodes and the second
+* network brings rows the frame lacks
 frames reset
 use `attrsgl', clear
-qui drop if source == "n1" & target == "n2"
+qui drop if source == "n6" | target == "n6"
 network_calc, type(attribute) subnet(single) name(ga)
+frame networks_single {
+    qui count
+    local n_five = r(N)
+}
 use `flowsgl', clear
 capture network_calc, type(flow) subnet(single) name(wa)
 assert _rc == 459
@@ -532,15 +483,30 @@ frame networks_single {
     capture confirm variable wa
     assert _rc != 0
     qui count
-    assert r(N) == `n_full' - 3
+    assert r(N) == `n_five'
 }
-di as res "5e join: a frame with an attribute takes no edge it lacks"
+di as res "5c join: a network with a node more is refused, nothing written"
+
+* a period more: the frame covers two periods and the second
+* network three
+frames reset
+use `flowsgl', clear
+qui drop if year == 2020
+network_calc, type(flow) subnet(single) name(wa)
+use `attrsgl', clear
+capture network_calc, type(attribute) subnet(single) name(ga)
+assert _rc == 459
+frame networks_single {
+    capture confirm variable ga
+    assert _rc != 0
+}
+di as res "5d join: a network with a period more is refused, nothing written"
 
 * the check runs before either frame is written: a multi-subnet
 * call refused at networks_single leaves networks_multi unwritten
 frames reset
 use `attrsgl', clear
-qui drop if source == "n1" & target == "n2"
+qui drop if source == "n6" | target == "n6"
 network_calc, type(attribute) subnet(single) name(ga)
 use `flowdat', clear
 capture network_calc, type(flow) subnet(multi) feature(feature) ///
@@ -552,7 +518,28 @@ frame networks_single {
     capture confirm variable wm
     assert _rc != 0
 }
-di as res "5f join: a call refused at the second frame writes neither"
+di as res "5e join: a call refused at the second frame writes neither"
+
+* a subnet fewer: networks_multi holds three subnets and the second
+* network two. Its copy has the rows of networks_single, but the
+* call is refused at networks_multi and writes neither frame.
+frames reset
+use `flowdat', clear
+network_calc, type(flow) subnet(multi) feature(feature) name(wa)
+use `intdat', clear
+qui drop if feature == "f3"
+capture network_calc, type(interaction) subnet(multi) ///
+    feature(feature) name(wb)
+assert _rc == 459
+frame networks_multi {
+    capture confirm variable wb
+    assert _rc != 0
+}
+frame networks_single {
+    capture confirm variable wb
+    assert _rc != 0
+}
+di as res "5f join: a subnet fewer is refused, and neither frame is written"
 
 * a key that is numeric in a frame and string in the data is refused
 * before either frame is written
@@ -572,25 +559,23 @@ frame networks_single {
 }
 di as res "5g join: a key of another type is refused, nothing written"
 
-* no shared edge at all: the frame becomes the two blocks stacked
+* node names that never meet those of the frame: no row is shared,
+* and the call is refused
 frames reset
 use `flowsgl', clear
 network_calc, type(flow) subnet(single) name(wa)
-frame networks_single {
-    qui count
-    local n_before = r(N)
-}
 use `flowsgl', clear
 qui replace source = "z" + source
 qui replace target = "z" + target
-network_calc, type(flow) subnet(single) name(wb)
+capture network_calc, type(flow) subnet(single) name(wb)
+assert _rc == 459
 frame networks_single {
+    capture confirm variable wb
+    assert _rc != 0
     qui count
-    assert r(N) == 2 * `n_before'
-    qui count if wa != 0 & wb != 0
-    assert r(N) == 0
+    assert r(N) == `n_full'
 }
-di as res "5h join: a disjoint network stacks, nothing overlaps"
+di as res "5h join: a network with other node names is refused"
 
 * the multi-subnet frame joins the same way, on year, feature and
 * edge_id, and each network brings its own ratio column
@@ -618,9 +603,10 @@ di as res "5i join: networks_multi joins on the feature as well"
 * into a weight that reads as defined, and a name that would be
 * lost or would overwrite a column is refused before anything is
 * computed. So are an option value the command does not know, an
-* edge that appears twice in a period, and node names that cannot
-* be joined into an edge_id. Beside the refusals stand the two ways
-* a subnet can come to nothing at a node, which are not refused.
+* edge that appears twice in a period, a row missing from the
+* complete panel, and node names that cannot be joined into an
+* edge_id. Beside the refusals stand the two ways a subnet can come
+* to nothing at a node, which are not refused.
 *==============================================================
 
 frames reset
@@ -674,19 +660,31 @@ frame networks_single {
 }
 di as res "6f refuses a name the frame already holds"
 
-* a subnet with no rows at a node is not there: the ratios of the
-* subnets that are there add up to one at that node, and so does
-* the copy
+* a subnet the node does not hold keeps its rows, with size zero: it
+* takes no ratio there, the ratios of the other subnets add up to
+* one at that node, and so does the copy. Taking its rows out
+* instead is refused, since the panel then lacks them.
 frames reset
 use `flowdat', clear
-qui drop if source == "n1" & feature == "f1"
+qui replace source_size = 0 if source == "n1" & feature == "f1"
 network_calc, type(flow) subnet(multi) feature(feature) name(w)
+frame networks_multi {
+    split edge_id, parse("_") gen(node)
+    assert w_fratio == 0 if node1 == "n1" & feature == "f1"
+}
 frame networks_single {
     split edge_id, parse("_") gen(node)
     collapse (sum) w, by(year node1)
     assert reldif(w, 1) < 1e-12
 }
-di as res "6g a subnet without rows at a node: the copy sums to one"
+frames reset
+use `flowdat', clear
+qui drop if source == "n1" & feature == "f1"
+capture network_calc, type(flow) subnet(multi) feature(feature) name(w)
+assert _rc == 459
+capture frame networks_multi: describe
+assert _rc != 0
+di as res "6g a subnet a node does not hold: its rows with size zero"
 
 * a subnet that has rows but sends nothing weighs zero on every edge
 * and still holds its ratio, so the copy at that node sums to one
@@ -882,6 +880,36 @@ assert _rc != 0
 capture frame networks_single: confirm variable v, exact
 assert _rc != 0
 di as res "6s refuses a frame that holds _merge, and writes nothing"
+
+* the input must be the complete panel of its rows: a row taken out
+* is refused under either scope, the rows the input lacks are
+* listed, and nothing is written. So is a node missing from one
+* period, and a subnet missing from one period, although each
+* period is then a complete mesh on its own.
+frames reset
+use `flowsgl', clear
+qui drop if year == 2018 & source == "n1" & target == "n2"
+capture network_calc, type(flow) subnet(single) name(w)
+assert _rc == 459
+use `attrsgl', clear
+qui drop if year == 2019 & (source == "n6" | target == "n6")
+capture network_calc, type(attribute) subnet(single) name(w)
+assert _rc == 459
+use `flowdat', clear
+qui drop in 1
+capture network_calc, type(flow) subnet(multi) feature(feature) ///
+    name(w)
+assert _rc == 459
+use `intdat', clear
+qui drop if year == 2020 & feature == "f2"
+capture network_calc, type(interaction) subnet(multi) ///
+    feature(feature) name(w)
+assert _rc == 459
+capture frame networks_single: describe
+assert _rc != 0
+capture frame networks_multi: describe
+assert _rc != 0
+di as res "6t refuses a row missing from the complete panel, writes nothing"
 
 *==============================================================
 * 7. Known answers
