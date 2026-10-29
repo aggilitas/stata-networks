@@ -1,9 +1,8 @@
 -------------------------------------------------------------------------------
       name:  <unnamed>
-       log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\examp
-> le_session.log
+       log:  C:\Users\ntnta\gm\StataJournal\netcalc_run\example_session.log
   log type:  text
- opened on:  28 Oct 2026, 08:56:44
+ opened on:  29 Oct 2026, 20:47:31
 
 . 
 . *--------------------------------------------------------------
@@ -113,12 +112,6 @@ To view the networks:
 . return list
 
 scalars:
-     r(new_only_multi) =  300
-   r(frame_only_multi) =  0
-      r(matched_multi) =  0
-    r(new_only_single) =  60
-  r(frame_only_single) =  0
-     r(matched_single) =  0
         r(mean_weight) =  .25
             r(n_pairs) =  60
             r(n_edges) =  300
@@ -711,7 +704,7 @@ file example_estimates.csv saved
 
 . display as text _n "Files written to `c(pwd)':"
 
-Files written to C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples:
+Files written to C:\Users\ntnta\gm\StataJournal\netcalc_run:
 
 . display as text "  example_session.log"
   example_session.log
@@ -722,8 +715,7 @@ Files written to C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples:
 . 
 . log close
       name:  <unnamed>
-       log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\examp
-> le_session.log
+       log:  C:\Users\ntnta\gm\StataJournal\netcalc_run\example_session.log
   log type:  text
- closed on:  28 Oct 2026, 08:56:46
+ closed on:  29 Oct 2026, 20:47:32
 -------------------------------------------------------------------------------
