@@ -165,9 +165,11 @@ restore
 * An estimation on the panel
 *
 * The outcome comes from a file of its own, on the same key as the
-* panel. It was generated with known coefficients: 2 on the
-* single-subnet copy of the flow network, mig_out, and 0.5 on the
-* schooling log-ratio, sch. The ordered pair and the period are
+* panel. It was generated as 2 times the single-subnet copy of the
+* flow network, mig_out, plus 0.5 times the schooling log-ratio, sch,
+* plus noise; with 60 observations and the absorbed effects, the
+* estimates need not reproduce those two numbers. The ordered pair
+* and the period are
 * absorbed: source-period and target-period effects together would
 * absorb sch entirely, since a log-ratio is the difference of a
 * target-period and a source-period term. With five nodes no

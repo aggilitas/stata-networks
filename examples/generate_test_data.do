@@ -169,8 +169,8 @@ format source_value target_value %7.4f
 export delimited using test_attribute_single.csv, replace datafmt
 
 *--------------------------------------------------------------
-* Outcome: known coefficients, 2 on the single-subnet copy of the
-* flow network and 0.5 on the schooling log-ratio
+* Outcome: 2 times the single-subnet copy of the flow network, plus
+* 0.5 times the schooling log-ratio, plus noise
 *--------------------------------------------------------------
 
 * population of each node, over all groups

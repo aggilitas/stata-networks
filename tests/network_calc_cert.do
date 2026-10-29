@@ -246,13 +246,15 @@ foreach c in 1000 0.001 period {
         if "`src'" == "intdat"  local dat "`intdat'"
         if "`src'" == "attrsgl" local dat "`attrsgl'"
         local opt = cond("`sub'" == "multi", "feature(feature)", "")
-        local frm = "networks_single"
 
-        tempfile base
+        tempfile base basem
         frames reset
         use "`dat'", clear
         network_calc, type(`typ') subnet(`sub') `opt' name(w)
-        frame `frm': qui save "`base'", replace
+        frame networks_single: qui save "`base'", replace
+        if "`sub'" == "multi" {
+            frame networks_multi: qui save "`basem'", replace
+        }
 
         frames reset
         use "`dat'", clear
@@ -271,16 +273,21 @@ foreach c in 1000 0.001 period {
         }
         drop k
         network_calc, type(`typ') subnet(`sub') `opt' name(w)
-        frame `frm' {
+        frame networks_single {
             rename w w_scaled
-            if "`frm'" == "networks_multi" {
-                qui merge 1:1 year feature edge_id using "`base'", ///
-                    nogenerate
-            }
-            else {
-                qui merge 1:1 year edge_id using "`base'", nogenerate
-            }
+            qui merge 1:1 year edge_id using "`base'", nogenerate
             assert reldif(w_scaled, w) < 1e-12
+        }
+        * under subnet(multi) the subnet weights and the ratios of
+        * the subnets stay put as well, not only the copy
+        if "`sub'" == "multi" {
+            frame networks_multi {
+                rename (w w_fratio) (w_scaled w_fratio_scaled)
+                qui merge 1:1 year feature edge_id using "`basem'", ///
+                    nogenerate
+                assert reldif(w_scaled, w) < 1e-12
+                assert reldif(w_fratio_scaled, w_fratio) < 1e-12
+            }
         }
         local by = cond("`c'" == "period", "a factor per period", "`c'")
         di as res "3 `typ' `sub': unchanged when scaled by `by'"
@@ -595,6 +602,67 @@ frame networks_multi {
     assert r(k) == 9
 }
 di as res "5i join: networks_multi joins on the feature as well"
+
+* a period fewer: the frame covers three periods and the second
+* network two
+frames reset
+use `flowsgl', clear
+network_calc, type(flow) subnet(single) name(wa)
+use `attrsgl', clear
+qui drop if year == 2020
+capture network_calc, type(attribute) subnet(single) name(ga)
+assert _rc == 459
+frame networks_single {
+    capture confirm variable ga
+    assert _rc != 0
+    qui count
+    assert r(N) == `n_full'
+}
+di as res "5j join: a network with a period fewer is refused, nothing written"
+
+* a subnet more: networks_multi holds two subnets and the second
+* network three
+frames reset
+use `intdat', clear
+qui drop if feature == "f3"
+network_calc, type(interaction) subnet(multi) feature(feature) ///
+    name(wa)
+use `flowdat', clear
+capture network_calc, type(flow) subnet(multi) feature(feature) ///
+    name(wb)
+assert _rc == 459
+frame networks_multi {
+    capture confirm variable wb
+    assert _rc != 0
+}
+frame networks_single {
+    capture confirm variable wb
+    assert _rc != 0
+}
+di as res "5k join: a subnet more is refused, and neither frame is written"
+
+* another feature with the same levels: networks_multi records the
+* name of the feature it is split by, and a call that names another
+* variable is refused, although every row would match
+frames reset
+use `flowdat', clear
+network_calc, type(flow) subnet(multi) feature(feature) name(wa)
+use `intdat', clear
+rename feature group
+capture network_calc, type(interaction) subnet(multi) ///
+    feature(group) name(wb)
+assert _rc == 459
+frame networks_multi {
+    capture confirm variable wb
+    assert _rc != 0
+    local split : char feature[netcalc_feature]
+    assert "`split'" == "feature"
+}
+frame networks_single {
+    capture confirm variable wb
+    assert _rc != 0
+}
+di as res "5l join: a network split by another feature is refused"
 
 *==============================================================
 * 6. What the command refuses

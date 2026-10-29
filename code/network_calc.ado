@@ -395,6 +395,23 @@ program define network_calc, rclass
             exit 110
         }
 
+        * networks_multi is split by one feature. The frame records
+        * the name of the variable, and a call that names another
+        * variable in feature() is refused, also where the levels of
+        * the two coincide: two files that name the same feature
+        * differently are brought to one name before the call.
+        if "`tag'" == "multi" {
+            frame `fr' {
+                local split : char feature[netcalc_feature]
+            }
+            if "`split'" != "" & "`split'" != "`feature'" {
+                di as error "frame `fr' is split by `split'," ///
+                            " not by `feature'"
+                di as error "Nothing has been written"
+                exit 459
+            }
+        }
+
         * the key must join: present in the frame, and string or
         * numeric on both sides alike
         foreach k of local keys {
@@ -497,6 +514,7 @@ program define network_calc, rclass
             networkname(`name') ///
             subnet(multi) ///
             type(`type') ///
+            featurename(`feature') ///
             `debug'
 
         * The single-subnet copy adds the subnet weights up after

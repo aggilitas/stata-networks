@@ -85,9 +85,10 @@ built. It also stops, before either output frame is written, on a join
 the frames cannot take: a network whose rows are not those of the frame
 it joins, and a key of another storage type than the frame has (see
 {help network_calc##output:Output frames}). A zero denominator is not
-refused. A node out of which nothing travels, a subnet whose size at
-the node is zero, and a subnet whose value is zero at every node but
-the source all come to zero, and their weights are written as zero.
+refused. A node out of which nothing travels and a subnet whose value
+is zero at every node but the source come to zero, and their weights
+are written as zero; a subnet whose size at the node is zero keeps its
+weights and has a ratio of zero there.
 
 {pstd}
 Dropping the offending edge instead would take it out of its own
@@ -125,7 +126,9 @@ beside the network, and under {cmd:subnet(multi)} the name has at most
 25 characters, so that {it:newvar}{cmd:_fratio} fits in 32. The name
 cannot be {cmd:netcalc_fratio} or {cmd:_merge}, which the command uses
 on its own. The check is exact: a name that only abbreviates a variable
-in a frame is a new name.
+in a frame is a new name. Nor can it be
+{cmd:year}, {cmd:source}, {cmd:target}, {cmd:edge_id} or {cmd:feature},
+the variables of the frames themselves.
 
 {phang}
 {opt f:eature(varname)} names the variable that splits the network into
@@ -141,8 +144,10 @@ at the target. Under {cmd:flow}, the weight of edge i,j is then the
 value of that edge as recorded at j, read from {cmd:target_value}, over
 the values recorded at j for every edge entering it: the weight of i in
 what arrives at j. It is not the outflow weight of the reversed edge.
-Under {cmd:interaction} the two endpoints exchange their roles in the
-same way, and for {cmd:attribute} the log ratio changes sign. For
+Under {cmd:interaction} the data describe the subnets at the nodes,
+not the edges, so the exchange writes on the edge from i to j the
+outflow weight of the edge from j to i; for {cmd:attribute} the log
+ratio changes sign. For
 {cmd:interaction} and {cmd:flow} the weights of a node then add up over
 the edges entering it rather than those leaving it. Nothing in the data
 moves either way and the edge keeps its own orientation.
@@ -182,9 +187,11 @@ period, every ordered pair i,j with j != i of the nodes, and, with
 {cmd:subnet(multi)}, every level of the feature. The periods, the nodes
 and the levels are those the data name: every value of {cmd:year},
 every value that appears as {cmd:source} or {cmd:target}, and every
-value of the feature. Each node carries one value. A flow or an
-interaction that did not happen is a row with value zero, which the
-data supply: the command fills in no row and no value. Data with a row
+value of the feature. Under {cmd:interaction} and {cmd:attribute} each
+node carries one value, and under {cmd:flow} each edge carries its
+own. A flow or an interaction that did not happen is a row with value
+zero, which the data supply: the command fills in no row and no value.
+Data with a row
 missing are refused, and the command lists the missing rows and their
 number in each period.
 
@@ -217,7 +224,10 @@ kilometres meaningless and a fare or a tonnage meaningful.
 {pstd}
 Under {cmd:interaction}, {cmd:size} must be constant within a period,
 subnet and node: the template reads it once for each subnet, because it
-describes the node. Under {cmd:flow} it is added up over the rows of
+describes the node. The command does not compare the rows that repeat
+it; a line such as {cmd:bysort year feature source: assert}
+{cmd:source_size == source_size[1]} checks them before the call.
+Under {cmd:flow} it is added up over the rows of
 the subnet, so it may describe the edge and change from one target to
 the next, as the migrants of one group sent along each edge would, or
 describe the node and be the same on every row of a complete mesh.
@@ -238,8 +248,11 @@ identifier stays unambiguous. Data that break either rule are refused.
 {dlgtab:interaction}
 
 {pstd}
-{cmd:type(interaction)} requires {cmd:subnet(multi)}: it compares two
-subnets of two nodes and has no single-subnet form. The weight is the
+{cmd:type(interaction)} requires {cmd:subnet(multi)}: its weight is
+defined inside a subnet, the same subnet at the two nodes, so the call
+names the feature that defines the subnets. A feature with a single
+level gives a network with one subnet, and {cmd:subnet(single)} is kept
+for data without a feature. The weight is the
 quantity of the subnet at the target over its quantity at every node
 but the source, read from {cmd:value}:
 
@@ -346,7 +359,10 @@ into {cmd:networks_multi}: the network and, beside it,
 A frame is a panel of edges, and every network in it is a column of
 that panel. A call therefore joins a frame only with the rows the frame
 holds: the same periods and edges and, in {cmd:networks_multi}, the
-same subnets. Nothing is filled in on either side. A call with a row
+same subnets, split by the same feature: the frame records the name
+of the variable named in {cmd:feature()}, and a call that names another
+variable is refused, even where the levels of the two coincide.
+Nothing is filled in on either side. A call with a row
 the frame lacks, or without a row the frame holds, is refused, and the
 rows on either side are listed. That is what happens when the input
 files name different nodes or periods, or when two multi-subnet
@@ -366,7 +382,7 @@ the ratio of the subnet within the feature at its node, which is what
 the {cmd:size} columns are read as. It is a number between zero and one
 and the ratios of a node add up to one over the subnets, so a regression
 run one subnet at a time has both the weights of that subnet and the
-weight of the subnet itself. Each call reads the sizes of its own input,
+ratio of the subnet at its node. Each call reads the sizes of its own input,
 so two networks split the same way carry a column each and need not
 weigh their subnets alike.
 
@@ -393,14 +409,6 @@ run from the directory that holds them. Where a file is split into
 subnets, the variable {cmd:feature} holds the province people were born
 in.
 
-{pstd}One network from migration flows{p_end}
-{phang2}{cmd:. import delimited test_flow_single.csv, clear}{p_end}
-{phang2}{cmd:. network_calc, type(flow) subnet(single) name(mig_out)}{p_end}
-
-{pstd}The same flows seen from the receiving node{p_end}
-{phang2}{cmd:. network_calc, type(flow) subnet(single) name(mig_in)}{break}
-{cmd:          direction(inflow)}{p_end}
-
 {pstd}Social connection by birthplace, one subnet per birthplace{p_end}
 {phang2}{cmd:. import delimited test_interaction_multi.csv, clear}{p_end}
 {phang2}{cmd:. network_calc, type(interaction) subnet(multi)}{break}
@@ -412,10 +420,15 @@ holds at its node, which the call leaves in {cmd:mig_out_fratio}{p_end}
 {phang2}{cmd:. network_calc, type(flow) subnet(multi)}{break}
 {cmd:          feature(feature) name(mig_out)}{p_end}
 
-{pstd}
-This call and the first one are two derivations of the same channel,
-not steps to run one after the other: whichever comes second finds
-{cmd:mig_out} already in {cmd:networks_single} and is refused.
+{pstd}The same flows seen from the receiving node{p_end}
+{phang2}{cmd:. network_calc, type(flow) subnet(multi)}{break}
+{cmd:          feature(feature) direction(inflow) name(mig_in)}{p_end}
+
+{pstd}The same migration pooled over the subnets, one network without
+a feature; it differs from the single-subnet copy of {cmd:mig_out},
+which weighs the subnets by their size{p_end}
+{phang2}{cmd:. import delimited test_flow_single.csv, clear}{p_end}
+{phang2}{cmd:. network_calc, type(flow) subnet(single) name(mig_pool)}{p_end}
 
 {pstd}The schooling gap between the two nodes of each edge{p_end}
 {phang2}{cmd:. import delimited test_attribute_single.csv, clear}{p_end}

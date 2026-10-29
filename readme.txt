@@ -24,8 +24,8 @@ Three templates are available.
   interaction   the quantity of a subnet at the target over its quantity
                 at every node but the source, with the subnets added up
                 in proportion to their size at the source. Requires the
-                panel to be split into subnets by a feature; it has no
-                single-subnet form.
+                panel to be split into subnets by a feature; a feature
+                with one level gives a network with one subnet.
 
   flow          the quantity of an edge over the total leaving its node
                 in that period. For quantities that move between nodes:
@@ -43,8 +43,9 @@ has no subnets: the node level is passed with subnet(single).
 
 Input is the complete panel of its rows: every period, every ordered
 pair of distinct nodes and, with a feature, every level of the feature,
-with one value per node and a zero, which the data supply, for a flow
-or an interaction that did not happen. A row missing from that panel is
+with one value for each node under interaction and attribute, one for
+each edge under flow, and a zero, which the data supply, for a flow or
+an interaction that did not happen. A row missing from that panel is
 refused, and the command lists it. Without a feature it holds year,
 source, target, source_value and target_value. Under flow both value
 columns describe the edge: source_value as the source records it and
@@ -111,8 +112,7 @@ package once the article is accepted, which takes the place of st0XXX:
 
 From the development repository:
 
-    net install netcalc, ///
-        from(https://raw.githubusercontent.com/aggilitas/stata-networks/main/)
+    net install netcalc, from(https://raw.githubusercontent.com/aggilitas/stata-networks/main/)
 
 If a version before 2.0.0 is installed, it was distributed under the
 package name stata-networks. Remove it first, or both copies will sit
@@ -143,8 +143,9 @@ failure. Its eight sections check:
      value recorded there over the total recorded there
   5. that a second network joins a frame only with the rows the frame
      holds, that a network with a node, a period or a subnet more or
-     fewer is refused and writes nothing, and that a call refused at
-     the second frame writes neither
+     fewer, or split by another feature, is refused and writes
+     nothing, and that a call refused at the second frame writes
+     neither
   6. that the command refuses each input it cannot make a network of,
      self-loops and a row missing from the complete panel included,
      that option values ignore case, that a name is checked exactly,
@@ -161,10 +162,12 @@ Notes
 Section 6.7 of the article sets out the published application of the
 framework, job-seeking migration between the 81 provinces of Turkiye
 (Talay et al. 2026, cited below), as the network_calc calls that build
-its columns. Its data from the Turkish Statistical Institute are not
-public: the Institute supplies them for a fee, and they cannot be
-distributed. The package therefore holds neither the data of that
-application nor a log of its calls. The example session runs on
+its columns. Its migration and birthplace counts are not public: the
+Turkish Statistical Institute supplies them for a fee, and they cannot
+be distributed; the unemployment and schooling levels are published,
+but without the counts the calls cannot be run. The package therefore
+holds neither the data of that application nor a log of its calls.
+The example session runs on
 synthetic data instead, built by generate_test_data.do, which serve
 for testing.
 

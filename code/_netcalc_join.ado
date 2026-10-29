@@ -5,7 +5,7 @@
 program define _netcalc_join
     version 16.0
     syntax , Framename(string) Networkname(string) Subnet(string) ///
-              Type(string) [DEBUG]
+              Type(string) [Featurename(string) DEBUG]
     
     * Validate subnet
     if !inlist("`subnet'", "single", "multi") {
@@ -48,6 +48,12 @@ program define _netcalc_join
 
             * Record the template the column came from.
             char `networkname'[netcalc_type] "`type'"
+
+            * networks_multi is split by one feature: record its name,
+            * so that a call split by another feature is refused.
+            if "`featurename'" != "" {
+                char feature[netcalc_feature] "`featurename'"
+            }
         }
     }
     else {
