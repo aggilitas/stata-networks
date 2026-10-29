@@ -111,7 +111,8 @@ package once the article is accepted, which takes the place of st0XXX:
 
 From the development repository:
 
-    net install netcalc, from(https://raw.githubusercontent.com/aggilitas/stata-networks/main/)
+    net install netcalc, ///
+        from(https://raw.githubusercontent.com/aggilitas/stata-networks/main/)
 
 If a version before 2.0.0 is installed, it was distributed under the
 package name stata-networks. Remove it first, or both copies will sit
@@ -135,8 +136,9 @@ failure. Its eight sections check:
      to one, and that the single-subnet copy sums to one
   2. that attribute values cancel along a reversed edge, and that an
      attribute with subnets is refused
-  3. that scaling the whole input by a positive constant, or by a
-     factor that changes from one period to the next, moves no weight
+  3. that scaling the whole input by a positive constant, by a factor
+     that changes from one period to the next, or everything one source
+     sends by a factor of its own, moves no weight
   4. that direction(inflow) anchors the weight at the target, the
      value recorded there over the total recorded there
   5. that a second network joins a frame only with the rows the frame

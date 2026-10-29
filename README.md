@@ -111,13 +111,14 @@ year  feature  source  target  source_size  source_value
 who live there, passengers carried by a mode), read as a ratio of the
 subnet to the node; `value` is the quantity the network is about.
 
-The templates are defined on the complete directed mesh of each period:
-every ordered pair of distinct nodes, one value for each node, and a zero
-for a flow that did not happen. Laying the data out that way is part of
-preparing the input; the command computes on the rows it is given. It
-refuses a missing value, a self-loop, an edge that appears twice in a
-period, and a source or target that is not a string or holds an
-underscore.
+The data must be the complete panel of their rows: every period, every
+ordered pair of distinct nodes and, with a feature, every level of the
+feature, with one value for each node and a zero, which the data supply,
+for a flow or an interaction that did not happen. The command fills in no
+row and no value: data with a row missing are refused, and the missing
+rows are listed. It also refuses a missing value, a self-loop, an edge
+that appears twice in a period, and a source or target that is not a
+string or holds an underscore.
 
 The examples read the data files in `examples/` and run from that
 directory. In the files split into subnets, `feature` holds the province
@@ -205,15 +206,13 @@ year  feature  source  target  edge_id  network1_fratio  network1  ...
 A multi-subnet call writes two columns into `networks_multi`: the network
 and, beside it, the ratio of each subnet within the feature at its node.
 
-Weight networks need not reach the same edges: on an edge a flow or
-interaction network does not reach, its column weighs zero, which changes no
-weight already in the frame. An attribute cannot be absent on an edge, since
-a node is never without its attribute: an attribute network must reach every
-edge of its frame, and a frame that holds an attribute column takes no edge
-the column lacks. Every join is checked against both frames before either
-is written, so a call writes both frames or neither. Each call returns in
-`r()` the rows and edges it computed and, for each frame it writes, the
-edges matched, those only in the frame, and those only in the call.
+Every network of a frame has the rows of the frame: the same periods and
+edges and, in `networks_multi`, the same subnets. A call whose rows differ
+from those of the frame is refused before anything is written, and the rows
+on either side are listed; nothing is filled in. Every join is checked
+against both frames before either is written, so a call writes both frames
+or neither. Each call returns in `r()` the rows and edges it computed and
+the mean of the variable.
 
 ## Project Structure
 
