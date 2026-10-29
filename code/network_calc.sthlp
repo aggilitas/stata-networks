@@ -83,7 +83,9 @@ period, or in a subnet; and on a {cmd:source} or {cmd:target} that is
 not a string or holds an underscore, from which no {cmd:edge_id} can be
 built. It also stops, before either output frame is written, on a join
 the frames cannot take: a network whose rows are not those of the frame
-it joins, and a key of another storage type than the frame has (see
+it joins, a multi-subnet network split by a feature of another name, a
+key of another storage type than the frame has, and a frame that holds
+a variable named {cmd:_merge} (see
 {help network_calc##output:Output frames}). A zero denominator is not
 refused. A node out of which nothing travels and a subnet whose value
 is zero at every node but the source come to zero, and their weights
@@ -361,8 +363,9 @@ that panel. A call therefore joins a frame only with the rows the frame
 holds: the same periods and edges and, in {cmd:networks_multi}, the
 same subnets, split by the same feature: the frame records the name
 of the variable named in {cmd:feature()}, and a call that names another
-variable is refused, even where the levels of the two coincide.
-Nothing is filled in on either side. A call with a row
+variable is refused, even where the levels of the two coincide; two
+features that share a name and levels it cannot tell apart. Nothing is
+filled in on either side. A call with a row
 the frame lacks, or without a row the frame holds, is refused, and the
 rows on either side are listed. That is what happens when the input
 files name different nodes or periods, or when two multi-subnet
@@ -370,8 +373,9 @@ networks are split by different features.
 
 {pstd}
 Whatever could stop a join, a network whose rows differ from those of
-the frame, a key that is a string on one side and numeric on the
-other, and a variable named {cmd:_merge} in the frame, is checked
+the frame, a feature of another name, a key that is a string on one
+side and numeric on the other, and a variable named {cmd:_merge} in the
+frame, is checked
 against every frame a call writes before the first of them changes, so
 a call writes both frames or neither.
 
@@ -484,8 +488,10 @@ zero, one over the number of alternatives under {cmd:interaction} and
 Each network column, the variable named in {cmd:name()}, records the
 template that produced it in the variable characteristic
 {cmd:netcalc_type}, which {cmd:char list} displays: {cmd:interaction},
-{cmd:flow} or {cmd:attribute}. The {it:_fratio} columns and the key
-variables carry none.
+{cmd:flow} or {cmd:attribute}. The {it:_fratio} columns carry none. In
+{cmd:networks_multi}, the key variable {cmd:feature} carries the
+characteristic {cmd:netcalc_feature}, the name of the variable the frame
+is split by, which a call split by another feature is checked against.
 
 
 {marker author}{...}
