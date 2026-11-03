@@ -1,0 +1,18 @@
+{
+  "status": "passed",
+  "scope": "Exact rational arithmetic for structural identities, not empirical estimates",
+  "binary_newman_identity": true,
+  "positive_denominator_row_sums": true,
+  "common_positive_scale_invariance": true,
+  "outside_subgroup_redistribution_invariance": true,
+  "rest_closure": true,
+  "combined_rest_size_alone_insufficient": true,
+  "equal_composition_target_mass_identity": true,
+  "zero_denominator_convention": true,
+  "illustration": {
+    "P_ij": "5/12",
+    "P_ji": "1/2",
+    "changed_third_node": "13/44",
+    "diagonal_removed_after_mixture": "7/16"
+  }
+}

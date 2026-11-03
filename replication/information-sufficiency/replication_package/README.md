@@ -1,9 +1,6 @@
 # Replication package
 
-**Information sufficiency criteria for exactness under partial observation in the AIMNER framework**
-Necmi Talay, Hakan Acaroğlu, Aslıhan Günal and Fausto Pedro García Márquez
-(corresponding author)
-
+**Information Sufficiency Criteria for Exact Measurement in Partially Observed Networks with Panel Data**
 Supplementary Software 1. The package reproduces every numerical result of the
 application and of the synthetic design of the paper, from the published data
 as used. The application covers the export networks of the EU textile,
@@ -60,7 +57,7 @@ data/                               source data as used
   mrqap_precision.py                Monte Carlo precision of the MRQAP p values; 100,000 draws near 0.05
   qv_sensitivity.py                 sensitivity to exports declared without an importer (QV)
   layer_positions.py                positional analysis of the second network
-  layer_network_figure.py           Fig. 3, the second network
+  layer_network_figure.py           Figure 2, the second network
   multiple_testing.py               the second network under corrections for multiple testing
   specification_sensitivity.py      the tests under year effects and other level/change choices
   descriptive_statistics.py         descriptive statistics
@@ -76,6 +73,9 @@ data/                               source data as used
 6_synthetic/
   synthetic_experiments.py          synthetic design and the examples of Propositions 5-7
   synthetic_results.json, figure1_boundary.pdf
+7_algebraic_checks/
+  interaction_projection_checks.py     exact rational identities for Supplementary Section S1.7
+  interaction_projection_checks.json   saved verification results
 ../netcalc/                         netcalc 2.0.0 at commit 6012f3f, next to this folder (see INSTALL.txt there)
 ```
 
@@ -86,7 +86,7 @@ run from `5_estimation`.
 
 ## Software
 
-- **Python 3.12 or later**, standard library only, for steps 1-4 and 9. From
+- **Python 3.12 or later**, standard library only, for steps 1-4, 9 and 11. From
   Python 3.12 on, `sum()` of floats uses Neumaier summation; under an older
   Python, some values of the attribute files differ from the packaged ones in
   the last binary digit.
@@ -140,7 +140,7 @@ From the package folder (the folder that holds this README):
 7. **Sensitivity.** `python 5_estimation/qv_sensitivity.py` (about half an
    hour), after step 6: the models under the four allocations of the exports
    declared without an importer.
-8. **Positions and Fig. 3.** `python 5_estimation/layer_positions.py`, then
+8. **Positions and Figure 2.** `python 5_estimation/layer_positions.py`, then
    `python 5_estimation/layer_network_figure.py`. Then
    `python 5_estimation/multiple_testing.py` (seconds), the second network under
    corrections for multiple testing, and
@@ -150,6 +150,8 @@ From the package folder (the folder that holds this README):
     after steps 5 and 6 or on the packaged results.
 10. **Synthetic design.** `python 6_synthetic/synthetic_experiments.py`,
     independent of the other steps.
+
+11. **Interaction projection identities.** `python 7_algebraic_checks/interaction_projection_checks.py` (seconds), independently of the empirical steps. This checks the binary co-membership identity, exclusion before versus after the subgroup mixture, dependence on third-node mass, scale invariance, REST closure, equal composition and zero-denominator cases using exact rational arithmetic.
 
 Each step overwrites the packaged output of the same name; to compare, run in a
 copy of the package.
@@ -191,15 +193,15 @@ files, which are the ones behind the results.
 | `4_declaration_check/compare_declarations_result.txt` | exporter- against importer-declared weights, ten member states | Section 4.2; Table S3 |
 | `5_estimation/results/unit_roots.csv` | Fisher-type Phillips-Perron tests | Section 4.4; Supplementary Section S7.1; Table S5 |
 | `5_estimation/results/screen_models.csv` | the 306 models, corridor-clustered inference | Supplementary Data 1 |
-| `5_estimation/results/mrqap.csv`, `mrqap_summary.txt` | MRQAP p values of the flow weight and the attribute edge values | Section 5; Table 4; Supplementary Data 1 |
+| `5_estimation/results/mrqap.csv`, `mrqap_summary.txt` | MRQAP p values of the flow weight and the attribute edge values | Section 5; Table 2; Supplementary Data 1 |
 | `5_estimation/results/mrqap_precision.csv`, `mrqap_precision.txt` | Monte Carlo intervals; the tests near 0.05 with 100,000 permutations | Section 5; Supplementary Data 1 |
 | `5_estimation/results/qv_sensitivity.txt`, `qv_sensitivity_cells.csv` | the models under four allocations of the exports declared without an importer | Section 5; Section 4.7; Supplementary Section S8.1; Supplementary Data 2 |
 | `5_estimation/results/layer_positions.txt`, `layer_pair_relations.csv` | relations between the before sets and between the after sets of the 153 pairs; the structurally equivalent pair; the positions | Section 5; Tables S6 and S7; Supplementary Data 3 |
-| `5_estimation/results/fig_layer_network.pdf` | the second network | Fig. 3 |
+| `5_estimation/results/fig_layer_network.pdf` | the second network | Figure 2 |
 | `5_estimation/results/multiple_testing.txt` | the second network under the Benjamini-Hochberg, Benjamini-Yekutieli and Holm corrections | Section 4.6; Supplementary Section S8.1 |
 | `5_estimation/results/specification_sensitivity.txt` | the flow-weight tests with year effects and under other level/change choices of the attribute edge values | Supplementary Section S8.1 |
-| `5_estimation/descriptive_statistics_result.txt` | shares of the EU27's TCLF exports; REST shares; the factor of equation (8); cell counts; producer prices in 2022 | Sections 4, 5 and 7; Table 4; Supplementary Sections S5-S8 |
-| `6_synthetic/synthetic_results.json`, `figure1_boundary.pdf` | examples of Propositions 5-7, nested-boundary errors, fixed-subnet check | Supplementary Section S3; Fig. 2; Table S2; Supplementary Section S4 |
+| `5_estimation/descriptive_statistics_result.txt` | shares of the EU27's TCLF exports; REST shares; the factor of equation (8); cell counts; producer prices in 2022 | Sections 4, 5 and 7; Table 2; Supplementary Sections S5-S8 |
+| `6_synthetic/synthetic_results.json`, `figure1_boundary.pdf` | examples of Propositions 5-7, nested-boundary errors, fixed-subnet check | Supplementary Section S3; Figure S1; Table S2; Supplementary Section S4 |
 
 Supplementary Section S8.1 also states that the structurally equivalent pair is the
 same under the p values from corridor-clustered standard errors: the rule of
@@ -217,12 +219,12 @@ The scripts, the log and the result files use the labels in the left column. The
 | Label in the package | Item in the article |
 |---|---|
 | section 4 (examples of Propositions 4-6) | Propositions 5-7; Section 3.4; Supplementary Section S3 |
-| section 5; Figure 1; Table 3 | Fig. 2; Table S2; Section 4.1; Supplementary Section S4 |
+| section 5; Figure 1; Table 1 | Figure S1; Table S2; Section 4.1; Supplementary Section S4 |
 | section 6; Appendix A | Section 4; Supplementary Sections S5-S8 |
 | section 6.1; Tables A1, A2 | Sections 4.2, 5.3 and 5.4; Supplementary Section S5; Tables S3 and S4 |
 | section 6.2 | Sections 4.3, 5.3 and 7; Supplementary Section S6 |
 | section 6.3; Table A3 | Sections 4.4 and 4.6; Supplementary Section S7; Table S5 |
-| section 6.4; Table 4; Figure 2 | Section 5; Table 4; Fig. 3; Supplementary Section S8 |
+| section 6.4; Table 2; Figure 2 | Section 5; Table 2; Figure 2; Supplementary Section S8 |
 | Table 5 (layer_positions.py) | Table S6; Section 4.5 |
 | section 6.5 | Section 5.3; Supplementary Section S8.3 |
 | Supplementary Tables S1, S2, S3 | Supplementary Data 1, 2, 3 |
@@ -264,3 +266,13 @@ Talay, N., Acaroğlu, H., Günal, A. and García Márquez, F. P. (2026).
 Algebraic invariant multilayer-network edge regression: multi-source data
 fusion with macro-shock immunity. Knowledge-Based Systems, 352, 117007.
 doi:10.1016/j.knosys.2026.117007.
+
+## Journal version
+
+This package accompanies the statistical network paper prepared for the Journal of Business & Economic Statistics. The computation code, data, numeric results and original execution log are unchanged.
+
+The main paper contains Figures 1 and 2 and Tables 1 and 2. The synthetic boundary plot is Figure S1 in Supplementary Section S4. Supplementary Tables S1-S9 cover the supporting results, input routes and configurations. Section S7.3 documents allocation sensitivity, Section S10.3 gives network configurations, and Section S11 documents data and code availability. Existing generated filenames are retained for reproducibility.
+
+This archive retains the authorship, repository addresses and license notices of the bundled published software. It is not fully anonymized. The anonymous manuscript and Online Supplement are separate files.
+
+The structural derivations and literature comparisons in Supplementary Section S1.7 use the existing interaction formula. Step 11 verifies their algebraic examples and does not rerun or change any empirical estimate.
