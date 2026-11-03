@@ -1,4 +1,4 @@
-*! _netcalc_flow 2.1.0
+*! _netcalc_flow 2.2.0
 *! Helper function for calculating flow network edge weights
 *! Formula: w_i = v_i / T(y,s) or T(y,f,s) for multi-subnet
 
@@ -6,29 +6,30 @@ program define _netcalc_flow, rclass
     version 16.0
     syntax, Subnet(string) Direction(string) ///
             [Feature(varname) DEBUG]
-    
+
     * Validate subnet type
     if !inlist("`subnet'", "single", "multi") {
         di as error "subnet() must be single or multi"
         exit 198
     }
-    
+
     * For multi-subnet, feature is required
     if "`subnet'" == "multi" & "`feature'" == "" {
         di as error "feature() required for multi-subnet flow network"
         exit 198
     }
-    
+
     * Validate required variables based on subnet type
     if "`subnet'" == "multi" {
-        local required_vars year `feature' source target ///
+        local required_vars year `feature' source target edge_id ///
                             source_size source_value ///
                             target_size target_value
     }
     else {
-        local required_vars year source target source_value target_value
+        local required_vars year source target edge_id ///
+                            source_value target_value
     }
-    
+
     foreach var of local required_vars {
         capture confirm variable `var'
         if _rc {
@@ -36,12 +37,13 @@ program define _netcalc_flow, rclass
             exit 111
         }
     }
-    
+
     * An inflow network is the same computation read from the other
     * end of the edge. Nothing in the data moves: the roles are
     * assigned to the other columns and the rest of the routine reads
-    * through these names. The edge keeps its own orientation, so
-    * edge_id is built from source and target as they stand.
+    * through these names. The edge keeps its own orientation, and so
+    * does edge_id, built by the caller from source and target as they
+    * stand.
     if "`direction'" == "inflow" {
         local nsrc target
         local ntgt source
@@ -63,7 +65,7 @@ program define _netcalc_flow, rclass
         }
         di as text "  Observations: " _N
     }
-    
+
     * A flow can be zero, meaning nothing travelled along that edge,
     * but it cannot be negative. A negative value is a fault in the
     * data, and a weight taken over a total that mixes signs would mean
@@ -73,26 +75,37 @@ program define _netcalc_flow, rclass
         di as error "flows can not be negative"
         exit 411
     }
-    
+
     * Calculate flow network weights
     * Formula: w_i = v_i / T(y,s)
     * where T(y,s) sums the values sharing (year, source), or
     * (year, feature, source) when the network has subnets
-    
+
     tempvar netcalc_fratio
+
+    * A total of zero is not refused: the weights read over it are
+    * written as zero. The totals that come to zero are counted, one
+    * for each group of rows that shares one, and the count goes back
+    * to the caller, which says so and returns it.
+    local n_zero_totals = 0
+    local n_zero_sizes = 0
 
     qui {
         * The weight is the quantity of the edge over what leaves its
         * node. Under subnet(multi) that is read inside the subnet,
         * so the weights of a subnet add up to one on their own and
         * the subnet is a network in its own right.
-        tempvar total_group runsum edge_weight
+        tempvar total_group runsum edge_weight first
         if "`subnet'" == "multi" {
             bysort year `feature' `nsrc': ///
                 gen double `runsum' = sum(`vsrc')
             by year `feature' `nsrc': ///
                 gen double `total_group' = `runsum'[_N]
+            by year `feature' `nsrc': gen byte `first' = _n == 1
             drop `runsum'
+            count if `first' & `total_group' == 0
+            local n_zero_totals = r(N)
+            drop `first'
             gen double `edge_weight' = `vsrc' / `total_group'
             replace `edge_weight' = 0 if `total_group' == 0
 
@@ -111,6 +124,10 @@ program define _netcalc_flow, rclass
                 gen double `runsize' = sum(`ssrc')
             by year `nsrc': ///
                 gen double `total_size' = `runsize'[_N]
+            by year `nsrc': gen byte `first' = _n == 1
+            count if `first' & `total_size' == 0
+            local n_zero_sizes = r(N)
+            drop `first'
             gen double `netcalc_fratio' = `total_sub' / `total_size'
             replace `netcalc_fratio' = 0 if `total_size' == 0
             drop `runsub' `total_sub' `runsize' `total_size'
@@ -119,30 +136,29 @@ program define _netcalc_flow, rclass
             bysort year `nsrc': ///
                 gen double `runsum' = sum(`vsrc')
             by year `nsrc': gen double `total_group' = `runsum'[_N]
+            by year `nsrc': gen byte `first' = _n == 1
             drop `runsum'
+            count if `first' & `total_group' == 0
+            local n_zero_totals = r(N)
+            drop `first'
             gen double `edge_weight' = `vsrc' / `total_group'
 
             * A node out of which nothing travels weighs zero.
             replace `edge_weight' = 0 if `total_group' == 0
         }
-        
-        * Create edge_id (source_target format)
-        tempvar edge_id
-        gen `edge_id' = source + "_" + target
-        
+
         * Keep only necessary variables
         if "`subnet'" == "multi" {
-            keep year `feature' source target `edge_id' ///
+            keep year `feature' source target edge_id ///
                  `edge_weight' `netcalc_fratio'
             rename `feature' feature
             rename `netcalc_fratio' netcalc_fratio
         }
         else {
-            keep year source target `edge_id' `edge_weight'
+            keep year source target edge_id `edge_weight'
         }
-        
+
         * Rename for output
-        rename `edge_id' edge_id
         rename `edge_weight' edge_value
         if "`subnet'" == "multi" {
             order year feature source target edge_id ///
@@ -152,16 +168,18 @@ program define _netcalc_flow, rclass
             order year source target edge_id edge_value
         }
     }
-    
+
     if "`debug'" != "" {
         di as text "_netcalc_flow: Calculation completed"
         di as text "  Output observations: " _N
         sum edge_value, detail
     }
-    
+
     * Return statistics
     sum edge_value, meanonly
     return scalar mean_weight = r(mean)
     return scalar n_edges = _N
-    
+    return scalar n_zero_totals = `n_zero_totals'
+    return scalar n_zero_sizes = `n_zero_sizes'
+
 end

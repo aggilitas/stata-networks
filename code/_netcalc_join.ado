@@ -1,4 +1,4 @@
-*! _netcalc_join 2.1.0
+*! _netcalc_join 2.2.0
 *! Creates a network frame or joins a network with the same rows to it
 *! Internal routine of network_calc; not for direct use
 
@@ -6,39 +6,39 @@ program define _netcalc_join
     version 16.0
     syntax , Framename(string) Networkname(string) Subnet(string) ///
               Type(string) [Featurename(string) DEBUG]
-    
+
     * Validate subnet
     if !inlist("`subnet'", "single", "multi") {
         di as error "subnet() must be single or multi"
         exit 198
     }
-    
+
     if "`debug'" != "" {
         di as text "_netcalc_join"
         di as text "  Frame: `framename'"
         di as text "  Network: `networkname'"
         di as text "  Subnet: `subnet'"
     }
-    
+
     * Ask the frame itself rather than listing every frame and
     * searching the list for its name.
     capture frame `framename': qui describe
     local frame_exists = (_rc == 0)
-    
+
     * Temp file for current data
     tempfile newdata
     qui save `newdata'
-    
+
     if `frame_exists' == 0 {
         * CREATE: Frame doesn't exist, create it
         if "`debug'" != "" {
             di as text "  Creating new frame: `framename'"
         }
-        
+
         frame create `framename'
         frame `framename' {
             use `newdata', clear
-            
+
             * Rename edge_value to network name if it exists
             capture confirm variable edge_value
             if _rc == 0 {
@@ -61,27 +61,33 @@ program define _netcalc_join
         if "`debug'" != "" {
             di as text "  Joining to existing frame: `framename'"
         }
-        
+
         * Rename edge_value to network name before merging (if it exists)
         capture confirm variable edge_value
         if _rc == 0 {
             qui rename edge_value `networkname'
         }
         * Otherwise, data already has the network name (from aggregation)
-        
+
+        * The frame already carries the label of each edge, built from
+        * the same two columns, so the new network brings only its
+        * values
+        capture drop edge_id
+
         * Save modified data
         qui save `newdata', replace
-        
+
         * Merge with existing frame
         frame `framename' {
-            * Determine merge keys
+            * The key: the period, the ordered pair, and in
+            * networks_multi the subnet
             if "`subnet'" == "multi" {
-                local merge_keys year feature edge_id
+                local merge_keys year feature source target
             }
             else {
-                local merge_keys year edge_id
+                local merge_keys year source target
             }
-            
+
             * Every network in a frame is a column of the same edge
             * panel. network_calc has checked, before any frame was
             * written, that the call brings exactly the rows the frame
@@ -93,11 +99,10 @@ program define _netcalc_join
             char `networkname'[netcalc_type] "`type'"
         }
     }
-    
+
     if "`debug'" != "" {
         frame `framename': di as text ///
             "  Frame `framename' now has " _N " observations"
         frame `framename': describe, short
     }
 end
-

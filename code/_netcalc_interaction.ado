@@ -1,4 +1,4 @@
-*! _netcalc_interaction 2.1.0
+*! _netcalc_interaction 2.2.0
 *! Helper function for calculating interaction network edge weights
 *! Formula: e_ij^X = v_j^X / sum_{k!=i} v_k^X, with S_i^X / S_i
 *! carried alongside for the reduction to a single subnet
@@ -6,9 +6,9 @@
 program define _netcalc_interaction, rclass
     version 16.0
     syntax, Feature(varname) Direction(string) [DEBUG]
-    
+
     * Validate required variables
-    local required_vars year `feature' source target ///
+    local required_vars year `feature' source target edge_id ///
                         source_size source_value ///
                         target_size target_value
     foreach var of local required_vars {
@@ -18,12 +18,13 @@ program define _netcalc_interaction, rclass
             exit 111
         }
     }
-    
+
     * An inflow network is the same computation read from the other
     * end of the edge. Nothing in the data moves: the roles are
     * assigned to the other columns and the rest of the routine reads
-    * through these names. The edge keeps its own orientation, so
-    * edge_id is built from source and target as they stand.
+    * through these names. The edge keeps its own orientation, and so
+    * does edge_id, built by the caller from source and target as they
+    * stand.
     if "`direction'" == "inflow" {
         local nsrc target
         local ntgt source
@@ -42,7 +43,7 @@ program define _netcalc_interaction, rclass
         di as text "  Feature variable: `feature'"
         di as text "  Observations: " _N
     }
-    
+
     * The network inside the subnet divides the quantity the subnet
     * carries among the nodes other than the source. A node can hold
     * none of it, but it cannot hold a negative amount.
@@ -53,8 +54,15 @@ program define _netcalc_interaction, rclass
     }
 
     * Calculate interaction network weights
-    
+
     tempvar netcalc_fratio
+
+    * A total of zero is not refused: the weights read over it are
+    * written as zero. The totals that come to zero are counted, one
+    * for each group of rows that shares one, and the count goes back
+    * to the caller, which says so and returns it.
+    local n_zero_totals = 0
+    local n_zero_sizes = 0
 
     qui {
         * The three groupings below are ordered so that only one of
@@ -83,6 +91,8 @@ program define _netcalc_interaction, rclass
         by year `feature' `nsrc': ///
             gen double `total_target_excl_source' = `runtgt'[_N]
         drop `runtgt'
+        count if `_tfirst' & `total_target_excl_source' == 0
+        local n_zero_totals = r(N)
 
         * Step 3: Calculate N_i (total population in source node)
         * Running sum then last element, instead of egen total().
@@ -91,11 +101,15 @@ program define _netcalc_interaction, rclass
         * stop being exact above 16,777,216; a node total past that
         * silently rounded, and the error reached every weight through
         * p_source.
-        tempvar total_source runsrc
+        tempvar total_source runsrc first_node
         bysort year `nsrc': ///
             gen double `runsrc' = sum(`ssrc' * `_tfirst')
         by year `nsrc': gen double `total_source' = `runsrc'[_N]
+        by year `nsrc': gen byte `first_node' = _n == 1
         drop `runsrc'
+        count if `first_node' & `total_source' == 0
+        local n_zero_sizes = r(N)
+        drop `first_node'
 
         * Step 3b: the weight itself is how the subnet divides what
         * it holds outside the source. It is a network of its own and
@@ -112,33 +126,30 @@ program define _netcalc_interaction, rclass
         * the weights as far as the reduction and no further.
         gen double `netcalc_fratio' = `ssrc' / `total_source'
         replace `netcalc_fratio' = 0 if `total_source' == 0
-        
-        * Step 6: Create edge_id (source_target format)
-        tempvar edge_id
-        gen `edge_id' = source + "_" + target
-        
-        * Keep only necessary variables
-        keep year `feature' source target `edge_id' ///
+
+        * Keep only necessary variables; edge_id comes from the caller
+        keep year `feature' source target edge_id ///
              `edge_weight' `netcalc_fratio'
-        
+
         * Rename for output
-        rename `edge_id' edge_id
         rename `edge_weight' edge_value
         rename `netcalc_fratio' netcalc_fratio
         rename `feature' feature
         order year feature source target edge_id ///
               netcalc_fratio edge_value
     }
-    
+
     if "`debug'" != "" {
         di as text "_netcalc_interaction: Calculation completed"
         di as text "  Output observations: " _N
         sum edge_value, detail
     }
-    
+
     * Return statistics
     sum edge_value, meanonly
     return scalar mean_weight = r(mean)
     return scalar n_edges = _N
-    
+    return scalar n_zero_totals = `n_zero_totals'
+    return scalar n_zero_sizes = `n_zero_sizes'
+
 end

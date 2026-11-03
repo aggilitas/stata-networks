@@ -1,31 +1,49 @@
 -------------------------------------------------------------------------------
       name:  <unnamed>
-       log:  C:\Users\ntnta\gm\StataJournal\netcalc_run\generate_test_data.log
+       log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\gener
+> ate_test_data.log
   log type:  text
- opened on:  29 Oct 2026, 23:15:06
+ opened on:   3 Nov 2026, 19:00:08
 
 . set seed 20260912
 
 . 
+. local N 81
+
+. local Y0 2018
+
+. local Y1 2023
+
+. 
 . *--------------------------------------------------------------
-. * Five provinces, which are both the nodes and the birthplace
-. * groups
+. * The nodes, which are both the places and the birthplace groups
 . *--------------------------------------------------------------
 . 
-. input str4 node byte norder
+. clear
 
-          node    norder
-  1. "van"  1
-  2. "kars" 2
-  3. "bolu" 3
-  4. "rize" 4
-  5. "ordu" 5
-  6. end
+. set obs `N'
+Number of observations (_N) was 0, now 81.
+
+. generate int norder = _n
+
+. generate str3 node = "p" + string(norder, "%02.0f")
+
+. 
+. * the population of each node, spread as the provinces of the
+. * application are: a few large, most of middling size
+. generate double pop = round(exp(rnormal(13, .9)))
+
+. 
+. * the share of its residents born in the node itself, and the
+. * affinity of every other group for it
+. generate double home = runiform(.5, .8)
+
+. generate double growth = 1 + runiform(-.01, .03)
 
 . tempfile nodes
 
 . save `nodes'
-file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000001.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000001.tmp saved as .dta
     format
 
 . 
@@ -35,22 +53,41 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000001.tmp saved as .dta
 . 
 . rename (node norder) (feature forder)
 
+. keep feature forder
+
 . cross using `nodes'
 
-. expand 3
-(50 observations created)
+. 
+. * the part of the population of the node born in each group: the
+. * home group takes its share, the others divide the rest in
+. * proportion to a random affinity
+. generate double affinity = cond(feature == node, 0, exp(rnormal(0, 1.2)))
 
-. bysort forder norder: generate int year = 2017 + _n
+. bysort node: egen double affinity_total = total(affinity)
+
+. generate double share = cond(feature == node, home, ///
+>                              (1 - home) * affinity / affinity_total)
+
+. drop affinity affinity_total
+
+. 
+. local Y = `Y1' - `Y0' + 1
+
+. expand `Y'
+(32,805 observations created)
+
+. bysort forder norder: generate int year = `Y0' - 1 + _n
 
 . sort year forder norder
 
 . 
-. * people of the group at the node; the group is largest at home
-. generate long size = cond(feature == node, 40000, ///
->                           runiformint(1500, 45000))
+. * people of the group at the node; the node grows at its own rate
+. * and the groups drift a little from year to year
+. generate long size = round(pop * share * growth^(year - `Y0') ///
+>                            * (1 + rnormal(0, .02)))
 
-. replace size = size + (year - 2018) * runiformint(50, 900)
-(50 real changes made)
+. replace size = 0 if size < 0
+(0 real changes made)
 
 . 
 . * years of schooling of the group at the node
@@ -61,10 +98,12 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000001.tmp saved as .dta
 . generate long employed = round(size * runiform(.35, .75))
 
 . 
+. keep year feature forder node norder size schooling employed
+
 . tempfile nodelevel
 
 . save `nodelevel'
-file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000002.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000002.tmp saved as .dta
     format
 
 . 
@@ -79,7 +118,7 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000002.tmp saved as .dta
 . tempfile src
 
 . save `src'
-file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000003.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000003.tmp saved as .dta
     format
 
 . 
@@ -91,22 +130,30 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000003.tmp saved as .dta
 . joinby year feature forder using `src'
 
 . drop if source == target
-(75 observations deleted)
+(39,366 observations deleted)
 
 . sort year forder sorder torder
 
 . 
 . * migrants of the group along the edge as the sending node records
-. * them, and the same flow as the receiving node records it
-. generate long flow = runiformint(20, 3000)
+. * them: a rate of the group's people at the source, which differs
+. * from one pair of nodes to the next, with zeros where the group is
+. * small; and the same flow as the receiving node records it
+. tempvar rate
+
+. generate double `rate' = runiform(.0005, .01) * runiform(.5, 1.5)
+
+. generate long flow = round(source_size * `rate')
 
 . generate long flow_at_target = round(flow * runiform(.9, 1.1))
+
+. drop `rate'
 
 . 
 . tempfile edges
 
 . save `edges'
-file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000004.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000004.tmp saved as .dta
     format
 
 . 
@@ -158,6 +205,8 @@ file test_flow_multi.csv saved
 
 . keep year source target source_value target_value
 
+. order year source target source_value target_value
+
 . format source_value target_value %9.0f
 
 . export delimited using test_flow_single.csv, replace datafmt
@@ -183,7 +232,7 @@ file test_flow_single.csv saved
 . tempfile level
 
 . save `level'
-file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000005.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000005.tmp saved as .dta
     format
 
 . 
@@ -192,7 +241,7 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000005.tmp saved as .dta
 . tempfile slevel
 
 . save `slevel'
-file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000006.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000006.tmp saved as .dta
     format
 
 . use `level', clear
@@ -202,11 +251,13 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000006.tmp saved as .dta
 . joinby year using `slevel'
 
 . drop if source == target
-(15 observations deleted)
+(486 observations deleted)
 
 . sort year sorder torder
 
 . keep year source target source_value target_value
+
+. order year source target source_value target_value
 
 . format source_value target_value %7.4f
 
@@ -216,7 +267,10 @@ file test_attribute_single.csv saved
 . 
 . *--------------------------------------------------------------
 . * Outcome: 2 times the single-subnet copy of the flow network, plus
-. * 0.5 times the schooling log-ratio, plus noise
+. * 0.5 times the schooling log-ratio, plus an effect of the ordered
+. * pair, an effect of the period, a disturbance common to the edges
+. * leaving a node in a period, one common to the edges entering a
+. * node in a period, and noise on the edge
 . *--------------------------------------------------------------
 . 
 . * population of each node, over all groups
@@ -229,7 +283,7 @@ file test_attribute_single.csv saved
 . tempfile pop
 
 . save `pop'
-file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000007.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000007.tmp saved as .dta
     format
 
 . 
@@ -242,12 +296,12 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000007.tmp saved as .dta
     Result                      Number of obs
     -----------------------------------------
     Not matched                             0
-    Matched                               300  
+    Matched                         3,149,280  
     -----------------------------------------
 
 . bysort year forder sorder: egen double sent = total(flow)
 
-. generate double part = source_size / pop * flow / sent
+. generate double part = cond(sent == 0, 0, source_size / pop * flow / sent)
 
 . collapse (sum) copy = part, by(year sorder torder source target)
 
@@ -261,7 +315,7 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000007.tmp saved as .dta
     Result                      Number of obs
     -----------------------------------------
     Not matched                             0
-    Matched                                60  
+    Matched                            38,880  
     -----------------------------------------
 
 . rename (node level) (source source_level)
@@ -274,7 +328,7 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000007.tmp saved as .dta
     Result                      Number of obs
     -----------------------------------------
     Not matched                             0
-    Matched                                60  
+    Matched                            38,880  
     -----------------------------------------
 
 . rename (node level) (target target_level)
@@ -282,11 +336,48 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000007.tmp saved as .dta
 . generate double sch = ln(target_level / source_level)
 
 . 
+. * the effects and the disturbances, each drawn once for the unit it
+. * belongs to
 . sort year sorder torder
 
-. generate double y = 1 + 2 * copy + .5 * sch + rnormal(0, .05)
+. bysort sorder torder (year): generate double pair_effect = ///
+>     cond(_n == 1, rnormal(0, .3), .)
+(32,400 missing values generated)
+
+. by sorder torder: replace pair_effect = pair_effect[1]
+(32,400 real changes made)
+
+. bysort year (sorder torder): generate double period_effect = ///
+>     cond(_n == 1, rnormal(0, .1), .)
+(38,874 missing values generated)
+
+. by year: replace period_effect = period_effect[1]
+(38,874 real changes made)
+
+. bysort year sorder (torder): generate double source_shock = ///
+>     cond(_n == 1, rnormal(0, .05), .)
+(38,394 missing values generated)
+
+. by year sorder: replace source_shock = source_shock[1]
+(38,394 real changes made)
+
+. bysort year torder (sorder): generate double target_shock = ///
+>     cond(_n == 1, rnormal(0, .05), .)
+(38,394 missing values generated)
+
+. by year torder: replace target_shock = target_shock[1]
+(38,394 real changes made)
+
+. 
+. sort year sorder torder
+
+. generate double y = 1 + 2 * copy + .5 * sch + pair_effect ///
+>                     + period_effect + source_shock + target_shock ///
+>                     + rnormal(0, .05)
 
 . keep year source target y
+
+. order year source target y
 
 . format y %9.6f
 
@@ -304,7 +395,8 @@ file test_outcome.csv saved
 . local k = 0
 
 . foreach f in interaction_multi flow_multi flow_single attribute_single {
-  2.     import delimited test_`f'.csv, clear varnames(1) stringcols(_all)
+  2.     import delimited test_`f'.csv, clear varnames(1) stringcols(_all) ///
+>         rowrange(1:2)
   3.     keep in 1
   4.     generate str32 file = "test_`f'"
   5.     generate byte order = `++k'
@@ -313,24 +405,24 @@ file test_outcome.csv saved
   8.     }
   9.     save `t2', replace
  10. }
-(8 vars, 300 obs)
-(299 observations deleted)
-(file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000008.tmp not found)
-file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000008.tmp saved as .dta
+(8 vars, 1 obs)
+(0 observations deleted)
+(file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000008.tmp not found)
+file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000008.tmp saved as .dta
     format
-(8 vars, 300 obs)
-(299 observations deleted)
-(variable source_value was str4, now str5 to accommodate using data's values)
-(variable target_value was str4, now str5 to accommodate using data's values)
-file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000008.tmp saved as .dta
+(8 vars, 1 obs)
+(0 observations deleted)
+(variable source_value was str3, now str5 to accommodate using data's values)
+file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000008.tmp saved as .dta
     format
-(5 vars, 60 obs)
-(59 observations deleted)
-file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000008.tmp saved as .dta
+(5 vars, 1 obs)
+(0 observations deleted)
+(variable source_value was str3, now str5 to accommodate using data's values)
+file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000008.tmp saved as .dta
     format
-(5 vars, 60 obs)
-(59 observations deleted)
-file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000008.tmp saved as .dta
+(5 vars, 1 obs)
+(0 observations deleted)
+file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000008.tmp saved as .dta
     format
 
 . use `t2', clear
@@ -354,34 +446,34 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_4f94_000008.tmp saved as .dta
 
   +-------------------------------------------------------------------------+
   |                   file | year | feature | source | target | source_size |
-  | test_interaction_multi | 2018 |     van |    van |   kars |       40000 |
+  | test_interaction_multi | 2018 |     p01 |    p01 |    p02 |       91379 |
   |------------------------+------------------------------------------------|
   |      source_value      |      target_size      |      target_value      |
-  |             17407      |             8605      |              4520      |
+  |             42706      |             1786      |               847      |
   +-------------------------------------------------------------------------+
 
   +-------------------------------------------------------------------------+
   |                   file | year | feature | source | target | source_size |
-  |        test_flow_multi | 2018 |     van |    van |   kars |       40000 |
+  |        test_flow_multi | 2018 |     p01 |    p01 |    p02 |       91379 |
   |------------------------+------------------------------------------------|
   |      source_value      |      target_size      |      target_value      |
-  |              2476      |             8605      |              2308      |
+  |               418      |             1786      |               426      |
   +-------------------------------------------------------------------------+
 
   +-------------------------------------------------------------------------+
   |                   file | year | feature | source | target | source_size |
-  |       test_flow_single | 2018 |         |    van |   kars |             |
+  |       test_flow_single | 2018 |         |    p01 |    p02 |             |
   |------------------------+------------------------------------------------|
   |      source_value      |      target_size      |      target_value      |
-  |              6008      |                       |              5737      |
+  |               846      |                       |               840      |
   +-------------------------------------------------------------------------+
 
   +-------------------------------------------------------------------------+
   |                   file | year | feature | source | target | source_size |
-  |  test_attribute_single | 2018 |         |    van |   kars |             |
+  |  test_attribute_single | 2018 |         |    p01 |    p02 |             |
   |------------------------+------------------------------------------------|
   |      source_value      |      target_size      |      target_value      |
-  |            7.8524      |                       |            8.2232      |
+  |            7.7449      |                       |           10.2097      |
   +-------------------------------------------------------------------------+
 
 . export delimited using article_table2.csv, replace
@@ -394,7 +486,7 @@ file article_table2.csv saved
 . 
 . display as text _n "Files written to `c(pwd)':"
 
-Files written to C:\Users\ntnta\gm\StataJournal\netcalc_run:
+Files written to C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples:
 
 . foreach f in test_interaction_multi.csv test_flow_multi.csv ///
 >              test_flow_single.csv test_attribute_single.csv ///
@@ -415,7 +507,8 @@ Files written to C:\Users\ntnta\gm\StataJournal\netcalc_run:
 . 
 . log close
       name:  <unnamed>
-       log:  C:\Users\ntnta\gm\StataJournal\netcalc_run\generate_test_data.log
+       log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\gener
+> ate_test_data.log
   log type:  text
- closed on:  29 Oct 2026, 23:15:06
+ closed on:   3 Nov 2026, 19:00:40
 -------------------------------------------------------------------------------

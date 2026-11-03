@@ -1,0 +1,12 @@
+# the example input files and the outcome are built by
+# examples/generate_test_data.do where it runs; the two multi-subnet
+# files hold 3,149,280 rows each and are not distributed
+examples/test_interaction_multi.csv
+examples/test_flow_multi.csv
+examples/test_flow_single.csv
+examples/test_attribute_single.csv
+examples/test_outcome.csv
+
+# working files of the author's own checks
+examples/check_open_items.log
+tests/check_open_items.do

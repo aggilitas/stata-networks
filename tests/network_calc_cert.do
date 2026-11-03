@@ -584,8 +584,8 @@ frame networks_single {
 }
 di as res "5h join: a network with other node names is refused"
 
-* the multi-subnet frame joins the same way, on year, feature and
-* edge_id, and each network brings its own ratio column
+* the multi-subnet frame joins the same way, on year, feature, source
+* and target, and each network brings its own ratio column
 frames reset
 use `flowdat', clear
 qui count
@@ -672,9 +672,11 @@ di as res "5l join: a network split by another feature is refused"
 * lost or would overwrite a column is refused before anything is
 * computed. So are an option value the command does not know, an
 * edge that appears twice in a period, a row missing from the
-* complete panel, and node names that cannot be joined into an
-* edge_id. Beside the refusals stand the two ways a subnet can come
-* to nothing at a node, which are not refused.
+* complete panel, and a node figure that differs between the rows
+* that repeat it. Beside the refusals stand the two ways a subnet
+* can come to nothing at a node, which are not refused, and the
+* replace option, which clears a name from both frames once every
+* check has passed.
 *==============================================================
 
 frames reset
@@ -701,9 +703,12 @@ capture network_calc, type(flow) subnet(multi) feature(feature) ///
 assert _rc == 411
 di as res "6c refuses a negative subnet size"
 
+* the level of n2 is zero on every row that names it, so that the
+* refusal is the one on the sign, not the one on rows that disagree
 frames reset
 use `attrsgl', clear
-qui replace target_value = 0 in 1
+qui replace target_value = 0 if target == "n2"
+qui replace source_value = 0 if source == "n2"
 capture network_calc, type(attribute) subnet(single) name(w)
 assert _rc == 411
 di as res "6d refuses a non-positive attribute value"
@@ -782,9 +787,13 @@ frame networks_single {
 }
 di as res "6h a subnet that sends nothing: the copy sums to one less its ratio"
 
+* the value of n2 in f1 is negative on every row that names it, so
+* that the refusal is the one on the sign, not the one on rows that
+* disagree
 frames reset
 use `intdat', clear
-qui replace target_value = -1 in 1
+qui replace target_value = -1 if target == "n2" & feature == "f1"
+qui replace source_value = -1 if source == "n2" & feature == "f1"
 capture network_calc, type(interaction) subnet(multi) ///
     feature(feature) name(w)
 assert _rc == 411
@@ -865,26 +874,60 @@ capture frame networks_multi: describe
 assert _rc != 0
 di as res "6n refuses an edge that appears twice in a period"
 
-* edge_id joins source and target with an underscore, so both must
-* be strings and neither may hold an underscore of its own
+* the frames are keyed on the node columns, so the nodes may be
+* named by numbers, and a name may hold an underscore: edge_id is a
+* label built from the values, not the key. The weights are those
+* of the same panel under string names, and the frame carries the
+* node columns as the data gave them.
+tempfile named
 frames reset
 use `flowsgl', clear
-qui encode source, gen(s)
-drop source
-rename s source
-capture network_calc, type(flow) subnet(single) name(w)
-assert _rc == 459
+network_calc, type(flow) subnet(single) name(w)
+frame networks_single: qui save "`named'", replace
+frames reset
+use `flowsgl', clear
+qui gen int s = real(substr(source, 2, .))
+qui gen int t = real(substr(target, 2, .))
+drop source target
+rename (s t) (source target)
+network_calc, type(flow) subnet(single) name(w)
+frame networks_single {
+    confirm numeric variable source target
+    assert edge_id == string(source) + "_" + string(target)
+    rename w w_numeric
+    qui gen str4 s = "n" + string(source)
+    qui gen str4 t = "n" + string(target)
+    drop source target
+    rename (s t) (source target)
+    qui merge 1:1 year source target using "`named'", nogenerate ///
+        assert(match)
+    assert reldif(w_numeric, w) < 1e-12
+}
+frames reset
 use `flowsgl', clear
 qui replace source = "n_1" if source == "n1"
-capture network_calc, type(flow) subnet(single) name(w)
-assert _rc == 459
-use `flowsgl', clear
 qui replace target = "n_1" if target == "n1"
+network_calc, type(flow) subnet(single) name(w)
+frame networks_single {
+    rename w w_under
+    qui replace source = "n1" if source == "n_1"
+    qui replace target = "n1" if target == "n_1"
+    qui merge 1:1 year source target using "`named'", nogenerate ///
+        assert(match)
+    assert reldif(w_under, w) < 1e-12
+}
+* the two ends name nodes of one kind: a string at one end and a
+* number at the other is refused
+frames reset
+use `flowsgl', clear
+qui gen int t = real(substr(target, 2, .))
+drop target
+rename t target
 capture network_calc, type(flow) subnet(single) name(w)
 assert _rc == 459
 capture frame networks_single: describe
 assert _rc != 0
-di as res "6o refuses node names that cannot be joined into an edge_id"
+di as res "6o accepts numeric node identifiers and names with underscores"
 
 * a node is not one of its own alternatives
 frames reset
@@ -978,6 +1021,105 @@ assert _rc != 0
 capture frame networks_multi: describe
 assert _rc != 0
 di as res "6t refuses a row missing from the complete panel, writes nothing"
+
+* a figure that describes a node is repeated on every row that names
+* the node, and the rows must agree: under interaction the size and
+* the value of a subnet at its node, under attribute the level of the
+* node. One row with another figure is refused, at either end, and so
+* is a node whose figure differs between its rows as source and as
+* target. Nothing is written. Under flow the sizes may describe the
+* edge, so there the same change is accepted.
+frames reset
+use `intdat', clear
+qui replace source_size = source_size * 3 in 1
+capture network_calc, type(interaction) subnet(multi) ///
+    feature(feature) name(w)
+assert _rc == 459
+use `intdat', clear
+qui replace target_size = target_size * 3 in 1
+capture network_calc, type(interaction) subnet(multi) ///
+    feature(feature) name(w)
+assert _rc == 459
+use `intdat', clear
+qui replace target_value = target_value + 1 in 1
+capture network_calc, type(interaction) subnet(multi) ///
+    feature(feature) name(w)
+assert _rc == 459
+* the rows of n1 in f1 agree with one another at either end, but the
+* source rows carry twice the figure of the target rows
+use `intdat', clear
+qui replace source_size = source_size * 2 if source == "n1" & ///
+    feature == "f1"
+capture network_calc, type(interaction) subnet(multi) ///
+    feature(feature) name(w)
+assert _rc == 459
+use `attrsgl', clear
+qui replace source_value = source_value * 2 in 1
+capture network_calc, type(attribute) subnet(single) name(w)
+assert _rc == 459
+use `attrsgl', clear
+qui replace target_value = target_value * 2 if target == "n2"
+capture network_calc, type(attribute) subnet(single) name(w)
+assert _rc == 459
+capture frame networks_single: describe
+assert _rc != 0
+capture frame networks_multi: describe
+assert _rc != 0
+use `flowdat', clear
+qui replace source_size = source_size * 3 in 1
+network_calc, type(flow) subnet(multi) feature(feature) name(w)
+di as res "6u refuses a node figure that differs between its rows"
+
+* replace: a name a frame holds is cleared from both frames, the
+* ratio column with it, and the network is written anew; only once
+* every check has passed, so a refused call leaves the old network
+* in place; and without replace the name is refused as before
+tempfile before
+frames reset
+use `flowsgl', clear
+network_calc, type(flow) subnet(single) direction(inflow) name(inw)
+use `flowsgl', clear
+network_calc, type(flow) subnet(single) name(w)
+frame networks_single: qui save "`before'", replace
+use `flowsgl', clear
+network_calc, type(flow) subnet(single) direction(inflow) name(w) ///
+    replace
+frame networks_single {
+    assert reldif(w, inw) < 1e-12
+    qui describe, short
+    assert r(k) == 6
+}
+use `flowsgl', clear
+qui drop if source == "n6" | target == "n6"
+capture network_calc, type(flow) subnet(single) name(w) replace
+assert _rc == 459
+frame networks_single {
+    rename w w_kept
+    qui merge 1:1 year source target using "`before'", nogenerate ///
+        assert(match)
+    assert reldif(w_kept, inw) < 1e-12
+}
+frames reset
+use `flowdat', clear
+network_calc, type(flow) subnet(multi) feature(feature) name(w)
+use `flowsgl', clear
+capture network_calc, type(flow) subnet(single) name(w)
+assert _rc == 110
+network_calc, type(flow) subnet(single) name(w) replace
+frame networks_multi {
+    capture confirm variable w, exact
+    assert _rc != 0
+    capture confirm variable w_fratio, exact
+    assert _rc != 0
+    confirm variable year feature source target edge_id
+}
+frame networks_single {
+    confirm variable w, exact
+    split edge_id, parse("_") gen(node)
+    collapse (sum) w, by(year node1)
+    assert reldif(w, 1) < 1e-12
+}
+di as res "6v replace clears a name from both frames once every check has passed"
 
 *==============================================================
 * 7. Known answers
@@ -1098,6 +1240,8 @@ network_calc, type(flow) subnet(multi) feature(feature) name(w)
 assert r(n_edges) == 270
 assert r(n_pairs) == 90
 assert reldif(r(mean_weight), 1 / 5) < 1e-12
+assert r(n_zero_totals) == 0
+assert r(n_zero_sizes) == 0
 assert "`r(network_name)'" == "w"
 assert "`r(network_type)'" == "flow"
 assert "`r(subnet_type)'" == "multi"
@@ -1106,10 +1250,79 @@ network_calc, type(attribute) subnet(single) name(a)
 assert r(n_edges) == 90
 assert r(n_pairs) == 90
 assert abs(r(mean_weight)) < 1e-12
+assert r(n_zero_totals) == 0
+assert r(n_zero_sizes) == 0
 assert "`r(network_name)'" == "a"
 assert "`r(network_type)'" == "attribute"
 assert "`r(subnet_type)'" == "single"
 di as res "8a r() holds the call, the number of edges and their mean"
+
+* a total of zero is not refused, but it is counted and returned:
+* one count for each group of rows that shares a total. n1 sends
+* nothing in any of the three periods; in the subnet panel its f1
+* sends nothing; under interaction f1 is empty outside every source;
+* and a node whose sizes are all zero has a size total of zero
+frames reset
+use `flowsgl', clear
+qui replace source_value = 0 if source == "n1"
+network_calc, type(flow) subnet(single) name(w)
+assert r(n_zero_totals) == 3
+assert r(n_zero_sizes) == 0
+use `flowdat', clear
+qui replace source_value = 0 if source == "n1" & feature == "f1"
+network_calc, type(flow) subnet(multi) feature(feature) name(v)
+assert r(n_zero_totals) == 3
+assert r(n_zero_sizes) == 0
+frames reset
+use `intdat', clear
+qui replace target_value = 0 if feature == "f1"
+qui replace source_value = 0 if feature == "f1"
+network_calc, type(interaction) subnet(multi) feature(feature) ///
+    name(w)
+assert r(n_zero_totals) == 18
+assert r(n_zero_sizes) == 0
+frames reset
+use `flowdat', clear
+qui replace source_size = 0 if source == "n1"
+qui replace target_size = 0 if target == "n1"
+network_calc, type(flow) subnet(multi) feature(feature) name(w)
+assert r(n_zero_totals) == 0
+assert r(n_zero_sizes) == 3
+di as res "8c r() counts the totals that are zero"
+
+* the variables may be read under other names: an option names the
+* variable for each role, and the frames carry the roles' own names
+tempfile byname
+frames reset
+use `flowdat', clear
+network_calc, type(flow) subnet(multi) feature(feature) name(w)
+frame networks_multi: qui save "`byname'", replace
+frames reset
+use `flowdat', clear
+rename (year source target) (yr orig dest)
+rename (source_value target_value) (sent received)
+rename (source_size target_size) (pop_s pop_t)
+network_calc, type(flow) subnet(multi) feature(feature) name(w) ///
+    period(yr) source(orig) target(dest) value(sent received) ///
+    size(pop_s pop_t)
+frame networks_multi {
+    confirm variable year feature source target edge_id w w_fratio
+    rename (w w_fratio) (w_named w_fratio_named)
+    qui merge 1:1 year feature source target using "`byname'", ///
+        nogenerate assert(match)
+    assert reldif(w_named, w) < 1e-12
+    assert reldif(w_fratio_named, w_fratio) < 1e-12
+}
+* a variable named for two roles is refused, and so is a role whose
+* variable is not there
+use `flowdat', clear
+capture network_calc, type(flow) subnet(multi) feature(feature) ///
+    name(v) source(target) target(target)
+assert _rc == 198
+rename year yr
+capture network_calc, type(flow) subnet(multi) feature(feature) name(v)
+assert _rc == 111
+di as res "8d the variables may be named by options; the frames keep the roles' names"
 
 frames reset
 use `flowsgl', clear

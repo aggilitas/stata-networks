@@ -1,6 +1,14 @@
 *! generate_test_data.do
-*! Builds the example datasets of netcalc 2.1.0 and writes them beside
-*! this file. Run it from the examples directory.
+*! Builds the example datasets of netcalc 2.2.0 and writes them beside
+*! this file. Run it from the examples directory, before
+*! example_session.do. The files are not distributed with the package:
+*! the two multi-subnet files hold 3,149,280 rows each, so they are
+*! built where they are used, in a minute or two.
+*!
+*! The data are synthetic. Their shape is that of the published
+*! application: 81 nodes, named p01 to p81, six periods, 2018 to 2023,
+*! and the people of each node grouped by the node they were born in,
+*! so the feature has the same 81 levels as the nodes.
 *!
 *! Layout, multi-subnet:
 *!     year feature source target source_size source_value
@@ -24,14 +32,17 @@
 *!       mean of the schooling of the birthplace groups living there
 *!   test_outcome.csv
 *!       a synthetic outcome y on the edge, built with known
-*!       coefficients: 2 on the single-subnet copy of the flow network
-*!       and 0.5 on the schooling log-ratio
+*!       coefficients, 2 on the single-subnet copy of the flow network
+*!       and 0.5 on the schooling log-ratio, an effect of the ordered
+*!       pair, an effect of the period, and a disturbance with a part
+*!       common to the edges leaving a node in a period and a part
+*!       common to the edges entering one, so that edges that share a
+*!       node are dependent as dyadic data are
 *!
 *! Size and value differ in every multi-subnet file, so the
 *! single-subnet copy of the flow network, which weighs each subnet by
 *! its population at the node, differs from the flow network computed
 *! from the pooled file.
-
 *!
 *! Outputs, all written to the working directory and checked at the
 *! end of the run: the five files above, article_table2.csv (the first
@@ -44,18 +55,27 @@ capture log close
 log using generate_test_data.log, text replace
 set seed 20260912
 
+local N 81
+local Y0 2018
+local Y1 2023
+
 *--------------------------------------------------------------
-* Five provinces, which are both the nodes and the birthplace
-* groups
+* The nodes, which are both the places and the birthplace groups
 *--------------------------------------------------------------
 
-input str4 node byte norder
-"van"  1
-"kars" 2
-"bolu" 3
-"rize" 4
-"ordu" 5
-end
+clear
+set obs `N'
+generate int norder = _n
+generate str3 node = "p" + string(norder, "%02.0f")
+
+* the population of each node, spread as the provinces of the
+* application are: a few large, most of middling size
+generate double pop = round(exp(rnormal(13, .9)))
+
+* the share of its residents born in the node itself, and the
+* affinity of every other group for it
+generate double home = runiform(.5, .8)
+generate double growth = 1 + runiform(-.01, .03)
 tempfile nodes
 save `nodes'
 
@@ -64,15 +84,28 @@ save `nodes'
 *--------------------------------------------------------------
 
 rename (node norder) (feature forder)
+keep feature forder
 cross using `nodes'
-expand 3
-bysort forder norder: generate int year = 2017 + _n
+
+* the part of the population of the node born in each group: the
+* home group takes its share, the others divide the rest in
+* proportion to a random affinity
+generate double affinity = cond(feature == node, 0, exp(rnormal(0, 1.2)))
+bysort node: egen double affinity_total = total(affinity)
+generate double share = cond(feature == node, home, ///
+                             (1 - home) * affinity / affinity_total)
+drop affinity affinity_total
+
+local Y = `Y1' - `Y0' + 1
+expand `Y'
+bysort forder norder: generate int year = `Y0' - 1 + _n
 sort year forder norder
 
-* people of the group at the node; the group is largest at home
-generate long size = cond(feature == node, 40000, ///
-                          runiformint(1500, 45000))
-replace size = size + (year - 2018) * runiformint(50, 900)
+* people of the group at the node; the node grows at its own rate
+* and the groups drift a little from year to year
+generate long size = round(pop * share * growth^(year - `Y0') ///
+                           * (1 + rnormal(0, .02)))
+replace size = 0 if size < 0
 
 * years of schooling of the group at the node
 generate double schooling = round(runiform(5, 13), .01)
@@ -80,6 +113,7 @@ generate double schooling = round(runiform(5, 13), .01)
 * those of the group in employment
 generate long employed = round(size * runiform(.35, .75))
 
+keep year feature forder node norder size schooling employed
 tempfile nodelevel
 save `nodelevel'
 
@@ -101,9 +135,14 @@ drop if source == target
 sort year forder sorder torder
 
 * migrants of the group along the edge as the sending node records
-* them, and the same flow as the receiving node records it
-generate long flow = runiformint(20, 3000)
+* them: a rate of the group's people at the source, which differs
+* from one pair of nodes to the next, with zeros where the group is
+* small; and the same flow as the receiving node records it
+tempvar rate
+generate double `rate' = runiform(.0005, .01) * runiform(.5, 1.5)
+generate long flow = round(source_size * `rate')
 generate long flow_at_target = round(flow * runiform(.9, 1.1))
+drop `rate'
 
 tempfile edges
 save `edges'
@@ -139,6 +178,7 @@ collapse (sum) source_value = flow target_value = flow_at_target, ///
     by(year sorder torder source target)
 sort year sorder torder
 keep year source target source_value target_value
+order year source target source_value target_value
 format source_value target_value %9.0f
 export delimited using test_flow_single.csv, replace datafmt
 
@@ -165,12 +205,16 @@ joinby year using `slevel'
 drop if source == target
 sort year sorder torder
 keep year source target source_value target_value
+order year source target source_value target_value
 format source_value target_value %7.4f
 export delimited using test_attribute_single.csv, replace datafmt
 
 *--------------------------------------------------------------
 * Outcome: 2 times the single-subnet copy of the flow network, plus
-* 0.5 times the schooling log-ratio, plus noise
+* 0.5 times the schooling log-ratio, plus an effect of the ordered
+* pair, an effect of the period, a disturbance common to the edges
+* leaving a node in a period, one common to the edges entering a
+* node in a period, and noise on the edge
 *--------------------------------------------------------------
 
 * population of each node, over all groups
@@ -185,7 +229,7 @@ save `pop'
 use `edges', clear
 merge m:1 year source using `pop', nogenerate assert(match)
 bysort year forder sorder: egen double sent = total(flow)
-generate double part = source_size / pop * flow / sent
+generate double part = cond(sent == 0, 0, source_size / pop * flow / sent)
 collapse (sum) copy = part, by(year sorder torder source target)
 
 * the schooling log-ratio, from the node levels written above
@@ -199,9 +243,28 @@ merge m:1 year node using `level', keepusing(level) ///
 rename (node level) (target target_level)
 generate double sch = ln(target_level / source_level)
 
+* the effects and the disturbances, each drawn once for the unit it
+* belongs to
 sort year sorder torder
-generate double y = 1 + 2 * copy + .5 * sch + rnormal(0, .05)
+bysort sorder torder (year): generate double pair_effect = ///
+    cond(_n == 1, rnormal(0, .3), .)
+by sorder torder: replace pair_effect = pair_effect[1]
+bysort year (sorder torder): generate double period_effect = ///
+    cond(_n == 1, rnormal(0, .1), .)
+by year: replace period_effect = period_effect[1]
+bysort year sorder (torder): generate double source_shock = ///
+    cond(_n == 1, rnormal(0, .05), .)
+by year sorder: replace source_shock = source_shock[1]
+bysort year torder (sorder): generate double target_shock = ///
+    cond(_n == 1, rnormal(0, .05), .)
+by year torder: replace target_shock = target_shock[1]
+
+sort year sorder torder
+generate double y = 1 + 2 * copy + .5 * sch + pair_effect ///
+                    + period_effect + source_shock + target_shock ///
+                    + rnormal(0, .05)
 keep year source target y
+order year source target y
 format y %9.6f
 export delimited using test_outcome.csv, replace datafmt
 
@@ -213,7 +276,8 @@ export delimited using test_outcome.csv, replace datafmt
 tempfile t2
 local k = 0
 foreach f in interaction_multi flow_multi flow_single attribute_single {
-    import delimited test_`f'.csv, clear varnames(1) stringcols(_all)
+    import delimited test_`f'.csv, clear varnames(1) stringcols(_all) ///
+        rowrange(1:2)
     keep in 1
     generate str32 file = "test_`f'"
     generate byte order = `++k'

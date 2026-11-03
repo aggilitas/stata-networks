@@ -4,7 +4,7 @@ netcalc: directed edge variables from a panel of ordered node pairs
 Necmi Talay
 aggilitas@gmail.com
 
-Version 2.1.0. The package is called netcalc, its one command is
+Version 2.2.0. The package is called netcalc, its one command is
 network_calc, and stata-networks is the name of the repository in
 which it is developed.
 
@@ -47,22 +47,34 @@ with one value for each node under interaction and attribute, one for
 each edge under flow, and a zero, which the data supply, for a flow or
 an interaction that did not happen. A row missing from that panel is
 refused, and the command lists it. Without a feature it holds year,
-source, target, source_value and target_value. Under flow both value
+source, target, source_value and target_value, or the variables named
+in period(), source(), target() and value(). Under flow both value
 columns describe the edge: source_value as the source records it and
 target_value as the target records it; direction(outflow) reads the
 first and direction(inflow) the second. With a feature the panel holds
 the feature and two columns more on each side, source_size and
-target_size, which carry what the subnet weighs at that node and are
-read as a ratio of the subnet to the node.
+target_size, or the variables named in size(), which carry what the
+subnet weighs at that node and are read as a ratio of the subnet to the
+node. A figure that describes a node, under interaction the size and
+the value of a subnet at its node and under attribute the level of the
+node, is repeated on every row that names the node, and data in which
+those rows disagree are refused, with the cases listed. Nodes may be
+named by strings or by numbers.
 
 Results are written to the frames networks_single and networks_multi,
-keyed on year and edge_id, and on year, feature and edge_id. A
-multi-subnet call writes a second column beside the weights, named
-after the network with _fratio added, holding the ratio of the subnet
-within the feature at its node. A network joins a frame only with the
-rows the frame holds: a call whose rows differ is refused, and the rows
-on either side are listed. Nothing is filled in. Every join is checked
-against both frames before either is written.
+keyed on year, source and target, and on year, feature, source and
+target; edge_id, the two node names joined by an underscore, is carried
+beside them as a label of the pair. A multi-subnet call writes a second
+column beside the weights, named after the network with _fratio added,
+holding the ratio of the subnet within the feature at its node. A
+network joins a frame only with the rows the frame holds: a call whose
+rows differ is refused, and the rows on either side are listed. Nothing
+is filled in. Every join is checked against both frames before either
+is written. A name a frame already holds is refused unless replace is
+specified, which clears it from both frames once every check has
+passed. A total of zero is not refused: the weights read over it are
+written as zero, the command says how many totals came to zero, and
+returns the count in r().
 
 
 Requirements
@@ -88,18 +100,26 @@ meant to be called directly.
   network_calc_cert.do       certification script
   network_calc_cert.log      its log, run on Stata 17
 
+  generate_test_data.do      builds the data files the session reads,
+                             with its log: 81 nodes over six years,
+                             the people of each node grouped by the
+                             node they were born in. The files are not
+                             distributed; the two multi-subnet ones
+                             hold 3,149,280 rows each, so they are
+                             built where they are used
+  generate_test_data.log     its log
   example_session.do         the session shown in the article, ending
-                             in an estimation; needs reghdfe and ftools
+                             in an estimation with three standard
+                             errors; needs reghdfe and ftools
   example_session.log        its log
   example_estimates.csv      the estimates the session writes
-  generate_test_data.do      builds the data files below, with its log
-  test_interaction_multi.csv
-  test_flow_multi.csv
-  test_flow_single.csv
-  test_attribute_single.csv  the four files the session reads
-  test_outcome.csv           the outcome the session estimates
   article_table2.csv         the first row of each file the session
                              reads, table 2 of the article
+
+The files generate_test_data.do builds, in the directory it is run
+from: test_interaction_multi.csv, test_flow_multi.csv,
+test_flow_single.csv and test_attribute_single.csv, the four files the
+session reads, and test_outcome.csv, the outcome it estimates.
 
 
 Installation
@@ -147,13 +167,18 @@ failure. Its eight sections check:
      nothing, and that a call refused at the second frame writes
      neither
   6. that the command refuses each input it cannot make a network of,
-     self-loops and a row missing from the complete panel included,
-     that option values ignore case, that a name is checked exactly,
-     and that a frame holding _merge is refused
+     self-loops, a row missing from the complete panel and a node
+     figure that differs between its rows included, that nodes may be
+     numbers or hold underscores, that option values ignore case, that
+     a name is checked exactly, that a frame holding _merge is refused,
+     and that replace clears a name from both frames once every check
+     has passed
   7. that the weights of one edge equal the numbers worked out by hand
      from the formulas that build the data
-  8. that r() reports the call, and that the data in memory come back
-     as they were found, with their file name and changed flag
+  8. that r() reports the call and counts the totals that are zero,
+     that the variables may be named by options, and that the data in
+     memory come back as they were found, with their file name and
+     changed flag
 
 
 Notes
@@ -168,8 +193,8 @@ be distributed; the unemployment and schooling levels are published,
 but without the counts the calls cannot be run. The package therefore
 holds neither the data of that application nor a log of its calls.
 The example session runs on
-synthetic data instead, built by generate_test_data.do, which serve
-for testing.
+synthetic data instead, of the same shape, built by
+generate_test_data.do, which serve for testing.
 
 
 Citation

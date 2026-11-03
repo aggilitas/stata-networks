@@ -2,7 +2,7 @@
 
 A Stata package for calculating network edge weights from a panel of ordered node pairs. Supports multiple network types (interaction, flow, attribute) and outputs panel-ready datasets for econometric analysis.
 
-Version 2.1.0. The package is called `netcalc`, its one command is
+Version 2.2.0. The package is called `netcalc`, its one command is
 `network_calc`, and `stata-networks` is the name of the repository in which
 it is developed.
 
@@ -109,7 +109,11 @@ year  feature  source  target  source_size  source_value
 
 `size` is what the subnet weighs at that node (people born in a province
 who live there, passengers carried by a mode), read as a ratio of the
-subnet to the node; `value` is the quantity the network is about.
+subnet to the node; `value` is the quantity the network is about. Data
+that carry these variables under other names are read through the
+options `period()`, `source()`, `target()`, `value()` and `size()`; the
+output frames carry the names above whatever the data called them. Nodes
+may be named by strings or by numbers.
 
 The data must be the complete panel of their rows: every period, every
 ordered pair of distinct nodes and, with a feature, every level of the
@@ -117,12 +121,20 @@ feature, with one value for each node and a zero, which the data supply,
 for a flow or an interaction that did not happen. The command fills in no
 row and no value: data with a row missing are refused, and the missing
 rows are listed. It also refuses a missing value, a self-loop, an edge
-that appears twice in a period, and a source or target that is not a
-string or holds an underscore.
+that appears twice in a period, a figure that describes a node and
+differs between the rows that repeat it (under `interaction` the size and
+the value of a subnet at its node, under `attribute` the level of the
+node), and a source and target of different kinds, one a string and the
+other numeric. A total of zero is not refused: the weights read over it
+are written as zero, and the command says how many totals came to zero
+and returns the count in `r(n_zero_totals)`.
 
-The examples read the data files in `examples/` and run from that
-directory. In the files split into subnets, `feature` holds the province
-people were born in.
+The examples read the data files that `examples/generate_test_data.do`
+builds in that directory, 81 nodes over six years with the people of each
+node grouped by the node they were born in, and run from it. The files
+are not distributed: the two multi-subnet files hold 3,149,280 rows
+each. In the files split into subnets, `feature` holds the node people
+were born in.
 
 ### Example 1: Interaction Network
 
@@ -159,22 +171,25 @@ frame change networks_single
 frlink 1:1 year source target, frame(outcome)
 frget y, from(outcome)
 egen pair = group(source target)
-reghdfe y mig_out sch, absorb(pair year) vce(robust)
+egen src = group(source)
+egen tgt = group(target)
+reghdfe y mig_out sch, absorb(pair year) vce(cluster src tgt)
 ```
 
 An attribute value is the difference of a target-period and a
 source-period term, so source-period and target-period fixed effects
 together would absorb `sch` entirely; the example absorbs the ordered pair
-and the period instead.
+and the period instead. Edges that share a node are not independent, so
+the standard errors are clustered on the source and on the target.
 
-The whole example, from the data to the estimation, is
-`examples/example_session.do`; `examples/generate_test_data.do` builds its
-data.
+The whole example, from the data to the estimation with three standard
+errors, is `examples/example_session.do`; `examples/generate_test_data.do`
+builds its data.
 
 ## Command Syntax
 
 ```stata
-network_calc, type(interaction|flow|attribute) subnet(single|multi) name(network_name) [feature(varname)] [direction(outflow|inflow)] [debug]
+network_calc, type(interaction|flow|attribute) subnet(single|multi) name(network_name) [feature(varname)] [direction(outflow|inflow)] [period(varname) source(varname) target(varname) value(varlist) size(varlist)] [replace] [debug]
 ```
 
 **Parameters:**
@@ -183,6 +198,8 @@ network_calc, type(interaction|flow|attribute) subnet(single|multi) name(network
 - `name()`: Network name (required, valid Stata variable name; at most 25 characters with `subnet(multi)`, which adds `_fratio` to it for a second column)
 - `feature()`: Feature variable (required for multi-subnet)
 - `direction()`: Outflow or inflow (default: outflow)
+- `period()`, `source()`, `target()`, `value()`, `size()`: the variables to read, where the data do not carry them under the default names; `value()` and `size()` take two variables each, the source one first
+- `replace`: write over a network of the same name, in both frames, once every check of the call has passed
 - `debug`: Display detailed output
 
 The values of `type()`, `subnet()` and `direction()` may be typed in any
@@ -205,14 +222,18 @@ year  feature  source  target  edge_id  network1_fratio  network1  ...
 
 A multi-subnet call writes two columns into `networks_multi`: the network
 and, beside it, the ratio of each subnet within the feature at its node.
+The frames are keyed on `year`, `source` and `target`, and on `year`,
+`feature`, `source` and `target`; `edge_id`, the two node names joined by
+an underscore, is a label of the pair carried beside them.
 
 Every network of a frame has the rows of the frame: the same periods and
 edges and, in `networks_multi`, the same subnets. A call whose rows differ
 from those of the frame is refused before anything is written, and the rows
 on either side are listed; nothing is filled in. Every join is checked
 against both frames before either is written, so a call writes both frames
-or neither. Each call returns in `r()` the rows and edges it computed and
-the mean of the variable.
+or neither. A name a frame already holds is refused unless `replace` is
+specified. Each call returns in `r()` the rows and edges it computed, the
+mean of the variable, and the number of totals that came to zero.
 
 ## Project Structure
 
@@ -230,8 +251,7 @@ stata-networks/
 │   ├── example_session.do        # the session of the article, ending in an estimation
 │   ├── example_session.log       # its log
 │   ├── example_estimates.csv     # the estimates the session writes
-│   ├── generate_test_data.do     # builds the data files below, with its log
-│   ├── test_*.csv                 # the input files and the outcome
+│   ├── generate_test_data.do     # builds the input files and the outcome where it runs, with its log
 │   └── article_table2.csv        # the first row of each input file
 ├── tests/
 │   ├── network_calc_cert.do      # certification script

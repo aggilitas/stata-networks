@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 2.1.0  29oct2026}{...}
+{* *! version 2.2.0  03nov2026}{...}
 {viewerjumpto "Syntax" "network_calc##syntax"}{...}
 {viewerjumpto "Description" "network_calc##description"}{...}
 {viewerjumpto "Options" "network_calc##options"}{...}
@@ -44,6 +44,18 @@ variable name{p_end}
 subnets; required with {cmd:subnet(multi)}{p_end}
 {synopt :{opt d:irection(direction)}}{cmd:outflow} (default) or
 {cmd:inflow}{p_end}
+{synopt :{opt per:iod(varname)}}period variable; default
+{cmd:year}{p_end}
+{synopt :{opt so:urce(varname)}}node the edge leaves; default
+{cmd:source}{p_end}
+{synopt :{opt ta:rget(varname)}}node the edge enters; default
+{cmd:target}{p_end}
+{synopt :{opt v:alue(varlist)}}the two value variables, at the source and
+at the target; default {cmd:source_value target_value}{p_end}
+{synopt :{opt si:ze(varlist)}}the two size variables, with
+{cmd:subnet(multi)}; default {cmd:source_size target_size}{p_end}
+{synopt :{opt replace}}write over a network of the same name in the
+output frames{p_end}
 {synopt :{opt debug}}display intermediate output{p_end}
 {synoptline}
 
@@ -79,18 +91,21 @@ flow or a negative {cmd:interaction} value; on an {cmd:attribute} value
 that is zero or negative, the log ratio being undefined there; on a row
 whose {cmd:source} and {cmd:target} are the same node, which is not one
 of its own alternatives; on an edge that appears more than once in a
-period, or in a subnet; and on a {cmd:source} or {cmd:target} that is
-not a string or holds an underscore, from which no {cmd:edge_id} can be
-built. It also stops, before either output frame is written, on a join
-the frames cannot take: a network whose rows are not those of the frame
-it joins, a multi-subnet network split by a feature of another name, a
-key of another storage type than the frame has, and a frame that holds
-a variable named {cmd:_merge} (see
+period, or in a subnet; on a figure that describes a node and differs
+between the rows that repeat it, under {cmd:interaction} the size and
+the value of a subnet at its node and under {cmd:attribute} the level
+of the node; and on a {cmd:source} and a {cmd:target} of different
+kinds, one a string and the other numeric. It also stops, before either
+output frame is written, on a join the frames cannot take: a network
+whose rows are not those of the frame it joins, a multi-subnet network
+split by a feature of another name, a key of another storage type than
+the frame has, and a frame that holds a variable named {cmd:_merge} (see
 {help network_calc##output:Output frames}). A zero denominator is not
 refused. A node out of which nothing travels and a subnet whose value
 is zero at every node but the source come to zero, and their weights
 are written as zero; a subnet whose size at the node is zero keeps its
-weights and has a ratio of zero there.
+weights and has a ratio of zero there. The command says how many
+totals came to zero and returns the counts in {cmd:r()}.
 
 {pstd}
 Dropping the offending edge instead would take it out of its own
@@ -120,9 +135,10 @@ single-subnet copy; see {help network_calc##output:Output frames}.
 {phang}
 {opt n:ame(newvar)} is required and names the network. The name
 becomes the variable that holds the network in the output frames, so it
-must be a valid Stata variable name and must not already be taken in
-either output frame: {cmd:networks_single} and {cmd:networks_multi} are
-both checked, whichever of them the call writes. The same holds for
+must be a valid Stata variable name and, unless {cmd:replace} is
+specified, must not already be taken in either output frame:
+{cmd:networks_single} and {cmd:networks_multi} are both checked,
+whichever of them the call writes. The same holds for
 {it:newvar}{cmd:_fratio}, the column a {cmd:subnet(multi)} call writes
 beside the network, and under {cmd:subnet(multi)} the name has at most
 25 characters, so that {it:newvar}{cmd:_fratio} fits in 32. The name
@@ -155,6 +171,26 @@ the edges entering it rather than those leaving it. Nothing in the data
 moves either way and the edge keeps its own orientation.
 
 {phang}
+{opt per:iod(varname)}, {opt so:urce(varname)}, {opt ta:rget(varname)},
+{opt v:alue(varlist)} and {opt si:ze(varlist)} name the variables the
+command reads, where the data do not carry them under the default names
+listed under {help network_calc##input:Input data}. {cmd:value()} and
+{cmd:size()} take two variables each, the one at the source first and
+the one at the target second; {cmd:size()} is read with
+{cmd:subnet(multi)} only, and ignored otherwise, with a note. One
+variable fills one role, and the feature cannot fill any. The output
+frames carry the variables under the default names whatever the data
+called them, and so do the rows a refusal lists.
+
+{phang}
+{opt replace} writes over a network of the same name. Without it, a
+name that either output frame already holds is refused before anything
+is computed. With it, the name is cleared from both frames, the
+{it:newvar}{cmd:_fratio} column with it, and the network is written
+anew; the clearing comes only after every check of the call has passed,
+so a refused call leaves the old network in place.
+
+{phang}
 {opt debug} displays the intermediate quantities of the template and a
 summary of the calculated network. Use it to see why a value is not
 what you expected.
@@ -165,7 +201,9 @@ what you expected.
 
 {pstd}
 The data in memory must be in long form, one observation per directed
-edge and period. Without a feature it must hold:
+edge and period. Without a feature it must hold, under these names or
+under the names given in {cmd:period()}, {cmd:source()},
+{cmd:target()} and {cmd:value()}:
 
 {p2colset 9 30 32 2}{...}
 {p2col :{cmd:year}}period identifier{p_end}
@@ -199,7 +237,8 @@ number in each period.
 
 {pstd}
 With {cmd:subnet(multi)} the panel holds one observation per period,
-subnet and directed edge, and carries two columns more:
+subnet and directed edge, and carries two columns more, under these
+names or the names given in {cmd:size()}:
 
 {p2colset 9 30 32 2}{...}
 {p2col :{cmd:year}}period identifier{p_end}
@@ -224,24 +263,30 @@ the feature: splitting an edge by transport mode makes a distance in
 kilometres meaningless and a fare or a tonnage meaningful.
 
 {pstd}
-Under {cmd:interaction}, {cmd:size} must be constant within a period,
-subnet and node: the template reads it once for each subnet, because it
-describes the node. The command does not compare the rows that repeat
-it; a line such as {cmd:bysort year feature source: assert}
-{cmd:source_size == source_size[1]} checks them before the call.
-Under {cmd:flow} it is added up over the rows of
-the subnet, so it may describe the edge and change from one target to
-the next, as the migrants of one group sent along each edge would, or
-describe the node and be the same on every row of a complete mesh.
-{cmd:value} is constant within a period, subnet and node when it
-describes a node, as in {cmd:interaction} and {cmd:attribute}, and
-varies over the edge when it travels along it, as in {cmd:flow}.
+A figure that describes a node is repeated on every row that names the
+node, as {cmd:source_}{it:...} on the rows the node leaves and as
+{cmd:target_}{it:...} on the rows it enters, and the rows must agree:
+under {cmd:interaction} the size and the value of a subnet at its node,
+the template reading the size once for each subnet, and under
+{cmd:attribute} the level of the node. The command checks it. Data in
+which the figure differs between the rows of a node, or between the rows
+that name the node as source and those that name it as target, by more
+than floating-point error, a relative difference of 1e-12, are refused,
+and the cases are listed with the figures that differ. Under
+{cmd:flow} the values describe the edge, and {cmd:size} is added up
+over the rows of the subnet, so it may describe the edge and change
+from one target to the next, as the migrants of one group sent along
+each edge would, or describe the node and be the same on every row of a
+complete mesh; nothing is compared there.
 
 {pstd}
-{cmd:source} and {cmd:target} must be string variables, because the
-edge identifier is built by joining them with an underscore, and the
-node names must contain no underscore of their own, so that the
-identifier stays unambiguous. Data that break either rule are refused.
+{cmd:source} and {cmd:target} may be string or numeric, both of one
+kind. The frames are keyed on the two node columns, so a node name may
+hold whatever it likes, an underscore included, and a numeric
+identifier works as it is. {cmd:edge_id}, the label of the ordered
+pair that the frames carry beside the node columns, is built from the
+two values joined by an underscore; for numeric nodes it holds the
+numbers.
 
 
 {marker templates}{...}
@@ -332,10 +377,10 @@ that is not is refused.
 first call and merging into it on later calls:
 
 {p2colset 9 28 30 2}{...}
-{p2col :{cmd:networks_single}}keyed on {cmd:year} and
-{cmd:edge_id}{p_end}
-{p2col :{cmd:networks_multi}}keyed on {cmd:year}, {cmd:feature} and
-{cmd:edge_id}{p_end}
+{p2col :{cmd:networks_single}}keyed on {cmd:year}, {cmd:source} and
+{cmd:target}{p_end}
+{p2col :{cmd:networks_multi}}keyed on {cmd:year}, {cmd:feature},
+{cmd:source} and {cmd:target}{p_end}
 {p2colreset}{...}
 
 {pstd}
@@ -345,7 +390,10 @@ one session, rename the frames of the first with {help frame rename}
 before building the second.
 
 {pstd}
-{cmd:edge_id} is {cmd:source} and {cmd:target} joined by an underscore.
+Beside the key, each frame carries {cmd:edge_id}, {cmd:source} and
+{cmd:target} joined by an underscore: a label of the ordered pair, kept
+for convenience and for the do-files that use it, and not the key of
+the join.
 Every call adds the network, named by {cmd:name()}, to the frame or
 frames it writes, and a {cmd:subnet(multi)} call writes two columns
 into {cmd:networks_multi}: the network and, beside it,
@@ -377,7 +425,10 @@ the frame, a feature of another name, a key that is a string on one
 side and numeric on the other, and a variable named {cmd:_merge} in the
 frame, is checked
 against every frame a call writes before the first of them changes, so
-a call writes both frames or neither.
+a call writes both frames or neither. A name a frame already holds is
+refused before anything is computed, unless {cmd:replace} is specified,
+and then it is cleared from both frames only once every check has
+passed.
 
 {pstd}
 A {cmd:subnet(multi)} call writes a second column into
@@ -408,10 +459,12 @@ questions and will not agree in general.
 {title:Examples}
 
 {pstd}
-The examples read the {cmd:.csv} files listed in {cmd:readme.txt}, and
-run from the directory that holds them. Where a file is split into
-subnets, the variable {cmd:feature} holds the province people were born
-in.
+The examples read the {cmd:.csv} files that {cmd:generate_test_data.do},
+distributed with the package, builds in the directory it is run from,
+and run from that directory. The files are not distributed themselves:
+the two multi-subnet files hold 3,149,280 rows each. Where a file is
+split into subnets, the variable {cmd:feature} holds the node people
+were born in.
 
 {pstd}Social connection by birthplace, one subnet per birthplace{p_end}
 {phang2}{cmd:. import delimited test_interaction_multi.csv, clear}{p_end}
@@ -438,6 +491,12 @@ which weighs the subnets by their size{p_end}
 {phang2}{cmd:. import delimited test_attribute_single.csv, clear}{p_end}
 {phang2}{cmd:. network_calc, type(attribute) subnet(single) name(sch)}{p_end}
 
+{pstd}The same data under other variable names, and a network written
+anew under a name the frame holds{p_end}
+{phang2}{cmd:. rename (year source target) (yr orig dest)}{p_end}
+{phang2}{cmd:. network_calc, type(attribute) subnet(single) name(sch)}{break}
+{cmd:          period(yr) source(orig) target(dest) replace}{p_end}
+
 {pstd}Estimating on the edge panel the calls have built. The
 estimation lies outside {cmd:network_calc}, and so does the outcome: it
 comes from a file of its own, {cmd:test_outcome.csv}, and is linked to
@@ -448,13 +507,18 @@ the panel on its key.{p_end}
 {phang2}{cmd:. frlink 1:1 year source target, frame(outcome)}{p_end}
 {phang2}{cmd:. frget y, from(outcome)}{p_end}
 {phang2}{cmd:. egen pair = group(source target)}{p_end}
-{phang2}{cmd:. reghdfe y mig_out sch, absorb(pair year) vce(robust)}{p_end}
+{phang2}{cmd:. egen src = group(source)}{p_end}
+{phang2}{cmd:. egen tgt = group(target)}{p_end}
+{phang2}{cmd:. reghdfe y mig_out sch, absorb(pair year) vce(cluster src tgt)}{p_end}
 
 {pstd}
 An attribute value is the difference of a target-period and a
 source-period term, so source-period and target-period fixed effects
 together would absorb {cmd:sch} entirely; the example absorbs the
-ordered pair and the period instead.
+ordered pair and the period instead. Edges that share a node are not
+independent, so the standard errors are clustered on the source and on
+the target; {cmd:example_session.do} adds the node jackknife beside
+them.
 
 
 {marker results}{...}
@@ -473,6 +537,12 @@ a period{p_end}
 complete mesh it is zero under {cmd:attribute} and, where no total is
 zero, one over the number of alternatives under {cmd:interaction} and
 {cmd:flow}, so it guards against gross errors only{p_end}
+{synopt:{cmd:r(n_zero_totals)}}number of totals that came to zero, one
+for each node and period, or node, period and subnet, whose weights
+were written as zero for want of a total{p_end}
+{synopt:{cmd:r(n_zero_sizes)}}number of nodes and periods whose sizes
+add up to zero, so that the ratios of their subnets were written as
+zero; under {cmd:subnet(multi)}{p_end}
 
 {p2col 5 24 28 2: Macros}{p_end}
 {synopt:{cmd:r(network_name)}}name given in {cmd:name()}{p_end}

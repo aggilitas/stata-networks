@@ -114,8 +114,6 @@ C:/Users/YourName/ado/plus/n/network_calc.sthlp
 C:/Users/YourName/ado/plus/_/_netcalc_interaction.ado
 C:/Users/YourName/ado/plus/_/_netcalc_flow.ado
 C:/Users/YourName/ado/plus/_/_netcalc_attribute.ado
-C:/Users/YourName/ado/plus/_/_netcalc_pool.ado
-C:/Users/YourName/ado/plus/_/_netcalc_frames.ado
 C:/Users/YourName/ado/plus/_/_netcalc_join.ado
 C:/Users/YourName/ado/plus/_/_netcalc_aggregate.ado
 ```

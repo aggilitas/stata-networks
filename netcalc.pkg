@@ -4,7 +4,7 @@ d
 d Author: Necmi TALAY
 d Support: https://github.com/aggilitas/stata-networks/issues
 d
-d Distribution-Date: 20261029
+d Distribution-Date: 20261103
 d
 d Turns a long panel of ordered node pairs and periods into a
 d panel of directed edge variables, ready for a fixed-effects
@@ -24,11 +24,6 @@ f tests/network_calc_cert.do
 f tests/network_calc_cert.log
 f examples/generate_test_data.do
 f examples/generate_test_data.log
-f examples/test_interaction_multi.csv
-f examples/test_flow_multi.csv
-f examples/test_flow_single.csv
-f examples/test_attribute_single.csv
-f examples/test_outcome.csv
 f examples/article_table2.csv
 f examples/example_session.do
 f examples/example_session.log

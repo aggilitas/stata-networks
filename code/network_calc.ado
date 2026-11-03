@@ -1,16 +1,22 @@
-*! network_calc 2.1.0
+*! network_calc 2.2.0
 *! Main command for calculating network edge weights
 *! Author: Necmi TALAY
-*! Date: 2026-10-29
+*! Date: 2026-11-03
 
 program define network_calc, rclass
     version 16.0
     syntax, Type(string) ///
             Subnet(string) ///
             Name(string) ///
-            [Feature(varname)] ///
-            [Direction(string)] ///
-            [DEBUG]
+            [Feature(varname) ///
+             Direction(string) ///
+             PERiod(varname) ///
+             SOurce(varname) ///
+             TArget(varname) ///
+             Value(varlist min=2 max=2) ///
+             SIze(varlist min=2 max=2) ///
+             REPLACE ///
+             DEBUG]
 
     *===========================================================================
     * 1. VALIDATE PARAMETERS
@@ -86,6 +92,12 @@ program define network_calc, rclass
         local feature ""
     }
 
+    * nor size columns: a single-subnet call reads none
+    if "`subnet'" == "single" & "`size'" != "" {
+        di as text "Note: size() ignored for single-subnet network"
+        local size ""
+    }
+
     * The output frames carry these five columns themselves, so a
     * network cannot be named after one of them.
     if inlist("`name'", "year", "source", "target", "edge_id", ///
@@ -113,26 +125,99 @@ program define network_calc, rclass
         exit 198
     }
 
-    * A name a frame already holds cannot be replaced: the merge
-    * keeps the column the frame has and the newly computed weights
-    * would be dropped without a word. Both frames are checked
-    * whatever the call writes, and before anything is computed, so
-    * that a name means one network wherever it appears and nothing
-    * is half written. The ratio column a name would bring is
-    * checked the same way. The check is exact: a name that only
-    * abbreviates a variable in a frame is a new name.
+    * A name a frame already holds is not written over without a
+    * word: the merge would keep the column the frame has and drop the
+    * newly computed weights. Both frames are checked whatever the
+    * call writes, and before anything is computed, so that a name
+    * means one network wherever it appears and nothing is half
+    * written. The ratio column a name would bring is checked the same
+    * way. The check is exact: a name that only abbreviates a variable
+    * in a frame is a new name. With replace, the columns found are
+    * noted here and dropped from both frames once every check has
+    * passed, so a refused call leaves the old network in place.
+    local held
     foreach fr in networks_single networks_multi {
-        capture frame `fr': confirm variable `name', exact
-        if _rc == 0 {
-            di as error "`name' is already in frame `fr'"
-            di as error "Drop it, or choose another name()"
-            exit 110
+        foreach v in `name' `name'_fratio {
+            capture frame `fr': confirm variable `v', exact
+            if _rc == 0 {
+                if "`replace'" == "" {
+                    di as error "`v' is already in frame `fr'"
+                    di as error "Drop it, choose another name()," ///
+                                " or specify replace"
+                    exit 110
+                }
+                local held `held' `fr'.`v'
+            }
         }
-        capture frame `fr': confirm variable `name'_fratio, exact
-        if _rc == 0 {
-            di as error "`name'_fratio is already in frame `fr'"
-            di as error "Drop it, or choose another name()"
-            exit 110
+    }
+
+    *---------------------------------------------------------------------------
+    * The variables the command reads, under the names the data give
+    * them. Each role has a default name, which is also the name the
+    * output frames carry; an option names another variable for it.
+    *---------------------------------------------------------------------------
+
+    if "`period'" == "" {
+        local period year
+    }
+    if "`source'" == "" {
+        local source source
+    }
+    if "`target'" == "" {
+        local target target
+    }
+    if "`value'" == "" {
+        local value source_value target_value
+    }
+    if "`size'" == "" {
+        local size source_size target_size
+    }
+    local roles year source target source_value target_value
+    local given `period' `source' `target' `value'
+    if "`subnet'" == "multi" {
+        local roles `roles' source_size target_size
+        local given `given' `size'
+    }
+
+    local nroles : word count `roles'
+    forvalues k = 1/`nroles' {
+        local role : word `k' of `roles'
+        local var : word `k' of `given'
+        capture confirm variable `var', exact
+        if _rc {
+            if "`var'" == "`role'" {
+                di as error "Required variable `role' not found in dataset"
+            }
+            else {
+                di as error "`var', named for `role', not found in dataset"
+            }
+            di as error ""
+            di as error "Expected format for `subnet'-subnet:"
+            if "`subnet'" == "multi" {
+                di as error "  year feature source target" ///
+                            " source_size source_value" ///
+                            " target_size target_value"
+            }
+            else {
+                di as error "  year source target source_value target_value"
+            }
+            di as error "or the variables named in period(), source()," ///
+                        " target(), value() and size()"
+            exit 111
+        }
+    }
+
+    * one variable fills one role
+    local dup : list dups given
+    if "`dup'" != "" {
+        di as error "`dup' is named for more than one of: `roles'"
+        exit 198
+    }
+    if "`feature'" != "" {
+        if `: list feature in given' {
+            di as error "`feature' cannot be both the feature and one of:" ///
+                        " `roles'"
+            exit 198
         }
     }
 
@@ -151,6 +236,17 @@ program define network_calc, rclass
     }
     di as text "  Direction: " as result "`direction'"
     di as text "  Name:      " as result "`name'"
+    if "`given'" != "`roles'" {
+        local readas
+        forvalues k = 1/`nroles' {
+            local role : word `k' of `roles'
+            local var : word `k' of `given'
+            if "`var'" != "`role'" {
+                local readas `readas' `var'=`role'
+            }
+        }
+        di as text "  Read as:   " as result "`readas'"
+    }
     di as text "  Obs:       " as result _N
     di as text "{hline 78}"
 
@@ -169,33 +265,13 @@ program define network_calc, rclass
     * be sorted and cut freely, and a refusal gives it back as well.
     preserve
 
-    * Check required variables based on subnet type
-    if "`subnet'" == "multi" {
-        local required_vars year `feature' source target ///
-                            source_size source_value ///
-                            target_size target_value
-    }
-    else {
-        local required_vars year source target source_value target_value
-    }
+    * From here on the command reads its variables under its own
+    * names, which are also the names the output frames carry; the
+    * refusals below list the rows under those names.
+    _netcalc_adopt, roles(`roles') given(`given')
+    capture drop edge_id
 
-    foreach var of local required_vars {
-        capture confirm variable `var'
-        if _rc {
-            di as error "Required variable `var' not found in dataset"
-            di as error ""
-            di as error "Expected format for `subnet'-subnet:"
-            if "`subnet'" == "multi" {
-                di as error "  year feature source target" ///
-                            " source_size source_value" ///
-                            " target_size target_value"
-            }
-            else {
-                di as error "  year source target source_value target_value"
-            }
-            exit 111
-        }
-    }
+    local required_vars `roles'
 
     * The key of an observation: the period, the subnet under
     * subnet(multi), and the ordered pair.
@@ -220,22 +296,18 @@ program define network_calc, rclass
         }
     }
 
-    * edge_id joins source and target with an underscore, so both
-    * must be strings and neither may hold an underscore of its own:
-    * a_b with c and a with b_c would both become a_b_c.
-    foreach var in source target {
-        capture confirm string variable `var'
-        if _rc {
-            di as error "`var' must be a string variable"
-            exit 459
-        }
-        qui count if strpos(`var', "_") > 0
-        if r(N) > 0 {
-            di as error "`var' holds an underscore in " r(N) ///
-                        " observations"
-            di as error "edge_id joins source and target with one"
-            exit 459
-        }
+    * The two ends of an edge name nodes of one kind: both string or
+    * both numeric, so that a name at one end can be looked for at the
+    * other. Either kind is accepted; edge_id is built from the values.
+    capture confirm string variable source
+    local s_str = (_rc == 0)
+    capture confirm string variable target
+    local t_str = (_rc == 0)
+    if `s_str' != `t_str' {
+        di as error "source is " cond(`s_str', "string", "numeric") ///
+                    " and target is " cond(`t_str', "string", "numeric")
+        di as error "both must be of one kind. Nothing has been written"
+        exit 459
     }
 
     * The source is not one of its own alternatives: every total of
@@ -283,6 +355,28 @@ program define network_calc, rclass
         _netcalc_mesh
     }
 
+    * A figure that describes a node is repeated on every row that
+    * names the node, and the rows must agree: under interaction the
+    * size and the value of a subnet at its node, under attribute the
+    * level of the node. A row that carries another figure is a slip
+    * in the layout, which the weights would carry without a word, so
+    * the data are refused and the nodes listed. Under flow the values
+    * describe the edge and the sizes may, so nothing is repeated.
+    if "`type'" == "interaction" {
+        _netcalc_constant, stem(size) feature(`feature')
+        _netcalc_constant, stem(value) feature(`feature')
+    }
+    else if "`type'" == "attribute" {
+        _netcalc_constant, stem(value)
+    }
+
+    * The label of the ordered pair, carried into the frames beside
+    * the two node columns: the values of source and target joined by
+    * an underscore. The frames are keyed on the node columns, so the
+    * label need not be unambiguous and the names may hold what they
+    * like.
+    _netcalc_edgeid
+
     *===========================================================================
     * 4. CALL APPROPRIATE CALCULATION FUNCTION
     *===========================================================================
@@ -326,6 +420,8 @@ program define network_calc, rclass
     * Store calculation results
     local calc_n_edges = r(n_edges)
     local calc_mean_weight = r(mean_weight)
+    local calc_zero_totals = r(n_zero_totals)
+    local calc_zero_sizes = r(n_zero_sizes)
 
     * Under subnet(multi) a row is an edge of one subnet, so the rows
     * outnumber the ordered pairs; both counts are reported.
@@ -344,6 +440,23 @@ program define network_calc, rclass
         di as text "  Calculated " as result `calc_n_edges' as text " edges"
     }
     di as text "  Mean weight: " as result %9.6f `calc_mean_weight'
+
+    * A total of zero is not refused: a node out of which nothing
+    * travels, or a subnet with nothing outside the source, has its
+    * weights written as zero. It is said here, so that it does not
+    * pass without a word, and returned in r().
+    if `calc_zero_totals' > 0 {
+        local unit = cond("`subnet'" == "multi", ///
+                          "node-period-subnet", "node-period")
+        di as text "  Note: " as result `calc_zero_totals' as text ///
+           " `unit' totals are zero; the weights read over them" ///
+           " are written as zero"
+    }
+    if `calc_zero_sizes' > 0 {
+        di as text "  Note: " as result `calc_zero_sizes' as text ///
+           " node-period size totals are zero; the ratios of those" ///
+           " nodes are written as zero"
+    }
 
     *===========================================================================
     * 5. CHECK EVERY FRAME BEFORE WRITING ANY
@@ -371,7 +484,8 @@ program define network_calc, rclass
     foreach fr of local frames_to_write {
         local tag = cond("`fr'" == "networks_multi", "multi", "single")
         local keys = cond("`tag'" == "multi", ///
-                          "year feature edge_id", "year edge_id")
+                          "year feature source target", ///
+                          "year source target")
 
         * the edges this call brings to the frame
         capture frame drop `NEWE'
@@ -438,9 +552,8 @@ program define network_calc, rclass
 
         * the rows found on one side only
         capture frame drop `FRE'
-        frame copy `fr' `FRE'
+        frame `fr': frame put `keys', into(`FRE')
         frame `FRE' {
-            keep `keys'
             qui frlink 1:1 `keys', frame(`NEWE') ///
                 generate(_netcalc_link)
             qui count if missing(_netcalc_link)
@@ -487,6 +600,16 @@ program define network_calc, rclass
 
     di as text ""
     di as text "Managing network frames..."
+
+    * With replace, the name is cleared from both frames, the ratio
+    * column with it, now that every check has passed and the call is
+    * going to be written.
+    foreach item of local held {
+        local fr = substr("`item'", 1, strpos("`item'", ".") - 1)
+        local v = substr("`item'", strpos("`item'", ".") + 1, .)
+        di as text "  Replacing `v' in frame `fr'"
+        frame `fr': drop `v'
+    }
 
     * Save calculated data
     tempfile calcdata
@@ -615,6 +738,8 @@ program define network_calc, rclass
     return scalar n_edges = `calc_n_edges'
     return scalar n_pairs = `calc_n_pairs'
     return scalar mean_weight = `calc_mean_weight'
+    return scalar n_zero_totals = `calc_zero_totals'
+    return scalar n_zero_sizes = `calc_zero_sizes'
     return local network_name "`name'"
     return local network_type "`type'"
     return local subnet_type "`subnet'"
@@ -643,6 +768,132 @@ program define _netcalc_pick, rclass
         local hit
     }
     return local pick `hit'
+end
+
+
+* Give each role its variable under the command's own name. The
+* variables named for the roles are moved to temporary names first,
+* so that two of them may change places, a column that only bears a
+* role's name is dropped as being in the way, and each temporary name
+* then takes the name of its role. The data in memory are under
+* preserve, so nothing of this reaches the user.
+program define _netcalc_adopt
+    version 16.0
+    syntax, Roles(string) Given(string)
+    local n : word count `roles'
+    forvalues k = 1/`n' {
+        local var : word `k' of `given'
+        tempvar t`k'
+        rename `var' `t`k''
+    }
+    foreach role of local roles {
+        capture confirm variable `role', exact
+        if _rc == 0 {
+            drop `role'
+        }
+    }
+    forvalues k = 1/`n' {
+        local role : word `k' of `roles'
+        rename `t`k'' `role'
+    }
+end
+
+
+* The label of the ordered pair: the values of source and target
+* joined by an underscore, whether the nodes are named by strings or
+* by numbers.
+program define _netcalc_edgeid
+    version 16.0
+    capture confirm string variable source
+    if _rc == 0 {
+        qui gen edge_id = source + "_" + target
+    }
+    else {
+        qui gen edge_id = strofreal(source, "%21.0g") + "_" ///
+                        + strofreal(target, "%21.0g")
+    }
+end
+
+
+* A figure that describes a node is repeated on every row that names
+* the node, as source on the rows the node leaves and as target on
+* the rows it enters. The rows must agree with one another at either
+* end, and the two ends must agree with each other, since they carry
+* the same figure of the same node. Data that break either rule are
+* refused and the nodes are listed, with the figures that differ.
+* Figures agree when they are equal to within floating-point error,
+* a relative difference of 1e-12, so that a figure computed twice
+* by the analyst, in two orders of summation, is not refused.
+program define _netcalc_constant
+    version 16.0
+    syntax, Stem(string) [Feature(string)]
+    local unit = cond("`feature'" != "", "node, period and subnet", ///
+                                         "node and period")
+    tempname W S T
+
+    * the rows of a node agree with one another, at either end
+    foreach end in source target {
+        capture frame drop `W'
+        frame put year `feature' `end' `end'_`stem', into(`W')
+        frame `W' {
+            qui collapse (min) lo = `end'_`stem' ///
+                         (max) hi = `end'_`stem', ///
+                by(year `feature' `end')
+            qui keep if reldif(lo, hi) > 1e-12
+            local n_bad = _N
+            sort year `feature' `end'
+        }
+        if `n_bad' > 0 {
+            di as error "`end'_`stem' is not the same on every row" ///
+                        " of a `unit': it describes the node, so its" ///
+                        " rows must agree"
+            di as error "  the " `n_bad' " cases whose rows differ," ///
+                        " with the smallest and the largest figure:"
+            frame `W': _netcalc_show, vars(year `feature' `end' lo hi)
+            di as error "Nothing has been written"
+            capture frame drop `W'
+            exit 459
+        }
+    }
+    capture frame drop `W'
+
+    * the figure of a node is the same whether the row names the node
+    * as its source or as its target. The rows of a node agree to
+    * within floating-point error by now, so one row of each stands
+    * for them.
+    frame put year `feature' source source_`stem', into(`S')
+    frame `S' {
+        qui collapse (first) as_source = source_`stem', ///
+            by(year `feature' source)
+        rename source node
+    }
+    frame put year `feature' target target_`stem', into(`T')
+    frame `T' {
+        qui collapse (first) as_target = target_`stem', ///
+            by(year `feature' target)
+        rename target node
+        qui frlink 1:1 year `feature' node, frame(`S') ///
+            generate(_netcalc_link)
+        qui frget as_source, from(_netcalc_link)
+        qui keep if reldif(as_source, as_target) > 1e-12
+        local n_bad = _N
+        sort year `feature' node
+    }
+    if `n_bad' > 0 {
+        di as error "`stem' of a node differs between the rows that" ///
+                    " name it as source and those that name it as" ///
+                    " target"
+        di as error "  the " `n_bad' " cases, by `unit', with the" ///
+                    " figure at either end:"
+        frame `T': _netcalc_show, vars(year `feature' node ///
+                                      as_source as_target)
+        di as error "Nothing has been written"
+        capture frame drop `S'
+        capture frame drop `T'
+        exit 459
+    }
+    capture frame drop `S'
+    capture frame drop `T'
 end
 
 
