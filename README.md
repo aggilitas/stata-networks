@@ -171,8 +171,8 @@ frame change networks_single
 frlink 1:1 year source target, frame(outcome)
 frget y, from(outcome)
 egen pair = group(source target)
-egen src = group(source)
-egen tgt = group(target)
+encode source, generate(src) label(node)
+encode target, generate(tgt) label(node)
 reghdfe y mig_out sch, absorb(pair year) vce(cluster src tgt)
 ```
 
@@ -198,7 +198,7 @@ network_calc, type(interaction|flow|attribute) subnet(single|multi) name(network
 - `name()`: Network name (required, valid Stata variable name; at most 25 characters with `subnet(multi)`, which adds `_fratio` to it for a second column)
 - `feature()`: Feature variable (required for multi-subnet)
 - `direction()`: Outflow or inflow (default: outflow)
-- `period()`, `source()`, `target()`, `value()`, `size()`: the variables to read, where the data do not carry them under the default names; `value()` and `size()` take two variables each, the source one first
+- `period()`, `source()`, `target()`, `value()`, `size()`: the variables to read, where the data do not carry them under the default names; `value()` and `size()` take two variables each, the source one first; the variable in `feature()` cannot fill one of these roles, nor bear one of the default names, `edge_id`, `edge_value` or `netcalc_fratio`
 - `replace`: write over a network of the same name, in both frames, once every check of the call has passed
 - `debug`: Display detailed output
 

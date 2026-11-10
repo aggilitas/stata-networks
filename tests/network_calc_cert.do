@@ -1119,6 +1119,41 @@ frame networks_single {
     collapse (sum) w, by(year node1)
     assert reldif(w, 1) < 1e-12
 }
+* under subnet(multi) a name written anew carries the new values in
+* both frames, the ratio column with it. The outflow and the inflow
+* network of one file differ in their weights and in their ratios, so
+* the columns written anew are compared with the inflow network kept
+* beside them
+frames reset
+use `flowdat', clear
+network_calc, type(flow) subnet(multi) feature(feature) ///
+    direction(inflow) name(inw)
+use `flowdat', clear
+network_calc, type(flow) subnet(multi) feature(feature) name(w)
+frame networks_multi {
+    qui count if reldif(w, inw) > 1e-6
+    assert r(N) > 0
+    qui count if reldif(w_fratio, inw_fratio) > 1e-6
+    assert r(N) > 0
+}
+frame networks_single {
+    qui count if reldif(w, inw) > 1e-6
+    assert r(N) > 0
+}
+use `flowdat', clear
+network_calc, type(flow) subnet(multi) feature(feature) ///
+    direction(inflow) name(w) replace
+frame networks_multi {
+    assert reldif(w, inw) < 1e-12
+    assert reldif(w_fratio, inw_fratio) < 1e-12
+    qui describe, short
+    assert r(k) == 9
+}
+frame networks_single {
+    assert reldif(w, inw) < 1e-12
+    qui describe, short
+    assert r(k) == 6
+}
 di as res "6v replace clears a name from both frames once every check has passed"
 
 *==============================================================
@@ -1322,6 +1357,31 @@ assert _rc == 198
 rename year yr
 capture network_calc, type(flow) subnet(multi) feature(feature) name(v)
 assert _rc == 111
+* nor can the feature bear a name the command gives to a column of
+* its own while that role is read from another variable: the variable
+* read for the role takes the name, and the feature would be dropped
+* as being in the way. Nothing is written
+frames reset
+use `flowdat', clear
+rename source orig
+rename feature source
+capture network_calc, type(flow) subnet(multi) feature(source) ///
+    name(v) source(orig)
+assert _rc == 198
+use `flowdat', clear
+rename (source_size target_size) (pop_s pop_t)
+rename feature source_size
+capture network_calc, type(flow) subnet(multi) feature(source_size) ///
+    name(v) size(pop_s pop_t)
+assert _rc == 198
+use `flowdat', clear
+rename feature edge_id
+capture network_calc, type(flow) subnet(multi) feature(edge_id) name(v)
+assert _rc == 198
+capture frame networks_single: describe
+assert _rc != 0
+capture frame networks_multi: describe
+assert _rc != 0
 di as res "8d the variables may be named by options; the frames keep the roles' names"
 
 frames reset

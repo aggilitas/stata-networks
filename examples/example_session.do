@@ -198,7 +198,12 @@ restore
 * which edges sharing a node are not. Two-way clustering on source
 * and target allows the dependence among the edges that share either
 * node. The node jackknife leaves one node out at a time, every edge
-* it touches with it, and takes the variance of the 81 coefficients.
+* it touches with it, and combines the 81 sets of coefficients with
+* the multiplier of Cameron and Miller (2014, eq. 2.17).
+*
+* The ordered pairs are numbered for the edge effects. The nodes are
+* numbered with one value label, so that a node has the same number
+* as source and as target.
 *--------------------------------------------------------------
 
 frame create outcome
@@ -207,8 +212,8 @@ frame change networks_single
 frlink 1:1 year source target, frame(outcome)
 frget y, from(outcome)
 egen pair = group(source target)
-egen src = group(source)
-egen tgt = group(target)
+encode source, generate(src) label(node)
+encode target, generate(tgt) label(node)
 
 reghdfe y mig_out sch, absorb(pair year) vce(robust)
 matrix b = e(b)
@@ -221,7 +226,10 @@ reghdfe y mig_out sch, absorb(pair year) vce(cluster src tgt)
 local se_c_mig = _se[mig_out]
 local se_c_sch = _se[sch]
 
-* the node jackknife: the coefficients without each node in turn
+* the node jackknife: the coefficients without each node in turn,
+* combined as in Cameron and Miller (2014, eq. 2.17), whose multiplier
+* of the sum of squared deviations is (G - 2) / (2 G) for G nodes;
+* r(Var) is that sum divided by G - 1
 frame create jack int node double(b_mig b_sch)
 forvalues k = 1/81 {
     quietly reghdfe y mig_out sch if src != `k' & tgt != `k', ///
@@ -230,9 +238,9 @@ forvalues k = 1/81 {
 }
 frame jack {
     quietly summarize b_mig
-    local se_j_mig = sqrt((r(N) - 1)^2 / r(N) * r(Var))
+    local se_j_mig = sqrt((r(N) - 2) / (2 * r(N)) * (r(N) - 1) * r(Var))
     quietly summarize b_sch
-    local se_j_sch = sqrt((r(N) - 1)^2 / r(N) * r(Var))
+    local se_j_sch = sqrt((r(N) - 2) / (2 * r(N)) * (r(N) - 1) * r(Var))
 }
 
 * the coefficients and the three standard errors side by side

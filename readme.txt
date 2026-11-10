@@ -172,13 +172,15 @@ failure. Its eight sections check:
      numbers or hold underscores, that option values ignore case, that
      a name is checked exactly, that a frame holding _merge is refused,
      and that replace clears a name from both frames once every check
-     has passed
+     has passed and writes the new values in both, the ratio column
+     with them
   7. that the weights of one edge equal the numbers worked out by hand
      from the formulas that build the data
   8. that r() reports the call and counts the totals that are zero,
-     that the variables may be named by options, and that the data in
-     memory come back as they were found, with their file name and
-     changed flag
+     that the variables may be named by options, that a feature
+     bearing a name the command gives to a column of its own is
+     refused, and that the data in memory come back as they were
+     found, with their file name and changed flag
 
 
 Notes

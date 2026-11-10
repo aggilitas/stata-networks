@@ -1,7 +1,7 @@
 *! network_calc 2.2.0
 *! Main command for calculating network edge weights
 *! Author: Necmi TALAY
-*! Date: 2026-11-03
+*! Date: 2026-11-10
 
 program define network_calc, rclass
     version 16.0
@@ -217,6 +217,19 @@ program define network_calc, rclass
         if `: list feature in given' {
             di as error "`feature' cannot be both the feature and one of:" ///
                         " `roles'"
+            exit 198
+        }
+        * Nor can the feature bear a name the command gives to a
+        * column of its own. The variable read for a role takes the
+        * role's name, and a variable that only bears that name is
+        * dropped as being in the way; the feature would go with it.
+        local own `roles' edge_id edge_value netcalc_fratio
+        if `: list feature in own' {
+            di as error "feature(`feature') bears a name network_calc" ///
+                        " gives to a column of its own:"
+            di as error "  `roles'"
+            di as error "  edge_id edge_value netcalc_fratio"
+            di as error "Rename the variable before the call"
             exit 198
         }
     }

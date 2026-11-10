@@ -3,15 +3,15 @@
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\tests\network_
 > calc_cert.log
   log type:  text
- opened on:   3 Nov 2026, 19:44:48
+ opened on:  10 Nov 2026, 10:02:03
 
 . 
 . which network_calc
-C:\Users\ntnta\ado\plus\n\network_calc.ado
+C:/Users/ntnta/gm/StataJournal/networks-ado-project/code\network_calc.ado
 *! network_calc 2.2.0
 *! Main command for calculating network edge weights
 *! Author: Necmi TALAY
-*! Date: 2026-11-03
+*! Date: 2026-11-10
 
 . 
 . *==============================================================
@@ -475,7 +475,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 90 edges
-  Mean weight: -0.000000
+  Mean weight:  0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -779,7 +779,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 90 edges
-  Mean weight: -0.000000
+  Mean weight:  0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -807,7 +807,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 90 edges
-  Mean weight: -0.000000
+  Mean weight:  0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -1027,7 +1027,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 90 edges
-  Mean weight: -0.000000
+  Mean weight:  0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -1275,7 +1275,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 90 edges
-  Mean weight: -0.000000
+  Mean weight:  0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -1590,7 +1590,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 90 edges
-  Mean weight: -0.000000
+  Mean weight:  0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -1623,7 +1623,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 90 edges
-  Mean weight:  0.000000
+  Mean weight: -0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -1902,7 +1902,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 90 edges
-  Mean weight: -0.000000
+  Mean weight:  0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -2007,7 +2007,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 60 edges
-  Mean weight: -0.000000
+  Mean weight:  0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -2120,7 +2120,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 60 edges
-  Mean weight: -0.000000
+  Mean weight:  0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -3951,6 +3951,154 @@ node1  node2
 .     assert reldif(w, 1) < 1e-12
 . }
 
+. * under subnet(multi) a name written anew carries the new values in
+. * both frames, the ratio column with it. The outflow and the inflow
+. * network of one file differ in their weights and in their ratios, so
+. * the columns written anew are compared with the inflow network kept
+. * beside them
+. frames reset
+
+. use `flowdat', clear
+
+. network_calc, type(flow) subnet(multi) feature(feature) ///
+>     direction(inflow) name(inw)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    multi
+  Feature:   feature
+  Direction: inflow
+  Name:      inw
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 subnet-edge rows (90 edges)
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'inw' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 7 variables
+  - Frame 'networks_single':       90 obs, 5 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. use `flowdat', clear
+
+. network_calc, type(flow) subnet(multi) feature(feature) name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    multi
+  Feature:   feature
+  Direction: outflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 subnet-edge rows (90 edges)
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 9 variables
+  - Frame 'networks_single':       90 obs, 6 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. frame networks_multi {
+.     qui count if reldif(w, inw) > 1e-6
+.     assert r(N) > 0
+.     qui count if reldif(w_fratio, inw_fratio) > 1e-6
+.     assert r(N) > 0
+. }
+
+. frame networks_single {
+.     qui count if reldif(w, inw) > 1e-6
+.     assert r(N) > 0
+. }
+
+. use `flowdat', clear
+
+. network_calc, type(flow) subnet(multi) feature(feature) ///
+>     direction(inflow) name(w) replace
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    multi
+  Feature:   feature
+  Direction: inflow
+  Name:      w
+  Obs:       270
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 270 subnet-edge rows (90 edges)
+  Mean weight:  0.200000
+
+Managing network frames...
+  Replacing w in frame networks_single
+  Replacing w in frame networks_multi
+  Replacing w_fratio in frame networks_multi
+  Adding to frame: networks_multi
+  Aggregating to single-subnet...
+  Adding aggregated to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_multi':       270 obs, 9 variables
+  - Frame 'networks_single':       90 obs, 6 variables (aggregated)
+
+To view the networks:
+  frame change networks_single
+  frame change networks_multi
+------------------------------------------------------------------------------
+
+
+. frame networks_multi {
+.     assert reldif(w, inw) < 1e-12
+.     assert reldif(w_fratio, inw_fratio) < 1e-12
+.     qui describe, short
+.     assert r(k) == 9
+. }
+
+. frame networks_single {
+.     assert reldif(w, inw) < 1e-12
+.     qui describe, short
+.     assert r(k) == 6
+. }
+
 . di as res "6v replace clears a name from both frames once every check has pas
 > sed"
 6v replace clears a name from both frames once every check has passed
@@ -4164,7 +4312,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 90 edges
-  Mean weight: -0.000000
+  Mean weight:  0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -4321,7 +4469,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network weights...
   Calculated 90 edges
-  Mean weight: -0.000000
+  Mean weight:  0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -4670,6 +4818,50 @@ To view the networks:
 
 . assert _rc == 111
 
+. * nor can the feature bear a name the command gives to a column of
+. * its own while that role is read from another variable: the variable
+. * read for the role takes the name, and the feature would be dropped
+. * as being in the way. Nothing is written
+. frames reset
+
+. use `flowdat', clear
+
+. rename source orig
+
+. rename feature source
+
+. capture network_calc, type(flow) subnet(multi) feature(source) ///
+>     name(v) source(orig)
+
+. assert _rc == 198
+
+. use `flowdat', clear
+
+. rename (source_size target_size) (pop_s pop_t)
+
+. rename feature source_size
+
+. capture network_calc, type(flow) subnet(multi) feature(source_size) ///
+>     name(v) size(pop_s pop_t)
+
+. assert _rc == 198
+
+. use `flowdat', clear
+
+. rename feature edge_id
+
+. capture network_calc, type(flow) subnet(multi) feature(edge_id) name(v)
+
+. assert _rc == 198
+
+. capture frame networks_single: describe
+
+. assert _rc != 0
+
+. capture frame networks_multi: describe
+
+. assert _rc != 0
+
 . di as res "8d the variables may be named by options; the frames keep the role
 > s' names"
 8d the variables may be named by options; the frames keep the roles' names
@@ -4746,5 +4938,5 @@ all network_calc certification tests passed
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\tests\network_
 > calc_cert.log
   log type:  text
- closed on:   3 Nov 2026, 19:44:52
+ closed on:  10 Nov 2026, 10:02:10
 -------------------------------------------------------------------------------

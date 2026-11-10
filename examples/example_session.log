@@ -3,7 +3,7 @@
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\examp
 > le_session.log
   log type:  text
- opened on:   3 Nov 2026, 19:29:48
+ opened on:  10 Nov 2026, 10:02:10
 
 . 
 . *--------------------------------------------------------------
@@ -315,9 +315,9 @@ To view the networks:
 
 . describe, short
 
-Contains data from C:\Users\ntnta\AppData\Local\Temp\ST_573c_000004.tmp
+Contains data from C:\Users\ntnta\AppData\Local\Temp\ST_2ba8_000004.tmp
  Observations:        38,880                  
-    Variables:             9                  3 Nov 2026 19:30
+    Variables:             9                  10 Nov 2026 10:03
 Sorted by: year  source  target
      Note: Dataset has changed since last saved.
 
@@ -366,7 +366,7 @@ Sorted by: year  source  target
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
-      mig_in |        486           1    2.31e-16          1          1
+      mig_in |        486           1    2.34e-16          1          1
 
 . restore
 
@@ -410,9 +410,9 @@ Sorted by: year  source  target
 
 . describe, short
 
-Contains data from C:\Users\ntnta\AppData\Local\Temp\ST_573c_000003.tmp
+Contains data from C:\Users\ntnta\AppData\Local\Temp\ST_2ba8_000003.tmp
  Observations:     3,149,280                  
-    Variables:            11                  3 Nov 2026 19:30
+    Variables:            11                  10 Nov 2026 10:03
 Sorted by: year  feature  source  target
      Note: Dataset has changed since last saved.
 
@@ -543,7 +543,7 @@ Sorted by: year  feature  source  target
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
-mig_out_fr~o |        486           1    2.27e-16          1          1
+mig_out_fr~o |        486           1    2.16e-16          1          1
 
 . restore
 
@@ -566,7 +566,12 @@ mig_out_fr~o |        486           1    2.27e-16          1          1
 . * which edges sharing a node are not. Two-way clustering on source
 . * and target allows the dependence among the edges that share either
 . * node. The node jackknife leaves one node out at a time, every edge
-. * it touches with it, and takes the variance of the 81 coefficients.
+. * it touches with it, and combines the 81 sets of coefficients with
+. * the multiplier of Cameron and Miller (2014, eq. 2.17).
+. *
+. * The ordered pairs are numbered for the edge effects. The nodes are
+. * numbered with one value label, so that a node has the same number
+. * as source and as target.
 . *--------------------------------------------------------------
 . 
 . frame create outcome
@@ -584,9 +589,9 @@ mig_out_fr~o |        486           1    2.27e-16          1          1
 
 . egen pair = group(source target)
 
-. egen src = group(source)
+. encode source, generate(src) label(node)
 
-. egen tgt = group(target)
+. encode target, generate(tgt) label(node)
 
 . 
 . reghdfe y mig_out sch, absorb(pair year) vce(robust)
@@ -665,7 +670,10 @@ Absorbed degrees of freedom:
 . local se_c_sch = _se[sch]
 
 . 
-. * the node jackknife: the coefficients without each node in turn
+. * the node jackknife: the coefficients without each node in turn,
+. * combined as in Cameron and Miller (2014, eq. 2.17), whose multiplier
+. * of the sum of squared deviations is (G - 2) / (2 G) for G nodes;
+. * r(Var) is that sum divided by G - 1
 . frame create jack int node double(b_mig b_sch)
 
 . forvalues k = 1/81 {
@@ -676,9 +684,9 @@ Absorbed degrees of freedom:
 
 . frame jack {
 .     quietly summarize b_mig
-.     local se_j_mig = sqrt((r(N) - 1)^2 / r(N) * r(Var))
+.     local se_j_mig = sqrt((r(N) - 2) / (2 * r(N)) * (r(N) - 1) * r(Var))
 .     quietly summarize b_sch
-.     local se_j_sch = sqrt((r(N) - 1)^2 / r(N) * r(Var))
+.     local se_j_sch = sqrt((r(N) - 2) / (2 * r(N)) * (r(N) - 1) * r(Var))
 . }
 
 . 
@@ -703,8 +711,8 @@ Absorbed degrees of freedom:
   +-----------------------------------------------------------+
   |    term   estimate   se_robust   se_twoway   se_jackknife |
   |-----------------------------------------------------------|
-  | mig_out     1.9969      0.0961      0.0824         0.1312 |
-  |     sch     0.4988      0.0020      0.0102         0.0098 |
+  | mig_out     1.9969      0.0961      0.0824         0.0922 |
+  |     sch     0.4988      0.0020      0.0102         0.0069 |
   +-----------------------------------------------------------+
 .     export delimited using example_estimates.csv, replace
 file example_estimates.csv saved
@@ -774,5 +782,5 @@ Files written to C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples:
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\examp
 > le_session.log
   log type:  text
- closed on:   3 Nov 2026, 19:35:01
+ closed on:  10 Nov 2026, 10:07:06
 -------------------------------------------------------------------------------

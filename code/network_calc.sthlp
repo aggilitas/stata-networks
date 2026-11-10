@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 2.2.0  03nov2026}{...}
+{* *! version 2.2.0  10nov2026}{...}
 {viewerjumpto "Syntax" "network_calc##syntax"}{...}
 {viewerjumpto "Description" "network_calc##description"}{...}
 {viewerjumpto "Options" "network_calc##options"}{...}
@@ -178,7 +178,9 @@ listed under {help network_calc##input:Input data}. {cmd:value()} and
 {cmd:size()} take two variables each, the one at the source first and
 the one at the target second; {cmd:size()} is read with
 {cmd:subnet(multi)} only, and ignored otherwise, with a note. One
-variable fills one role, and the feature cannot fill any. The output
+variable fills one role, and the feature cannot fill any, nor bear one
+of the default names or the name {cmd:edge_id}, {cmd:edge_value} or
+{cmd:netcalc_fratio}. The output
 frames carry the variables under the default names whatever the data
 called them, and so do the rows a refusal lists.
 
@@ -411,8 +413,9 @@ that panel. A call therefore joins a frame only with the rows the frame
 holds: the same periods and edges and, in {cmd:networks_multi}, the
 same subnets, split by the same feature: the frame records the name
 of the variable named in {cmd:feature()}, and a call that names another
-variable is refused, even where the levels of the two coincide; two
-features that share a name and levels it cannot tell apart. Nothing is
+variable is refused, even where the levels of the two coincide; it
+cannot tell apart two features that share both a name and their
+levels. Nothing is
 filled in on either side. A call with a row
 the frame lacks, or without a row the frame holds, is refused, and the
 rows on either side are listed. That is what happens when the input
@@ -507,8 +510,8 @@ the panel on its key.{p_end}
 {phang2}{cmd:. frlink 1:1 year source target, frame(outcome)}{p_end}
 {phang2}{cmd:. frget y, from(outcome)}{p_end}
 {phang2}{cmd:. egen pair = group(source target)}{p_end}
-{phang2}{cmd:. egen src = group(source)}{p_end}
-{phang2}{cmd:. egen tgt = group(target)}{p_end}
+{phang2}{cmd:. encode source, generate(src) label(node)}{p_end}
+{phang2}{cmd:. encode target, generate(tgt) label(node)}{p_end}
 {phang2}{cmd:. reghdfe y mig_out sch, absorb(pair year) vce(cluster src tgt)}{p_end}
 
 {pstd}
