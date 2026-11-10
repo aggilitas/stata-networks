@@ -16,7 +16,7 @@ which network_calc
 * Synthetic data
 *
 * Six nodes, three periods, three subnets, a complete directed
-* grid without self-loops. size gives the subnet its ratio at the
+* mesh without self-loops. size gives the subnet its ratio at the
 * node, value is the quantity being measured. A flow carries two
 * records of the same edge: source_value as the source records it
 * and target_value as the target records it.
@@ -195,7 +195,7 @@ di as res "1f interaction: size read once per subnet, the ratios sum to one"
 * 2. Attribute values cancel along a reversed edge
 *
 * w_ij is a log ratio, so w_ij + w_ji is zero on a complete
-* two-way grid. An attribute describes the node and has no
+* directed mesh. An attribute describes the node and has no
 * subnets: the node level is passed with subnet(single), and a
 * multi-subnet attribute call is refused.
 *==============================================================
@@ -296,7 +296,7 @@ foreach c in 1000 0.001 period {
 
 * a factor that scales everything one source sends cancels in its
 * outflow weights, since it multiplies every term of its total: the
-* weight says where the quantity of the origin goes, not how much of
+* weight says where the quantity of the source goes, not how much of
 * it there is
 tempfile base1
 frames reset
@@ -693,6 +693,8 @@ use `flowsgl', clear
 qui replace source_value = -1 in 1
 capture network_calc, type(flow) subnet(single) name(w)
 assert _rc == 411
+capture frame networks_single: describe
+assert _rc != 0
 di as res "6b refuses a negative flow"
 
 frames reset
@@ -701,6 +703,10 @@ qui replace source_size = -1 in 1
 capture network_calc, type(flow) subnet(multi) feature(feature) ///
     name(w)
 assert _rc == 411
+capture frame networks_single: describe
+assert _rc != 0
+capture frame networks_multi: describe
+assert _rc != 0
 di as res "6c refuses a negative subnet size"
 
 * the level of n2 is zero on every row that names it, so that the
@@ -711,6 +717,8 @@ qui replace target_value = 0 if target == "n2"
 qui replace source_value = 0 if source == "n2"
 capture network_calc, type(attribute) subnet(single) name(w)
 assert _rc == 411
+capture frame networks_single: describe
+assert _rc != 0
 di as res "6d refuses a non-positive attribute value"
 
 frames reset
@@ -718,6 +726,8 @@ use `flowsgl', clear
 foreach bad in year source target edge_id feature {
     capture network_calc, type(flow) subnet(single) name(`bad')
     assert _rc == 198
+    capture frame networks_single: describe
+    assert _rc != 0
 }
 di as res "6e refuses the five names the frames carry themselves"
 
@@ -797,6 +807,10 @@ qui replace source_value = -1 if source == "n2" & feature == "f1"
 capture network_calc, type(interaction) subnet(multi) ///
     feature(feature) name(w)
 assert _rc == 411
+capture frame networks_single: describe
+assert _rc != 0
+capture frame networks_multi: describe
+assert _rc != 0
 di as res "6i refuses a negative interaction value"
 
 * an option value the command does not know
@@ -827,6 +841,10 @@ foreach bad in netcalc_fratio _merge {
     capture network_calc, type(flow) subnet(multi) feature(feature) ///
         name(`bad')
     assert _rc == 198
+    capture frame networks_single: describe
+    assert _rc != 0
+    capture frame networks_multi: describe
+    assert _rc != 0
 }
 di as res "6k refuses the two names network_calc uses on its own"
 
@@ -837,6 +855,10 @@ use `flowdat', clear
 capture network_calc, type(flow) subnet(multi) feature(feature) ///
     name(abcdefghijklmnopqrstuvwxyz)
 assert _rc == 198
+capture frame networks_single: describe
+assert _rc != 0
+capture frame networks_multi: describe
+assert _rc != 0
 network_calc, type(flow) subnet(multi) feature(feature) ///
     name(abcdefghijklmnopqrstuvwxy)
 frame networks_multi: confirm variable abcdefghijklmnopqrstuvwxy_fratio
@@ -855,6 +877,12 @@ use `flowdat', clear
 capture network_calc, type(flow) subnet(multi) feature(feature) ///
     name(w)
 assert _rc == 110
+* the refused call has written no w beside the ratio column; the
+* check is exact, since w abbreviates w_fratio
+capture frame networks_multi: confirm variable w, exact
+assert _rc != 0
+capture frame networks_single: confirm variable w, exact
+assert _rc != 0
 di as res "6m refuses a name whose ratio column the frame holds"
 
 * an edge that appears twice in a period, or twice in a subnet
@@ -1154,7 +1182,8 @@ frame networks_single {
     qui describe, short
     assert r(k) == 6
 }
-di as res "6v replace clears a name from both frames once every check has passed"
+di as res "6v replace clears a name from both frames once every " ///
+    "check has passed"
 
 *==============================================================
 * 7. Known answers
@@ -1382,7 +1411,23 @@ capture frame networks_single: describe
 assert _rc != 0
 capture frame networks_multi: describe
 assert _rc != 0
-di as res "8d the variables may be named by options; the frames keep the roles' names"
+* nor a name the check of the node figures gives to its working
+* columns, under which a feature would stop it with an error of
+* Stata's own
+foreach bad in lo hi as_source as_target node _netcalc_link {
+    frames reset
+    use `intdat', clear
+    rename feature `bad'
+    capture network_calc, type(interaction) subnet(multi) ///
+        feature(`bad') name(v)
+    assert _rc == 198
+    capture frame networks_single: describe
+    assert _rc != 0
+    capture frame networks_multi: describe
+    assert _rc != 0
+}
+di as res "8d the variables may be named by options; the frames " ///
+    "keep the roles' names"
 
 frames reset
 use `flowsgl', clear
@@ -1400,6 +1445,97 @@ assert "`srt_after'" == "`srt'"
 qui datasignature
 assert "`r(datasignature)'" == "`sig'"
 di as res "8b the data, its file name and its changed flag are kept"
+
+* two ordered pairs may take the same label: from a_b to c and from a
+* to b_c the label is a_b_c. The frames are keyed on the node columns
+* and keep both, and r(n_pairs) counts the pairs, not the labels
+frames reset
+clear
+input str4 node
+"a"
+"a_b"
+"b_c"
+"c"
+end
+tempfile four labels
+qui save `four'
+rename node source
+cross using `four'
+rename node target
+qui drop if source == target
+qui expand 2
+bysort source target: gen int year = 2019 + _n
+sort year source target
+gen double source_value = 10 + _n
+gen double target_value = 12 + _n
+qui save `labels'
+frames reset
+use `labels', clear
+network_calc, type(flow) subnet(single) name(w)
+assert r(n_pairs) == 24
+assert r(n_edges) == 24
+frame networks_single {
+    qui count
+    assert r(N) == 24
+    qui count if edge_id == "a_b_c"
+    assert r(N) == 4
+}
+di as res "8e r(n_pairs) counts the ordered pairs where two share a label"
+
+*==============================================================
+* 9. The Stata lines the article shows
+*
+* Section 2.1 of the article gives the outflow weight as two lines of
+* Stata, and section 3.3 lays node records out on the mesh in seven.
+* Both are run here as the article prints them, the files of section
+* 3.3 under temporary names, and compared with what the command and
+* the data above give.
+*==============================================================
+
+tempfile byhand
+frames reset
+use `flowsgl', clear
+network_calc, type(flow) subnet(single) name(w_cmd)
+use `flowsgl', clear
+bysort year source: egen double total = total(source_value)
+generate double w = source_value / total
+keep year source target w
+qui save `byhand'
+frame networks_single {
+    qui merge 1:1 year source target using "`byhand'", nogenerate ///
+        assert(match)
+    assert reldif(w, w_cmd) < 1e-12
+}
+di as res "9a the two lines of section 2.1 give the outflow weight"
+
+tempfile nodes nodes_as_source
+clear
+set obs `N'
+gen int i = _n
+expand `Y'
+bysort i: gen int year = 2017 + _n
+expand `F'
+bysort i year: gen int f = _n
+gen str4 node = "n" + string(i)
+gen str4 feature = "f" + string(f)
+gen double size = 1000 + 130*i + 70*f + 40*(year - 2017)
+gen double value = size
+keep year feature node value size
+qui save `nodes'
+
+use `nodes', clear
+rename (node value size) (source source_value source_size)
+qui save `nodes_as_source', replace
+use `nodes', clear
+rename (node value size) (target target_value target_size)
+joinby year feature using `nodes_as_source'
+drop if source == target
+
+order year feature source target source_size source_value ///
+      target_size target_value
+sort year feature source target
+cf _all using `intdat'
+di as res "9b the seven lines of section 3.3 lay node records on the mesh"
 
 di as res _n "all network_calc certification tests passed"
 log close

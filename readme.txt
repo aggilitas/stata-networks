@@ -1,12 +1,58 @@
+Package name:
+
+DOI:
+
+Title:  network_calc: Constructing directed edge-period panels from heterogeneous relational sources
+
+Author 1 name:  Necmi Talay
+Author 1 from:  Republic of Turkiye Ministry of Industry and Technology, Ankara, Turkiye
+Author 1 email: necmi.talay@sanayi.gov.tr
+
+Author 2 name:  Hakan Acaroglu
+Author 2 from:  Department of Economics, Faculty of Economics and Administrative Sciences, Eskisehir Osmangazi University, Eskisehir, Turkiye
+Author 2 email: hacaroglu@ogu.edu.tr
+
+Author 3 name:  Aslihan Gunal
+Author 3 from:  Department of International Finance and Banking, Faculty of Commercial Sciences, Baskent University, Ankara, Turkiye
+Author 3 email: aslihangunal@baskent.edu.tr
+
+Author 4 name:  Fausto Pedro Garcia Marquez
+Author 4 from:  Ingenium Research Group, Universidad de Castilla-La Mancha, Ciudad Real, Spain
+Author 4 email: FaustoPedro.Garcia@uclm.es
+
+Author 5 name:
+Author 5 from:
+Author 5 email:
+
+Help keywords:  network_calc
+
+File list:  network_calc.ado network_calc.sthlp _netcalc_interaction.ado _netcalc_flow.ado _netcalc_attribute.ado _netcalc_join.ado _netcalc_aggregate.ado network_calc_cert.do network_calc_cert.log generate_test_data.do generate_test_data.log article_table2.csv example_session.do example_session.log example_estimates.csv readme.txt
+
+Notes:
+
 netcalc: directed edge variables from a panel of ordered node pairs
 ===================================================================
 
-Necmi Talay
-aggilitas@gmail.com
-
 Version 2.2.0. The package is called netcalc, its one command is
 network_calc, and stata-networks is the name of the repository in
-which it is developed.
+which it is developed. Questions and reports of errors go to
+https://github.com/aggilitas/stata-networks/issues or to
+aggilitas@gmail.com.
+
+
+Data that are not public
+------------------------
+
+Section 6.7 of the article sets out the published application of the
+framework, job-seeking migration between the 81 provinces of Turkiye
+(Talay et al. 2026, cited below), as the network_calc calls that build
+its columns. Its migration and birthplace counts are not public: the
+Turkish Statistical Institute supplies them for a fee, and they cannot
+be distributed; the unemployment and schooling levels are published,
+but without the counts the calls cannot be run. The package therefore
+holds neither the data of that application nor a log of its calls. The
+example session runs on synthetic data instead, of the same shape,
+built by generate_test_data.do, which serve for testing.
 
 
 What the package does
@@ -74,13 +120,16 @@ is written. A name a frame already holds is refused unless replace is
 specified, which clears it from both frames once every check has
 passed. A total of zero is not refused: the weights read over it are
 written as zero, the command says how many totals came to zero, and
-returns the count in r().
+returns the count in r(). A refusal lists the rows it is about, the
+first 50 where there are more, with a count of the rest.
 
 
 Requirements
 ------------
 
-Stata 16 or later, because the package writes into frames.
+Stata 16 or later, because the package writes into frames. The example
+session also needs the community-contributed commands reghdfe and
+ftools (ssc install ftools, ssc install reghdfe).
 
 
 Files
@@ -95,22 +144,25 @@ Files
   _netcalc_aggregate.ado     sums subnet weights over the feature
 
 Names beginning with an underscore are internal routines and are not
-meant to be called directly.
+meant to be called directly; network_calc.ado holds further routines of
+that kind beside the command.
 
   network_calc_cert.do       certification script
   network_calc_cert.log      its log, run on Stata 17
 
-  generate_test_data.do      builds the data files the session reads,
-                             with its log: 81 nodes over six years,
-                             the people of each node grouped by the
-                             node they were born in. The files are not
-                             distributed; the two multi-subnet ones
-                             hold 3,149,280 rows each, so they are
-                             built where they are used
+  generate_test_data.do      builds the data files the session reads:
+                             81 nodes over six years, the people of
+                             each node grouped by the node they were
+                             born in. The files are not distributed;
+                             the two multi-subnet ones hold 3,149,280
+                             rows each, so they are built where they
+                             are used
   generate_test_data.log     its log
-  example_session.do         the session shown in the article, ending
-                             in an estimation with three standard
-                             errors; needs reghdfe and ftools
+  example_session.do         the session shown in the article: the
+                             calls, the checks, an estimation with
+                             three standard errors, and the interaction
+                             network built again with built-in
+                             commands; needs reghdfe and ftools
   example_session.log        its log
   example_estimates.csv      the estimates the session writes
   article_table2.csv         the first row of each file the session
@@ -147,10 +199,10 @@ Certification
 -------------
 
 network_calc_cert.do builds its own data, six nodes over three periods
-and three subnets on a complete directed grid, and asserts properties
+and three subnets on a complete directed mesh, and asserts properties
 the weights must have, and values worked out by hand for one edge,
 rather than numbers recorded from an earlier run. It stops at the first
-failure. Its eight sections check:
+failure. Its nine sections check:
 
   1. that a subnet's weights sum to one, that the ratios of a node sum
      to one, and that the single-subnet copy sums to one
@@ -158,7 +210,8 @@ failure. Its eight sections check:
      attribute with subnets is refused
   3. that scaling the whole input by a positive constant, by a factor
      that changes from one period to the next, or everything one source
-     sends by a factor of its own, moves no weight
+     sends by a factor of its own, moves no weight and no attribute
+     value
   4. that direction(inflow) anchors the weight at the target, the
      value recorded there over the total recorded there
   5. that a second network joins a frame only with the rows the frame
@@ -168,35 +221,24 @@ failure. Its eight sections check:
      neither
   6. that the command refuses each input it cannot make a network of,
      self-loops, a row missing from the complete panel and a node
-     figure that differs between its rows included, that nodes may be
-     numbers or hold underscores, that option values ignore case, that
-     a name is checked exactly, that a frame holding _merge is refused,
-     and that replace clears a name from both frames once every check
-     has passed and writes the new values in both, the ratio column
-     with them
-  7. that the weights of one edge equal the numbers worked out by hand
-     from the formulas that build the data
+     figure that differs between its rows included, and each name the
+     frames cannot take, writing nothing; that nodes may be numbers or
+     hold underscores, that option values ignore case, that a name is
+     checked exactly, that a frame holding _merge is refused, and that
+     replace clears a name from both frames once every check has
+     passed and writes the new values in both, the ratio column with
+     them
+  7. that the weights and the attribute value of one edge equal the
+     numbers worked out by hand from the formulas that build the data
   8. that r() reports the call and counts the totals that are zero,
-     that the variables may be named by options, that a feature
-     bearing a name the command gives to a column of its own is
-     refused, and that the data in memory come back as they were
-     found, with their file name and changed flag
-
-
-Notes
------
-
-Section 6.7 of the article sets out the published application of the
-framework, job-seeking migration between the 81 provinces of Turkiye
-(Talay et al. 2026, cited below), as the network_calc calls that build
-its columns. Its migration and birthplace counts are not public: the
-Turkish Statistical Institute supplies them for a fee, and they cannot
-be distributed; the unemployment and schooling levels are published,
-but without the counts the calls cannot be run. The package therefore
-holds neither the data of that application nor a log of its calls.
-The example session runs on
-synthetic data instead, of the same shape, built by
-generate_test_data.do, which serve for testing.
+     that it counts the ordered pairs where two of them share a label,
+     that the variables may be named by options, that a feature bearing
+     a name the command gives to a column of its own is refused, and
+     that the data in memory come back as they were found, with their
+     file name and changed flag
+  9. that the two Stata lines of section 2.1 of the article give the
+     outflow weight of the command, and that the seven lines of
+     section 3.3 lay node records out on the mesh
 
 
 Citation

@@ -223,12 +223,17 @@ program define network_calc, rclass
         * column of its own. The variable read for a role takes the
         * role's name, and a variable that only bears that name is
         * dropped as being in the way; the feature would go with it.
+        * The check of the node figures names its working columns as
+        * well, and a feature under one of those names would stop it
+        * with an error of Stata's own.
         local own `roles' edge_id edge_value netcalc_fratio
-        if `: list feature in own' {
+        local work lo hi as_source as_target node _netcalc_link
+        if `: list feature in own' | `: list feature in work' {
             di as error "feature(`feature') bears a name network_calc" ///
                         " gives to a column of its own:"
             di as error "  `roles'"
             di as error "  edge_id edge_value netcalc_fratio"
+            di as error "  `work'"
             di as error "Rename the variable before the call"
             exit 198
         }
@@ -383,19 +388,49 @@ program define network_calc, rclass
         _netcalc_constant, stem(value)
     }
 
-    * The label of the ordered pair, carried into the frames beside
-    * the two node columns: the values of source and target joined by
-    * an underscore. The frames are keyed on the node columns, so the
-    * label need not be unambiguous and the names may hold what they
-    * like.
-    _netcalc_edgeid
-
-    *===========================================================================
-    * 4. CALL APPROPRIATE CALCULATION FUNCTION
-    *===========================================================================
-
-    di as text ""
-    di as text "Calculating network weights..."
+    * A flow or an interaction value below zero, and an attribute
+    * level at or below zero, is a fault in the data and not an edge
+    * without a weight, so it stops the command, and the rows that
+    * hold it are listed, as for every other refusal. The value read
+    * is the one the direction names; the template routines keep the
+    * same checks behind these.
+    local vsrc = cond("`direction'" == "inflow", ///
+                      "target_value", "source_value")
+    local vtgt = cond("`direction'" == "inflow", ///
+                      "source_value", "target_value")
+    if "`type'" == "flow" {
+        qui count if `vsrc' < 0
+        if r(N) > 0 {
+            di as error "flows can not be negative; `vsrc' is below" ///
+                        " zero in " r(N) " rows:"
+            local show : list key | vsrc
+            _netcalc_show if `vsrc' < 0, vars(`show')
+            di as error "Nothing has been written"
+            exit 411
+        }
+    }
+    else if "`type'" == "interaction" {
+        qui count if `vtgt' < 0
+        if r(N) > 0 {
+            di as error "interaction values can not be negative;" ///
+                        " `vtgt' is below zero in " r(N) " rows:"
+            local show : list key | vtgt
+            _netcalc_show if `vtgt' < 0, vars(`show')
+            di as error "Nothing has been written"
+            exit 411
+        }
+    }
+    else if "`type'" == "attribute" {
+        qui count if source_value <= 0 | target_value <= 0
+        if r(N) > 0 {
+            di as error "attributes can not be zero or negative; " ///
+                        r(N) " rows hold such a level:"
+            _netcalc_show if source_value <= 0 | target_value <= 0, ///
+                vars(`key' source_value target_value)
+            di as error "Nothing has been written"
+            exit 411
+        }
+    }
 
     * Under subnet(multi) a weight is computed inside its subnet, and
     * the ratio of the subnet within the feature at its node enters
@@ -407,10 +442,31 @@ program define network_calc, rclass
                           "target_size", "source_size")
         qui count if `ssrc' < 0
         if r(N) > 0 {
-            di as error "subnet sizes can not be negative"
+            di as error "subnet sizes can not be negative; `ssrc' is" ///
+                        " below zero in " r(N) " rows:"
+            local show : list key | ssrc
+            _netcalc_show if `ssrc' < 0, vars(`show')
+            di as error "Nothing has been written"
             exit 411
         }
     }
+
+    * The label of the ordered pair, carried into the frames beside
+    * the two node columns: the values of source and target joined by
+    * an underscore. The frames are keyed on the node columns, so the
+    * label need not be unambiguous and the names may hold what they
+    * like.
+    _netcalc_edgeid
+
+    *===========================================================================
+    * 4. CALL APPROPRIATE CALCULATION FUNCTION
+    *===========================================================================
+
+    * An attribute network holds values, the two weight templates
+    * weights, and the messages say which.
+    local what = cond("`type'" == "attribute", "value", "weight")
+    di as text ""
+    di as text "Calculating network `what's..."
 
     * Call calculation function based on type
     if "`type'" == "interaction" {
@@ -437,9 +493,11 @@ program define network_calc, rclass
     local calc_zero_sizes = r(n_zero_sizes)
 
     * Under subnet(multi) a row is an edge of one subnet, so the rows
-    * outnumber the ordered pairs; both counts are reported.
+    * outnumber the ordered pairs; both counts are reported. The pairs
+    * are counted on the two node columns, not on their label, which
+    * two pairs may share.
     tempvar firstpair
-    qui bysort year edge_id: gen byte `firstpair' = _n == 1
+    qui bysort year source target: gen byte `firstpair' = _n == 1
     qui count if `firstpair'
     local calc_n_pairs = r(N)
     drop `firstpair'
@@ -452,7 +510,12 @@ program define network_calc, rclass
     else {
         di as text "  Calculated " as result `calc_n_edges' as text " edges"
     }
-    di as text "  Mean weight: " as result %9.6f `calc_mean_weight'
+    if "`type'" == "attribute" {
+        di as text "  Mean value:  " as result %9.6f `calc_mean_weight'
+    }
+    else {
+        di as text "  Mean weight: " as result %9.6f `calc_mean_weight'
+    }
 
     * A total of zero is not refused: a node out of which nothing
     * travels, or a subnet with nothing outside the source, has its

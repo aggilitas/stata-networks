@@ -3,7 +3,7 @@
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\tests\network_
 > calc_cert.log
   log type:  text
- opened on:  10 Nov 2026, 10:02:03
+ opened on:  10 Nov 2026, 21:49:33
 
 . 
 . which network_calc
@@ -18,7 +18,7 @@ C:/Users/ntnta/gm/StataJournal/networks-ado-project/code\network_calc.ado
 . * Synthetic data
 . *
 . * Six nodes, three periods, three subnets, a complete directed
-. * grid without self-loops. size gives the subnet its ratio at the
+. * mesh without self-loops. size gives the subnet its ratio at the
 . * node, value is the quantity being measured. A flow carries two
 . * records of the same edge: source_value as the source records it
 . * and target_value as the target records it.
@@ -431,7 +431,7 @@ node1  node2
 . * 2. Attribute values cancel along a reversed edge
 . *
 . * w_ij is a log ratio, so w_ij + w_ji is zero on a complete
-. * two-way grid. An attribute describes the node and has no
+. * directed mesh. An attribute describes the node and has no
 . * subnets: the node level is passed with subnet(single), and a
 . * multi-subnet attribute call is refused.
 . *==============================================================
@@ -473,9 +473,9 @@ NETWORK_CALC: Calculating attribute network
   Obs:       90
 ------------------------------------------------------------------------------
 
-Calculating network weights...
+Calculating network values...
   Calculated 90 edges
-  Mean weight:  0.000000
+  Mean value:   0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -777,9 +777,9 @@ NETWORK_CALC: Calculating attribute network
   Obs:       90
 ------------------------------------------------------------------------------
 
-Calculating network weights...
+Calculating network values...
   Calculated 90 edges
-  Mean weight:  0.000000
+  Mean value:   0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -805,9 +805,9 @@ NETWORK_CALC: Calculating attribute network
   Obs:       90
 ------------------------------------------------------------------------------
 
-Calculating network weights...
+Calculating network values...
   Calculated 90 edges
-  Mean weight:  0.000000
+  Mean value:   0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -1025,9 +1025,9 @@ NETWORK_CALC: Calculating attribute network
   Obs:       90
 ------------------------------------------------------------------------------
 
-Calculating network weights...
+Calculating network values...
   Calculated 90 edges
-  Mean weight:  0.000000
+  Mean value:   0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -1053,9 +1053,9 @@ NETWORK_CALC: Calculating attribute network
   Obs:       90
 ------------------------------------------------------------------------------
 
-Calculating network weights...
+Calculating network values...
   Calculated 90 edges
-  Mean weight:  0.000000
+  Mean value:   0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -1273,9 +1273,9 @@ NETWORK_CALC: Calculating attribute network
   Obs:       90
 ------------------------------------------------------------------------------
 
-Calculating network weights...
+Calculating network values...
   Calculated 90 edges
-  Mean weight:  0.000000
+  Mean value:   0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -1301,9 +1301,9 @@ NETWORK_CALC: Calculating attribute network
   Obs:       90
 ------------------------------------------------------------------------------
 
-Calculating network weights...
+Calculating network values...
   Calculated 90 edges
-  Mean weight:  0.000000
+  Mean value:   0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -1323,7 +1323,7 @@ To view the networks:
 . 
 . * a factor that scales everything one source sends cancels in its
 . * outflow weights, since it multiplies every term of its total: the
-. * weight says where the quantity of the origin goes, not how much of
+. * weight says where the quantity of the source goes, not how much of
 . * it there is
 . tempfile base1
 
@@ -1588,9 +1588,9 @@ NETWORK_CALC: Calculating attribute network
   Obs:       90
 ------------------------------------------------------------------------------
 
-Calculating network weights...
+Calculating network values...
   Calculated 90 edges
-  Mean weight:  0.000000
+  Mean value:   0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -1621,9 +1621,9 @@ NETWORK_CALC: Calculating attribute network
   Obs:       90
 ------------------------------------------------------------------------------
 
-Calculating network weights...
+Calculating network values...
   Calculated 90 edges
-  Mean weight: -0.000000
+  Mean value:  -0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -1900,9 +1900,9 @@ NETWORK_CALC: Calculating attribute network
   Obs:       90
 ------------------------------------------------------------------------------
 
-Calculating network weights...
+Calculating network values...
   Calculated 90 edges
-  Mean weight:  0.000000
+  Mean value:   0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -2005,9 +2005,9 @@ NETWORK_CALC: Calculating attribute network
   Obs:       60
 ------------------------------------------------------------------------------
 
-Calculating network weights...
+Calculating network values...
   Calculated 60 edges
-  Mean weight:  0.000000
+  Mean value:  -0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -2118,9 +2118,9 @@ NETWORK_CALC: Calculating attribute network
   Obs:       60
 ------------------------------------------------------------------------------
 
-Calculating network weights...
+Calculating network values...
   Calculated 60 edges
-  Mean weight:  0.000000
+  Mean value:  -0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -2662,6 +2662,10 @@ To view the networks:
 
 . assert _rc == 411
 
+. capture frame networks_single: describe
+
+. assert _rc != 0
+
 . di as res "6b refuses a negative flow"
 6b refuses a negative flow
 
@@ -2676,6 +2680,14 @@ To view the networks:
 >     name(w)
 
 . assert _rc == 411
+
+. capture frame networks_single: describe
+
+. assert _rc != 0
+
+. capture frame networks_multi: describe
+
+. assert _rc != 0
 
 . di as res "6c refuses a negative subnet size"
 6c refuses a negative subnet size
@@ -2695,6 +2707,10 @@ To view the networks:
 
 . assert _rc == 411
 
+. capture frame networks_single: describe
+
+. assert _rc != 0
+
 . di as res "6d refuses a non-positive attribute value"
 6d refuses a non-positive attribute value
 
@@ -2706,7 +2722,9 @@ To view the networks:
 . foreach bad in year source target edge_id feature {
   2.     capture network_calc, type(flow) subnet(single) name(`bad')
   3.     assert _rc == 198
-  4. }
+  4.     capture frame networks_single: describe
+  5.     assert _rc != 0
+  6. }
 
 . di as res "6e refuses the five names the frames carry themselves"
 6e refuses the five names the frames carry themselves
@@ -2933,6 +2951,14 @@ node1  node2
 
 . assert _rc == 411
 
+. capture frame networks_single: describe
+
+. assert _rc != 0
+
+. capture frame networks_multi: describe
+
+. assert _rc != 0
+
 . di as res "6i refuses a negative interaction value"
 6i refuses a negative interaction value
 
@@ -2986,7 +3012,11 @@ node1  node2
   2.     capture network_calc, type(flow) subnet(multi) feature(feature) ///
 >         name(`bad')
   3.     assert _rc == 198
-  4. }
+  4.     capture frame networks_single: describe
+  5.     assert _rc != 0
+  6.     capture frame networks_multi: describe
+  7.     assert _rc != 0
+  8. }
 
 . di as res "6k refuses the two names network_calc uses on its own"
 6k refuses the two names network_calc uses on its own
@@ -3002,6 +3032,14 @@ node1  node2
 >     name(abcdefghijklmnopqrstuvwxyz)
 
 . assert _rc == 198
+
+. capture frame networks_single: describe
+
+. assert _rc != 0
+
+. capture frame networks_multi: describe
+
+. assert _rc != 0
 
 . network_calc, type(flow) subnet(multi) feature(feature) ///
 >     name(abcdefghijklmnopqrstuvwxy)
@@ -3098,6 +3136,16 @@ To view the networks:
 >     name(w)
 
 . assert _rc == 110
+
+. * the refused call has written no w beside the ratio column; the
+. * check is exact, since w abbreviates w_fratio
+. capture frame networks_multi: confirm variable w, exact
+
+. assert _rc != 0
+
+. capture frame networks_single: confirm variable w, exact
+
+. assert _rc != 0
 
 . di as res "6m refuses a name whose ratio column the frame holds"
 6m refuses a name whose ratio column the frame holds
@@ -4099,8 +4147,8 @@ To view the networks:
 .     assert r(k) == 6
 . }
 
-. di as res "6v replace clears a name from both frames once every check has pas
-> sed"
+. di as res "6v replace clears a name from both frames once every " ///
+>     "check has passed"
 6v replace clears a name from both frames once every check has passed
 
 . 
@@ -4310,9 +4358,9 @@ NETWORK_CALC: Calculating attribute network
   Obs:       90
 ------------------------------------------------------------------------------
 
-Calculating network weights...
+Calculating network values...
   Calculated 90 edges
-  Mean weight:  0.000000
+  Mean value:   0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -4467,9 +4515,9 @@ NETWORK_CALC: Calculating attribute network
   Obs:       90
 ------------------------------------------------------------------------------
 
-Calculating network weights...
+Calculating network values...
   Calculated 90 edges
-  Mean weight:  0.000000
+  Mean value:   0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -4862,8 +4910,24 @@ To view the networks:
 
 . assert _rc != 0
 
-. di as res "8d the variables may be named by options; the frames keep the role
-> s' names"
+. * nor a name the check of the node figures gives to its working
+. * columns, under which a feature would stop it with an error of
+. * Stata's own
+. foreach bad in lo hi as_source as_target node _netcalc_link {
+  2.     frames reset
+  3.     use `intdat', clear
+  4.     rename feature `bad'
+  5.     capture network_calc, type(interaction) subnet(multi) ///
+>         feature(`bad') name(v)
+  6.     assert _rc == 198
+  7.     capture frame networks_single: describe
+  8.     assert _rc != 0
+  9.     capture frame networks_multi: describe
+ 10.     assert _rc != 0
+ 11. }
+
+. di as res "8d the variables may be named by options; the frames " ///
+>     "keep the roles' names"
 8d the variables may be named by options; the frames keep the roles' names
 
 . 
@@ -4929,6 +4993,220 @@ To view the networks:
 8b the data, its file name and its changed flag are kept
 
 . 
+. * two ordered pairs may take the same label: from a_b to c and from a
+. * to b_c the label is a_b_c. The frames are keyed on the node columns
+. * and keep both, and r(n_pairs) counts the pairs, not the labels
+. frames reset
+
+. clear
+
+. input str4 node
+
+          node
+  1. "a"
+  2. "a_b"
+  3. "b_c"
+  4. "c"
+  5. end
+
+. tempfile four labels
+
+. qui save `four'
+
+. rename node source
+
+. cross using `four'
+
+. rename node target
+
+. qui drop if source == target
+
+. qui expand 2
+
+. bysort source target: gen int year = 2019 + _n
+
+. sort year source target
+
+. gen double source_value = 10 + _n
+
+. gen double target_value = 12 + _n
+
+. qui save `labels'
+
+. frames reset
+
+. use `labels', clear
+
+. network_calc, type(flow) subnet(single) name(w)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      w
+  Obs:       24
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 24 edges
+  Mean weight:  0.333333
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w' has been calculated and added to:
+  - Frame 'networks_single':       24 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. assert r(n_pairs) == 24
+
+. assert r(n_edges) == 24
+
+. frame networks_single {
+.     qui count
+.     assert r(N) == 24
+.     qui count if edge_id == "a_b_c"
+.     assert r(N) == 4
+. }
+
+. di as res "8e r(n_pairs) counts the ordered pairs where two share a label"
+8e r(n_pairs) counts the ordered pairs where two share a label
+
+. 
+. *==============================================================
+. * 9. The Stata lines the article shows
+. *
+. * Section 2.1 of the article gives the outflow weight as two lines of
+. * Stata, and section 3.3 lays node records out on the mesh in seven.
+. * Both are run here as the article prints them, the files of section
+. * 3.3 under temporary names, and compared with what the command and
+. * the data above give.
+. *==============================================================
+. 
+. tempfile byhand
+
+. frames reset
+
+. use `flowsgl', clear
+
+. network_calc, type(flow) subnet(single) name(w_cmd)
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Calculating flow network
+------------------------------------------------------------------------------
+  Type:      flow
+  Subnet:    single
+  Direction: outflow
+  Name:      w_cmd
+  Obs:       90
+------------------------------------------------------------------------------
+
+Calculating network weights...
+  Calculated 90 edges
+  Mean weight:  0.200000
+
+Managing network frames...
+  Adding to frame: networks_single
+
+------------------------------------------------------------------------------
+NETWORK_CALC: Completed successfully
+------------------------------------------------------------------------------
+Network 'w_cmd' has been calculated and added to:
+  - Frame 'networks_single':       90 obs, 5 variables
+
+To view the networks:
+  frame change networks_single
+------------------------------------------------------------------------------
+
+
+. use `flowsgl', clear
+
+. bysort year source: egen double total = total(source_value)
+
+. generate double w = source_value / total
+
+. keep year source target w
+
+. qui save `byhand'
+
+. frame networks_single {
+.     qui merge 1:1 year source target using "`byhand'", nogenerate ///
+>         assert(match)
+.     assert reldif(w, w_cmd) < 1e-12
+. }
+
+. di as res "9a the two lines of section 2.1 give the outflow weight"
+9a the two lines of section 2.1 give the outflow weight
+
+. 
+. tempfile nodes nodes_as_source
+
+. clear
+
+. set obs `N'
+Number of observations (_N) was 0, now 6.
+
+. gen int i = _n
+
+. expand `Y'
+(12 observations created)
+
+. bysort i: gen int year = 2017 + _n
+
+. expand `F'
+(36 observations created)
+
+. bysort i year: gen int f = _n
+
+. gen str4 node = "n" + string(i)
+
+. gen str4 feature = "f" + string(f)
+
+. gen double size = 1000 + 130*i + 70*f + 40*(year - 2017)
+
+. gen double value = size
+
+. keep year feature node value size
+
+. qui save `nodes'
+
+. 
+. use `nodes', clear
+
+. rename (node value size) (source source_value source_size)
+
+. qui save `nodes_as_source', replace
+
+. use `nodes', clear
+
+. rename (node value size) (target target_value target_size)
+
+. joinby year feature using `nodes_as_source'
+
+. drop if source == target
+(54 observations deleted)
+
+. 
+. order year feature source target source_size source_value ///
+>       target_size target_value
+
+. sort year feature source target
+
+. cf _all using `intdat'
+
+. di as res "9b the seven lines of section 3.3 lay node records on the mesh"
+9b the seven lines of section 3.3 lay node records on the mesh
+
+. 
 . di as res _n "all network_calc certification tests passed"
 
 all network_calc certification tests passed
@@ -4938,5 +5216,5 @@ all network_calc certification tests passed
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\tests\network_
 > calc_cert.log
   log type:  text
- closed on:  10 Nov 2026, 10:02:10
+ closed on:  10 Nov 2026, 21:49:40
 -------------------------------------------------------------------------------

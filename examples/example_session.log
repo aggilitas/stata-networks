@@ -3,7 +3,7 @@
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\examp
 > le_session.log
   log type:  text
- opened on:  10 Nov 2026, 10:02:10
+ opened on:  10 Nov 2026, 21:49:40
 
 . 
 . *--------------------------------------------------------------
@@ -246,9 +246,9 @@ NETWORK_CALC: Calculating attribute network
   Obs:       38880
 ------------------------------------------------------------------------------
 
-Calculating network weights...
+Calculating network values...
   Calculated 38880 edges
-  Mean weight: -0.000000
+  Mean value:  -0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -315,9 +315,9 @@ To view the networks:
 
 . describe, short
 
-Contains data from C:\Users\ntnta\AppData\Local\Temp\ST_2ba8_000004.tmp
+Contains data from C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000004.tmp
  Observations:        38,880                  
-    Variables:             9                  10 Nov 2026 10:03
+    Variables:             9                  10 Nov 2026 21:50
 Sorted by: year  source  target
      Note: Dataset has changed since last saved.
 
@@ -366,7 +366,7 @@ Sorted by: year  source  target
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
-      mig_in |        486           1    2.34e-16          1          1
+      mig_in |        486           1    2.24e-16          1          1
 
 . restore
 
@@ -410,9 +410,9 @@ Sorted by: year  source  target
 
 . describe, short
 
-Contains data from C:\Users\ntnta\AppData\Local\Temp\ST_2ba8_000003.tmp
+Contains data from C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000003.tmp
  Observations:     3,149,280                  
-    Variables:            11                  10 Nov 2026 10:03
+    Variables:            11                  10 Nov 2026 21:50
 Sorted by: year  feature  source  target
      Note: Dataset has changed since last saved.
 
@@ -543,7 +543,7 @@ Sorted by: year  feature  source  target
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
-mig_out_fr~o |        486           1    2.16e-16          1          1
+mig_out_fr~o |        486           1    2.13e-16          1          1
 
 . restore
 
@@ -782,5 +782,5 @@ Files written to C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples:
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\examp
 > le_session.log
   log type:  text
- closed on:  10 Nov 2026, 10:07:06
+ closed on:  10 Nov 2026, 21:54:28
 -------------------------------------------------------------------------------

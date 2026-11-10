@@ -2,9 +2,11 @@
 *! Run from the examples directory of the repository, after
 *! generate_test_data.do has built the input files there. Each call
 *! computes one network and adds it to the edge panel, so the calls
-*! together build a multi-network panel, and the session ends with an
-*! estimation on that panel, with three standard errors for the same
-*! coefficients. The estimation needs reghdfe and ftools.
+*! together build a multi-network panel. An estimation on that panel
+*! follows, with three standard errors for the same coefficients, and
+*! the session ends by building the interaction network again with
+*! built-in commands and comparing it with the call. The estimation
+*! needs reghdfe and ftools.
 *!
 *! Outputs, written to the working directory and checked at the end
 *! of the run: example_session.log, the log the article quotes, and

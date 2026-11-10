@@ -84,7 +84,8 @@ restored when the command finishes, unchanged.
 {pstd}
 The command refuses data it cannot make a network of, rather than
 returning a value that reads as defined, and lists the rows a refusal
-is about. It stops on a missing value in any required variable; on a
+is about, the first 50 where there are more, with a count of the rest.
+It stops on a missing value in any required variable; on a
 row missing from the complete panel described under
 {help network_calc##input:Input data}; on a negative size, a negative
 flow or a negative {cmd:interaction} value; on an {cmd:attribute} value
@@ -98,8 +99,9 @@ of the node; and on a {cmd:source} and a {cmd:target} of different
 kinds, one a string and the other numeric. It also stops, before either
 output frame is written, on a join the frames cannot take: a network
 whose rows are not those of the frame it joins, a multi-subnet network
-split by a feature of another name, a key of another storage type than
-the frame has, and a frame that holds a variable named {cmd:_merge} (see
+split by a feature of another name, a key that is a string on one side
+and numeric on the other, and a frame that holds a variable named
+{cmd:_merge} (see
 {help network_calc##output:Output frames}). A zero denominator is not
 refused. A node out of which nothing travels and a subnet whose value
 is zero at every node but the source come to zero, and their weights
@@ -179,8 +181,10 @@ listed under {help network_calc##input:Input data}. {cmd:value()} and
 the one at the target second; {cmd:size()} is read with
 {cmd:subnet(multi)} only, and ignored otherwise, with a note. One
 variable fills one role, and the feature cannot fill any, nor bear one
-of the default names or the name {cmd:edge_id}, {cmd:edge_value} or
-{cmd:netcalc_fratio}. The output
+of the default names, the name {cmd:edge_id}, {cmd:edge_value} or
+{cmd:netcalc_fratio}, or a name the command works under: {cmd:lo},
+{cmd:hi}, {cmd:as_source}, {cmd:as_target}, {cmd:node} or
+{cmd:_netcalc_link}. The output
 frames carry the variables under the default names whatever the data
 called them, and so do the rows a refusal lists.
 

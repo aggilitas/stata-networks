@@ -198,7 +198,7 @@ network_calc, type(interaction|flow|attribute) subnet(single|multi) name(network
 - `name()`: Network name (required, valid Stata variable name; at most 25 characters with `subnet(multi)`, which adds `_fratio` to it for a second column)
 - `feature()`: Feature variable (required for multi-subnet)
 - `direction()`: Outflow or inflow (default: outflow)
-- `period()`, `source()`, `target()`, `value()`, `size()`: the variables to read, where the data do not carry them under the default names; `value()` and `size()` take two variables each, the source one first; the variable in `feature()` cannot fill one of these roles, nor bear one of the default names, `edge_id`, `edge_value` or `netcalc_fratio`
+- `period()`, `source()`, `target()`, `value()`, `size()`: the variables to read, where the data do not carry them under the default names; `value()` and `size()` take two variables each, the source one first; the variable in `feature()` cannot fill one of these roles, nor bear one of the default names, `edge_id`, `edge_value` or `netcalc_fratio`, or a name the command works under: `lo`, `hi`, `as_source`, `as_target`, `node` or `_netcalc_link`
 - `replace`: write over a network of the same name, in both frames, once every check of the call has passed
 - `debug`: Display detailed output
 
