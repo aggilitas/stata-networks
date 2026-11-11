@@ -3,7 +3,12 @@
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\examp
 > le_session.log
   log type:  text
- opened on:  10 Nov 2026, 21:49:40
+ opened on:  11 Nov 2026, 05:16:44
+
+. 
+. * the release of Stata that runs this file
+. display "Stata " c(stata_version)
+Stata 17
 
 . 
 . *--------------------------------------------------------------
@@ -317,7 +322,7 @@ To view the networks:
 
 Contains data from C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000004.tmp
  Observations:        38,880                  
-    Variables:             9                  10 Nov 2026 21:50
+    Variables:             9                  11 Nov 2026 05:17
 Sorted by: year  source  target
      Note: Dataset has changed since last saved.
 
@@ -366,7 +371,7 @@ Sorted by: year  source  target
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
-      mig_in |        486           1    2.24e-16          1          1
+      mig_in |        486           1    2.21e-16          1          1
 
 . restore
 
@@ -412,7 +417,7 @@ Sorted by: year  source  target
 
 Contains data from C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000003.tmp
  Observations:     3,149,280                  
-    Variables:            11                  10 Nov 2026 21:50
+    Variables:            11                  11 Nov 2026 05:17
 Sorted by: year  feature  source  target
      Note: Dataset has changed since last saved.
 
@@ -422,8 +427,8 @@ Sorted by: year  feature  source  target
 
 . format mig_in_fratio mig_in %7.4f
 
-. * every network in the frame, and beside each the ratio its subnet
-. * takes at the node
+. * two of the three networks in the frame, and beside each the ratio
+. * its subnet takes at the node
 . list year feature source target bplace_fratio bplace ///
 >     mig_out_fratio mig_out in 1/9, noobs abbreviate(16)
 
@@ -500,9 +505,9 @@ Sorted by: year  feature  source  target
   +-----------------------------------------------------------+
 
 . 
-. * a subnet is a network of its own, so its weights add up to one:
-. * the first five subnets of p01 in 2018, and all 39,366 subnet
-. * node-years
+. * a subnet is a network of its own, so its weights add up to one,
+. * or to zero where it sends nothing: the first five subnets of p01
+. * in 2018, and all 39,366 subnet node-years
 . preserve
 
 .     collapse (sum) mig_out, by(year feature source)
@@ -543,7 +548,7 @@ Sorted by: year  feature  source  target
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
-mig_out_fr~o |        486           1    2.13e-16          1          1
+mig_out_fr~o |        486           1    2.15e-16          1          1
 
 . restore
 
@@ -635,8 +640,6 @@ Absorbed degrees of freedom:
 . 
 . reghdfe y mig_out sch, absorb(pair year) vce(cluster src tgt)
 (MWFE estimator converged in 2 iterations)
-Warning: VCV matrix was non-positive semi-definite; adjustment from Cameron, Ge
-> lbach & Miller applied.
 
 HDFE Linear regression                            Number of obs   =     38,880
 Absorbing 2 HDFE groups                           F(   2,     80) =    1470.42
@@ -782,5 +785,5 @@ Files written to C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples:
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\examp
 > le_session.log
   log type:  text
- closed on:  10 Nov 2026, 21:54:28
+ closed on:  11 Nov 2026, 05:21:45
 -------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 # Stata Networks Package
 
-A Stata package for calculating network edge weights from a panel of ordered node pairs. Supports multiple network types (interaction, flow, attribute) and outputs panel-ready datasets for econometric analysis.
+A Stata package for calculating network edge values from a panel of ordered node pairs. Supports multiple network types (interaction, flow, attribute) and outputs panel-ready datasets for econometric analysis.
 
 Version 2.2.0. The package is called `netcalc`, its one command is
 `network_calc`, and `stata-networks` is the name of the repository in which
@@ -52,8 +52,9 @@ that the link printed in the article stays valid.
 
 **If you installed a version before 2.0.0**, it was distributed under the
 package name `stata-networks`. Remove it first, or both will sit in your
-ado directory and shadow each other. `ado uninstall` takes the number
-`ado dir` prints in brackets beside the package, not its name:
+ado directory and shadow each other. `ado dir` prints a number in
+brackets beside each installed package, and `ado uninstall` takes that
+number:
 
 ```stata
 ado dir

@@ -1,6 +1,7 @@
 *! _netcalc_flow 2.2.0
 *! Helper function for calculating flow network edge weights
-*! Formula: w_i = v_i / T(y,s) or T(y,f,s) for multi-subnet
+*! Formula: w_ij = v_ij / T_i, with T_i = sum_{k!=i} v_ik, taken
+*! inside each subnet for multi-subnet
 
 program define _netcalc_flow, rclass
     version 16.0
@@ -77,9 +78,9 @@ program define _netcalc_flow, rclass
     }
 
     * Calculate flow network weights
-    * Formula: w_i = v_i / T(y,s)
-    * where T(y,s) sums the values sharing (year, source), or
-    * (year, feature, source) when the network has subnets
+    * Formula: w_ij = v_ij / T_i
+    * where T_i sums the values of the rows sharing (year, source),
+    * or (year, feature, source) when the network has subnets
 
     tempvar netcalc_fratio
 

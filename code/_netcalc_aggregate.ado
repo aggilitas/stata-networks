@@ -29,11 +29,11 @@ program define _netcalc_aggregate
         }
     }
     
-    * Aggregate by summing over features. source and target are
-    * carried through the by() list rather than dropped: edge_id is
-    * built from them, so they are constant within a group and the
-    * grouping does not change, and the caller keeps the two node
-    * columns to use as they see fit.
+    * Aggregate by summing over the levels of the feature. source
+    * and target stand in the by() list beside edge_id: the label is
+    * built from them, but two ordered pairs can share one label, and
+    * the node columns are what keeps such pairs apart. The caller
+    * also keeps the two node columns to use as they see fit.
     qui {
         collapse (sum) `networkname', by(year edge_id source target)
 

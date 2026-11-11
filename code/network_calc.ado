@@ -1,7 +1,7 @@
 *! network_calc 2.2.0
-*! Main command for calculating network edge weights
+*! Main command for calculating network edge values
 *! Author: Necmi TALAY
-*! Date: 2026-11-10
+*! Date: 2026-11-11
 
 program define network_calc, rclass
     version 16.0
@@ -289,7 +289,10 @@ program define network_calc, rclass
     _netcalc_adopt, roles(`roles') given(`given')
     capture drop edge_id
 
-    local required_vars `roles'
+    * The variables every row must hold: the roles and, under
+    * subnet(multi), the feature, which says to which subnet the row
+    * belongs.
+    local required_vars `roles' `feature'
 
     * The key of an observation: the period, the subnet under
     * subnet(multi), and the ordered pair.
@@ -1034,8 +1037,12 @@ program define _netcalc_mesh
         exit
     }
 
-    * the full set of rows, and those the data lack
+    * the full set of rows, and those the data lack. The feature is
+    * here under its own name, so the link is a temporary variable
+    * and the count by period is taken on the period alone: no name
+    * the feature may bear is in the way.
     tempname MS CT
+    tempvar inlink
     frame create `MS'
     frame `MS' {
         qui use `years'
@@ -1046,9 +1053,9 @@ program define _netcalc_mesh
             qui cross using `features'
         }
         qui frlink 1:1 year `feature' source target, frame(`cur') ///
-            generate(_netcalc_in)
-        qui keep if missing(_netcalc_in)
-        drop _netcalc_in
+            generate(`inlink')
+        qui keep if missing(`inlink')
+        drop `inlink'
         local n_lack = _N
         sort year `feature' source target
     }
@@ -1057,6 +1064,7 @@ program define _netcalc_mesh
                 " `n_lack' of `n_need' rows are missing"
     frame copy `MS' `CT'
     frame `CT' {
+        keep year
         qui contract year, freq(rows_missing)
         di as error "  missing rows in each period:"
         list year rows_missing, noobs clean abbreviate(16)

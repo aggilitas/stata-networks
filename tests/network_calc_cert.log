@@ -3,15 +3,20 @@
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\tests\network_
 > calc_cert.log
   log type:  text
- opened on:  10 Nov 2026, 21:49:33
+ opened on:  11 Nov 2026, 05:16:10
 
 . 
 . which network_calc
 C:/Users/ntnta/gm/StataJournal/networks-ado-project/code\network_calc.ado
 *! network_calc 2.2.0
-*! Main command for calculating network edge weights
+*! Main command for calculating network edge values
 *! Author: Necmi TALAY
-*! Date: 2026-11-10
+*! Date: 2026-11-11
+
+. 
+. * the release of Stata that runs this file
+. display "Stata " c(stata_version)
+Stata 17
 
 . 
 . *==============================================================
@@ -69,7 +74,7 @@ Number of observations (_N) was 0, now 6.
 . gen str4 feature = "f" + string(f)
 
 . 
-. * subnet weights, constant within (year, feature, node)
+. * subnet sizes, constant within (year, feature, node)
 . gen double src_size = 1000 + 130*i + 70*f + 40*(year - 2017)
 
 . gen double tgt_size = 1000 + 130*j + 70*f + 40*(year - 2017)
@@ -475,7 +480,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network values...
   Calculated 90 edges
-  Mean value:   0.000000
+  Mean value:  -0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -779,7 +784,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network values...
   Calculated 90 edges
-  Mean value:   0.000000
+  Mean value:  -0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -807,7 +812,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network values...
   Calculated 90 edges
-  Mean value:   0.000000
+  Mean value:  -0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -1027,7 +1032,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network values...
   Calculated 90 edges
-  Mean value:   0.000000
+  Mean value:  -0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -1275,7 +1280,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network values...
   Calculated 90 edges
-  Mean value:   0.000000
+  Mean value:  -0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -1570,7 +1575,7 @@ node1  node2
 4c inflow interaction: each subnet sums to one on its own
 
 . 
-. * an attribute weight is a log ratio, so reading the edge from the
+. * an attribute value is a log ratio, so reading the edge from the
 . * other end only changes its sign
 . frames reset
 
@@ -1590,7 +1595,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network values...
   Calculated 90 edges
-  Mean value:   0.000000
+  Mean value:  -0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -1623,7 +1628,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network values...
   Calculated 90 edges
-  Mean value:  -0.000000
+  Mean value:   0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -1902,7 +1907,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network values...
   Calculated 90 edges
-  Mean value:   0.000000
+  Mean value:  -0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -2628,10 +2633,12 @@ To view the networks:
 . * computed. So are an option value the command does not know, an
 . * edge that appears twice in a period, a row missing from the
 . * complete panel, and a node figure that differs between the rows
-. * that repeat it. Beside the refusals stand the two ways a subnet
-. * can come to nothing at a node, which are not refused, and the
-. * replace option, which clears a name from both frames once every
-. * check has passed.
+. * that repeat it. A missing value is refused in the feature as in
+. * any variable the call reads, and the rows a panel lacks are
+. * listed whatever the feature is called. Beside the refusals stand
+. * the two ways a subnet can come to nothing at a node, which are
+. * not refused, and the replace option, which clears a name from
+. * both frames once every check has passed.
 . *==============================================================
 . 
 . frames reset
@@ -4152,6 +4159,66 @@ To view the networks:
 6v replace clears a name from both frames once every check has passed
 
 . 
+. * a row whose feature is missing belongs to no subnet: the variable
+. * is named, its rows are listed and nothing is written, whether the
+. * feature is a string or a number
+. frames reset
+
+. use `flowdat', clear
+
+. qui replace feature = "" in 1
+
+. capture network_calc, type(flow) subnet(multi) feature(feature) ///
+>     name(w)
+
+. assert _rc == 416
+
+. use `intdat', clear
+
+. qui encode feature, generate(group)
+
+. drop feature
+
+. qui replace group = . in 1
+
+. capture network_calc, type(interaction) subnet(multi) ///
+>     feature(group) name(w)
+
+. assert _rc == 416
+
+. capture frame networks_single: describe
+
+. assert _rc != 0
+
+. capture frame networks_multi: describe
+
+. assert _rc != 0
+
+. di as res "6w refuses a missing value in the feature, and writes nothing"
+6w refuses a missing value in the feature, and writes nothing
+
+. 
+. * the rows a panel lacks are listed whatever the feature is called:
+. * the routine that lists them keeps no column of its own beside the
+. * feature, so no name of the feature stops it short of the refusal
+. foreach nm in rows_missing _netcalc_in {
+  2.     frames reset
+  3.     use `flowdat', clear
+  4.     rename feature `nm'
+  5.     qui drop in 1
+  6.     capture network_calc, type(flow) subnet(multi) feature(`nm') ///
+>         name(w)
+  7.     assert _rc == 459
+  8.     capture frame networks_single: describe
+  9.     assert _rc != 0
+ 10.     capture frame networks_multi: describe
+ 11.     assert _rc != 0
+ 12. }
+
+. di as res "6x lists the rows a panel lacks whatever the feature is called"
+6x lists the rows a panel lacks whatever the feature is called
+
+. 
 . *==============================================================
 . * 7. Known answers
 . *
@@ -4360,7 +4427,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network values...
   Calculated 90 edges
-  Mean value:   0.000000
+  Mean value:  -0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -4517,7 +4584,7 @@ NETWORK_CALC: Calculating attribute network
 
 Calculating network values...
   Calculated 90 edges
-  Mean value:   0.000000
+  Mean value:  -0.000000
 
 Managing network frames...
   Adding to frame: networks_single
@@ -4744,8 +4811,8 @@ To view the networks:
 
 . assert r(n_zero_sizes) == 3
 
-. di as res "8c r() counts the totals that are zero"
-8c r() counts the totals that are zero
+. di as res "8b r() counts the totals that are zero"
+8b r() counts the totals that are zero
 
 . 
 . * the variables may be read under other names: an option names the
@@ -4926,9 +4993,9 @@ To view the networks:
  10.     assert _rc != 0
  11. }
 
-. di as res "8d the variables may be named by options; the frames " ///
+. di as res "8c the variables may be named by options; the frames " ///
 >     "keep the roles' names"
-8d the variables may be named by options; the frames keep the roles' names
+8c the variables may be named by options; the frames keep the roles' names
 
 . 
 . frames reset
@@ -4989,8 +5056,8 @@ To view the networks:
 
 . assert "`r(datasignature)'" == "`sig'"
 
-. di as res "8b the data, its file name and its changed flag are kept"
-8b the data, its file name and its changed flag are kept
+. di as res "8d the data, its file name and its changed flag are kept"
+8d the data, its file name and its changed flag are kept
 
 . 
 . * two ordered pairs may take the same label: from a_b to c and from a
@@ -5216,5 +5283,5 @@ all network_calc certification tests passed
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\tests\network_
 > calc_cert.log
   log type:  text
- closed on:  10 Nov 2026, 21:49:40
+ closed on:  11 Nov 2026, 05:16:17
 -------------------------------------------------------------------------------

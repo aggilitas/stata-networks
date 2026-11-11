@@ -82,7 +82,7 @@ program define _netcalc_interaction, rclass
         bysort year `feature' `nsrc' (`ntgt'): ///
             gen byte `_tfirst' = (_n == 1)
 
-        * Step 2: Calculate sum_{k!=i} N_k^X
+        * Step 2: Calculate sum_{k!=i} v_k^X
         * Within a source group the target entries are the quantity
         * measured at every node other than the source, so their sum
         * is the denominator. Reuses the sort from step 1.
@@ -95,13 +95,12 @@ program define _netcalc_interaction, rclass
         count if `_tfirst' & `total_target_excl_source' == 0
         local n_zero_totals = r(N)
 
-        * Step 3: Calculate N_i (total population in source node)
-        * Running sum then last element, instead of egen total().
-        * Stored as double, like the denominator above. The original
-        * egen call left this one at the default float, whose integers
-        * stop being exact above 16,777,216; a node total past that
-        * silently rounded, and the error reached every weight through
-        * p_source.
+        * Step 3: Calculate S_i, the size of the source node over
+        * its subnets. Running sum then last element, instead of egen
+        * total(). Stored as double, like the denominator above: at
+        * the default float, integers stop being exact above
+        * 16,777,216, and a node total past that would be rounded
+        * without a word and carry the error into every ratio.
         tempvar total_source runsrc first_node
         bysort year `nsrc': ///
             gen double `runsrc' = sum(`ssrc' * `_tfirst')

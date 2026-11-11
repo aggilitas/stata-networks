@@ -17,8 +17,8 @@
 version 16.0
 clear all
 
-* the listings below are laid out to this width, which is what the
-* Stata Journal asks of code and output alike
+* the listings below are laid out to this width, within the 80
+* characters the Stata Journal asks code to respect
 set linesize 79
 
 * the input files are built where they are used
@@ -35,6 +35,9 @@ foreach f in interaction_multi flow_multi flow_single ///
 * the session writes itself beside this file
 capture log close
 log using example_session.log, text replace
+
+* the release of Stata that runs this file
+display "Stata " c(stata_version)
 
 *--------------------------------------------------------------
 * The input: a long panel of ordered node pairs split into subnets
@@ -159,14 +162,14 @@ describe, short
 format bplace_fratio bplace %7.4f
 format mig_out_fratio mig_out %7.4f
 format mig_in_fratio mig_in %7.4f
-* every network in the frame, and beside each the ratio its subnet
-* takes at the node
+* two of the three networks in the frame, and beside each the ratio
+* its subnet takes at the node
 list year feature source target bplace_fratio bplace ///
     mig_out_fratio mig_out in 1/9, noobs abbreviate(16)
 
-* a subnet is a network of its own, so its weights add up to one:
-* the first five subnets of p01 in 2018, and all 39,366 subnet
-* node-years
+* a subnet is a network of its own, so its weights add up to one,
+* or to zero where it sends nothing: the first five subnets of p01
+* in 2018, and all 39,366 subnet node-years
 preserve
     collapse (sum) mig_out, by(year feature source)
     format mig_out %8.4f

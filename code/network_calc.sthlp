@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 2.2.0  10nov2026}{...}
+{* *! version 2.2.0  11nov2026}{...}
 {viewerjumpto "Syntax" "network_calc##syntax"}{...}
 {viewerjumpto "Description" "network_calc##description"}{...}
 {viewerjumpto "Options" "network_calc##options"}{...}
@@ -35,7 +35,7 @@ node pairs and periods
 {synopt :{opt t:ype(template)}}construction template:
 {cmd:interaction}, {cmd:flow} or {cmd:attribute}{p_end}
 {synopt :{opt s:ubnet(scope)}}{cmd:single} for one network,
-{cmd:multi} for one network per feature{p_end}
+{cmd:multi} for one network per level of the feature{p_end}
 {synopt :{opt n:ame(newvar)}}name of the network; must be a valid
 variable name{p_end}
 
@@ -197,9 +197,9 @@ anew; the clearing comes only after every check of the call has passed,
 so a refused call leaves the old network in place.
 
 {phang}
-{opt debug} displays the intermediate quantities of the template and a
-summary of the calculated network. Use it to see why a value is not
-what you expected.
+{opt debug} displays the steps of the construction, the number of
+observations at each, and a summary of the calculated network. Use it
+to follow a call whose result is not what you expected.
 
 
 {marker input}{...}
@@ -310,7 +310,7 @@ quantity of the subnet at the target over its quantity at every node
 but the source, read from {cmd:value}:
 
 {p 8 8 2}
-ω(ij,X) = v(j,X) / sum over k != i of v(k,X)
+omega(ij,X) = v(j,X) / sum over k != i of v(k,X)
 
 {pstd}
 How much of the quantity the subnet carries, outside the source node,

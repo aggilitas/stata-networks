@@ -98,7 +98,7 @@ in period(), source(), target() and value(). Under flow both value
 columns describe the edge: source_value as the source records it and
 target_value as the target records it; direction(outflow) reads the
 first and direction(inflow) the second. With a feature the panel holds
-the feature and two columns more on each side, source_size and
+the feature and one column more on each side, source_size and
 target_size, or the variables named in size(), which carry what the
 subnet weighs at that node and are read as a ratio of the subnet to the
 node. A figure that describes a node, under interaction the size and
@@ -188,8 +188,9 @@ From the development repository:
 
 If a version before 2.0.0 is installed, it was distributed under the
 package name stata-networks. Remove it first, or both copies will sit
-in the ado directory and shadow each other. ado uninstall takes the
-number ado dir prints in brackets beside the package, not its name:
+in the ado directory and shadow each other. ado dir prints a number in
+brackets beside each installed package, and ado uninstall takes that
+number:
 
     ado dir
     ado uninstall [n]
@@ -220,7 +221,8 @@ failure. Its nine sections check:
      nothing, and that a call refused at the second frame writes
      neither
   6. that the command refuses each input it cannot make a network of,
-     self-loops, a row missing from the complete panel and a node
+     self-loops, a missing value in the feature, a row missing from
+     the complete panel, whatever the feature is called, and a node
      figure that differs between its rows included, and each name the
      frames cannot take, writing nothing; that nodes may be numbers or
      hold underscores, that option values ignore case, that a name is

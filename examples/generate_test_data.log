@@ -3,7 +3,7 @@
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\gener
 > ate_test_data.log
   log type:  text
- opened on:   3 Nov 2026, 19:00:08
+ opened on:  11 Nov 2026, 05:16:17
 
 . set seed 20260912
 
@@ -34,8 +34,8 @@ Number of observations (_N) was 0, now 81.
 . generate double pop = round(exp(rnormal(13, .9)))
 
 . 
-. * the share of its residents born in the node itself, and the
-. * affinity of every other group for it
+. * the fraction of its residents born in the node itself, and the
+. * rate at which the node grows from year to year
 . generate double home = runiform(.5, .8)
 
 . generate double growth = 1 + runiform(-.01, .03)
@@ -43,7 +43,7 @@ Number of observations (_N) was 0, now 81.
 . tempfile nodes
 
 . save `nodes'
-file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000001.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000001.tmp saved as .dta
     format
 
 . 
@@ -59,14 +59,14 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000001.tmp saved as .dta
 
 . 
 . * the part of the population of the node born in each group: the
-. * home group takes its share, the others divide the rest in
+. * home group takes its fraction, the others divide the rest in
 . * proportion to a random affinity
 . generate double affinity = cond(feature == node, 0, exp(rnormal(0, 1.2)))
 
 . bysort node: egen double affinity_total = total(affinity)
 
-. generate double share = cond(feature == node, home, ///
->                              (1 - home) * affinity / affinity_total)
+. generate double fraction = cond(feature == node, home, ///
+>                                 (1 - home) * affinity / affinity_total)
 
 . drop affinity affinity_total
 
@@ -83,7 +83,7 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000001.tmp saved as .dta
 . 
 . * people of the group at the node; the node grows at its own rate
 . * and the groups drift a little from year to year
-. generate long size = round(pop * share * growth^(year - `Y0') ///
+. generate long size = round(pop * fraction * growth^(year - `Y0') ///
 >                            * (1 + rnormal(0, .02)))
 
 . replace size = 0 if size < 0
@@ -103,7 +103,7 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000001.tmp saved as .dta
 . tempfile nodelevel
 
 . save `nodelevel'
-file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000002.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000002.tmp saved as .dta
     format
 
 . 
@@ -118,7 +118,7 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000002.tmp saved as .dta
 . tempfile src
 
 . save `src'
-file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000003.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000003.tmp saved as .dta
     format
 
 . 
@@ -153,7 +153,7 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000003.tmp saved as .dta
 . tempfile edges
 
 . save `edges'
-file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000004.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000004.tmp saved as .dta
     format
 
 . 
@@ -232,7 +232,7 @@ file test_flow_single.csv saved
 . tempfile level
 
 . save `level'
-file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000005.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000005.tmp saved as .dta
     format
 
 . 
@@ -241,7 +241,7 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000005.tmp saved as .dta
 . tempfile slevel
 
 . save `slevel'
-file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000006.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000006.tmp saved as .dta
     format
 
 . use `level', clear
@@ -283,7 +283,7 @@ file test_attribute_single.csv saved
 . tempfile pop
 
 . save `pop'
-file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000007.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000007.tmp saved as .dta
     format
 
 . 
@@ -407,22 +407,22 @@ file test_outcome.csv saved
  10. }
 (8 vars, 1 obs)
 (0 observations deleted)
-(file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000008.tmp not found)
-file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000008.tmp saved as .dta
+(file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000008.tmp not found)
+file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000008.tmp saved as .dta
     format
 (8 vars, 1 obs)
 (0 observations deleted)
 (variable source_value was str3, now str5 to accommodate using data's values)
-file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000008.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000008.tmp saved as .dta
     format
 (5 vars, 1 obs)
 (0 observations deleted)
 (variable source_value was str3, now str5 to accommodate using data's values)
-file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000008.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000008.tmp saved as .dta
     format
 (5 vars, 1 obs)
 (0 observations deleted)
-file C:\Users\ntnta\AppData\Local\Temp\ST_573c_000008.tmp saved as .dta
+file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000008.tmp saved as .dta
     format
 
 . use `t2', clear
@@ -510,5 +510,5 @@ Files written to C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples:
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\gener
 > ate_test_data.log
   log type:  text
- closed on:   3 Nov 2026, 19:00:40
+ closed on:  11 Nov 2026, 05:16:44
 -------------------------------------------------------------------------------

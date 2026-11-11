@@ -40,9 +40,9 @@ program define _netcalc_attribute, rclass
     }
 
     * The log ratio is defined only for positive levels, which is the
-    * domain the template is for. A value outside it is a fault in the
-    * data, not an edge without a weight, so it stops the command
-    * rather than leaving a missing weight behind.
+    * domain the template is for. A level outside it is a fault in
+    * the data, not an edge without a value, so it stops the command
+    * rather than leaving a missing value behind.
     qui count if `vsrc' <= 0 | `vtgt' <= 0
     if r(N) > 0 {
         di as error "attributes can not be zero or negative"

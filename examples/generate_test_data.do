@@ -72,8 +72,8 @@ generate str3 node = "p" + string(norder, "%02.0f")
 * application are: a few large, most of middling size
 generate double pop = round(exp(rnormal(13, .9)))
 
-* the share of its residents born in the node itself, and the
-* affinity of every other group for it
+* the fraction of its residents born in the node itself, and the
+* rate at which the node grows from year to year
 generate double home = runiform(.5, .8)
 generate double growth = 1 + runiform(-.01, .03)
 tempfile nodes
@@ -88,12 +88,12 @@ keep feature forder
 cross using `nodes'
 
 * the part of the population of the node born in each group: the
-* home group takes its share, the others divide the rest in
+* home group takes its fraction, the others divide the rest in
 * proportion to a random affinity
 generate double affinity = cond(feature == node, 0, exp(rnormal(0, 1.2)))
 bysort node: egen double affinity_total = total(affinity)
-generate double share = cond(feature == node, home, ///
-                             (1 - home) * affinity / affinity_total)
+generate double fraction = cond(feature == node, home, ///
+                                (1 - home) * affinity / affinity_total)
 drop affinity affinity_total
 
 local Y = `Y1' - `Y0' + 1
@@ -103,7 +103,7 @@ sort year forder norder
 
 * people of the group at the node; the node grows at its own rate
 * and the groups drift a little from year to year
-generate long size = round(pop * share * growth^(year - `Y0') ///
+generate long size = round(pop * fraction * growth^(year - `Y0') ///
                            * (1 + rnormal(0, .02)))
 replace size = 0 if size < 0
 

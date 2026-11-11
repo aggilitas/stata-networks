@@ -12,6 +12,9 @@ log using network_calc_cert.log, text replace
 
 which network_calc
 
+* the release of Stata that runs this file
+display "Stata " c(stata_version)
+
 *==============================================================
 * Synthetic data
 *
@@ -46,7 +49,7 @@ gen str4 source  = "n" + string(i)
 gen str4 target  = "n" + string(j)
 gen str4 feature = "f" + string(f)
 
-* subnet weights, constant within (year, feature, node)
+* subnet sizes, constant within (year, feature, node)
 gen double src_size = 1000 + 130*i + 70*f + 40*(year - 2017)
 gen double tgt_size = 1000 + 130*j + 70*f + 40*(year - 2017)
 
@@ -357,7 +360,7 @@ frame networks_multi {
 }
 di as res "4c inflow interaction: each subnet sums to one on its own"
 
-* an attribute weight is a log ratio, so reading the edge from the
+* an attribute value is a log ratio, so reading the edge from the
 * other end only changes its sign
 frames reset
 use `attrsgl', clear
@@ -673,10 +676,12 @@ di as res "5l join: a network split by another feature is refused"
 * computed. So are an option value the command does not know, an
 * edge that appears twice in a period, a row missing from the
 * complete panel, and a node figure that differs between the rows
-* that repeat it. Beside the refusals stand the two ways a subnet
-* can come to nothing at a node, which are not refused, and the
-* replace option, which clears a name from both frames once every
-* check has passed.
+* that repeat it. A missing value is refused in the feature as in
+* any variable the call reads, and the rows a panel lacks are
+* listed whatever the feature is called. Beside the refusals stand
+* the two ways a subnet can come to nothing at a node, which are
+* not refused, and the replace option, which clears a name from
+* both frames once every check has passed.
 *==============================================================
 
 frames reset
@@ -1185,6 +1190,46 @@ frame networks_single {
 di as res "6v replace clears a name from both frames once every " ///
     "check has passed"
 
+* a row whose feature is missing belongs to no subnet: the variable
+* is named, its rows are listed and nothing is written, whether the
+* feature is a string or a number
+frames reset
+use `flowdat', clear
+qui replace feature = "" in 1
+capture network_calc, type(flow) subnet(multi) feature(feature) ///
+    name(w)
+assert _rc == 416
+use `intdat', clear
+qui encode feature, generate(group)
+drop feature
+qui replace group = . in 1
+capture network_calc, type(interaction) subnet(multi) ///
+    feature(group) name(w)
+assert _rc == 416
+capture frame networks_single: describe
+assert _rc != 0
+capture frame networks_multi: describe
+assert _rc != 0
+di as res "6w refuses a missing value in the feature, and writes nothing"
+
+* the rows a panel lacks are listed whatever the feature is called:
+* the routine that lists them keeps no column of its own beside the
+* feature, so no name of the feature stops it short of the refusal
+foreach nm in rows_missing _netcalc_in {
+    frames reset
+    use `flowdat', clear
+    rename feature `nm'
+    qui drop in 1
+    capture network_calc, type(flow) subnet(multi) feature(`nm') ///
+        name(w)
+    assert _rc == 459
+    capture frame networks_single: describe
+    assert _rc != 0
+    capture frame networks_multi: describe
+    assert _rc != 0
+}
+di as res "6x lists the rows a panel lacks whatever the feature is called"
+
 *==============================================================
 * 7. Known answers
 *
@@ -1352,7 +1397,7 @@ qui replace target_size = 0 if target == "n1"
 network_calc, type(flow) subnet(multi) feature(feature) name(w)
 assert r(n_zero_totals) == 0
 assert r(n_zero_sizes) == 3
-di as res "8c r() counts the totals that are zero"
+di as res "8b r() counts the totals that are zero"
 
 * the variables may be read under other names: an option names the
 * variable for each role, and the frames carry the roles' own names
@@ -1426,7 +1471,7 @@ foreach bad in lo hi as_source as_target node _netcalc_link {
     capture frame networks_multi: describe
     assert _rc != 0
 }
-di as res "8d the variables may be named by options; the frames " ///
+di as res "8c the variables may be named by options; the frames " ///
     "keep the roles' names"
 
 frames reset
@@ -1444,7 +1489,7 @@ local srt_after : sortedby
 assert "`srt_after'" == "`srt'"
 qui datasignature
 assert "`r(datasignature)'" == "`sig'"
-di as res "8b the data, its file name and its changed flag are kept"
+di as res "8d the data, its file name and its changed flag are kept"
 
 * two ordered pairs may take the same label: from a_b to c and from a
 * to b_c the label is a_b_c. The frames are keyed on the node columns
