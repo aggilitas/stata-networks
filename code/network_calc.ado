@@ -611,7 +611,9 @@ program define network_calc, rclass
 
     * Whatever could stop a join is checked here, against every frame
     * the call writes, before the first of them changes, so that a
-    * call writes both frames or neither.
+    * call refused here writes neither frame. The frames are then
+    * written one after the other; a write that fails for a reason not
+    * checked here is not undone.
     *
     * A frame is a panel of edges and every network in it is a column
     * of that panel, so a network joins a frame only with the rows the

@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 2.2.0  11nov2026}{...}
+{* *! version 2.2.0  12nov2026}{...}
 {viewerjumpto "Syntax" "network_calc##syntax"}{...}
 {viewerjumpto "Description" "network_calc##description"}{...}
 {viewerjumpto "Options" "network_calc##options"}{...}
@@ -474,7 +474,10 @@ the frame, a feature of another name, a key that is a string on one
 side and numeric on the other, and a variable named {cmd:_merge} in the
 frame, is checked
 against every frame a call writes before the first of them changes, so
-a call writes both frames or neither. A name a frame already holds is
+a call that one of these checks refuses writes neither frame. The
+frames are then written one after the other, and a write that fails for
+a reason these checks do not cover is not undone. A name a frame
+already holds is
 refused before anything is computed, unless {cmd:replace} is specified,
 and then it is cleared from both frames only once every check has
 passed.
