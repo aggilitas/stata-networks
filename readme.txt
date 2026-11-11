@@ -84,8 +84,12 @@ Three templates are available.
 flow accepts a feature as well. A subnet is a network of its own, whose
 weights add up to one, and size gives it the ratio it takes when the
 subnets are put back together, so the single-subnet copy is the weight
-of the edge in the node as a whole. An attribute describes the node and
-has no subnets: the node level is passed with subnet(single).
+of the edge in the node as a whole. attribute accepts a feature too,
+for levels recorded for the subnets of a node: the value inside a
+subnet is the log ratio of its two levels, zero where one of the two
+nodes does not hold the subnet, and the single-subnet network is built
+from the node levels, the levels of the subnets of each node weighted
+by their sizes.
 
 Input is the complete panel of its rows: every period, every ordered
 pair of distinct nodes and, with a feature, every level of the feature,
@@ -103,9 +107,10 @@ target_size, or the variables named in size(), which carry what the
 subnet weighs at that node and are read as a ratio of the subnet to the
 node. A figure that describes a node, under interaction the size and
 the value of a subnet at its node and under attribute the level of the
-node, is repeated on every row that names the node, and data in which
-those rows disagree are refused, with the cases listed. Nodes may be
-named by strings or by numbers.
+node or, with a feature, the size and the level of each of its subnets,
+is repeated on every row that names the node, and data in which those
+rows disagree are refused, with the cases listed. Nodes may be named by
+strings or by numbers.
 
 Results are written to the frames networks_single and networks_multi,
 keyed on year, source and target, and on year, feature, source and
@@ -207,8 +212,9 @@ failure. Its nine sections check:
 
   1. that a subnet's weights sum to one, that the ratios of a node sum
      to one, and that the single-subnet copy sums to one
-  2. that attribute values cancel along a reversed edge, and that an
-     attribute with subnets is refused
+  2. that attribute values cancel along a reversed edge, inside each
+     subnet as well, and that the single-subnet network of an attribute
+     with subnets is that of the node levels
   3. that scaling the whole input by a positive constant, by a factor
      that changes from one period to the next, or everything one source
      sends by a factor of its own, moves no weight and no attribute
@@ -229,7 +235,10 @@ failure. Its nine sections check:
      checked exactly, that a frame holding _merge is refused, and that
      replace clears a name from both frames once every check has
      passed and writes the new values in both, the ratio column with
-     them
+     them; and that under an attribute with subnets a subnet that a
+     node does not hold gives a value of zero and is counted, while a
+     level at or below zero, rows that differ and a node whose sizes
+     are all zero are refused
   7. that the weights and the attribute value of one edge equal the
      numbers worked out by hand from the formulas that build the data
   8. that r() reports the call and counts the totals that are zero,

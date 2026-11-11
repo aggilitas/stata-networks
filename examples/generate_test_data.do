@@ -183,9 +183,10 @@ format source_value target_value %9.0f
 export delimited using test_flow_single.csv, replace datafmt
 
 *--------------------------------------------------------------
-* Attribute: years of schooling at the node. An attribute
-* describes the node and has no subnets, so the levels of the
-* groups are reduced to the node first, weighted by population.
+* Attribute: years of schooling at the node. The file holds the
+* node level: the levels of the groups reduced to the node, each
+* weighted by its population, as a multi-subnet attribute call
+* would reduce them itself.
 *--------------------------------------------------------------
 
 use `nodelevel', clear

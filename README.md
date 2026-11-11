@@ -9,7 +9,7 @@ it is developed.
 ## Features
 
 - **Three Network Types**: Interaction, Flow, and Attribute networks
-- **Multi-subnet Support**: Feature-based and aggregate calculations for interaction and flow
+- **Multi-subnet Support**: Feature-based calculations for all three types; the single-subnet network is aggregated for interaction and flow and built from the node levels for attribute
 - **Bidirectional Networks**: Outflow and inflow direction options
 - **Automatic Frame Management**: Seamless data organization
 - **Ready for Regression**: Compatible with ivreghdfe, reghdfe, and other panel estimators
@@ -27,11 +27,11 @@ it is developed.
 - **Values**: `source_value` is the quantity of the edge i,j as recorded at i, and `target_value` the quantity of the same edge as recorded at j, as with exports declared by the exporter and imports declared by the importer; where a single record exists, the same figure goes into both columns
 - **Direction**: outflow, or inflow, which anchors the weight at the target: the weight of edge i,j is the value j records for it over the values j records for every edge entering it, w_ij = u_ij / Σ_{k≠j} u_kj with u read from `target_value`, the weight of i in what arrives at j
 
-### 3. Attribute Network (Single-subnet)
+### 3. Attribute Network (Single- or multi-subnet)
 - **Formula**: w_ij = ln(A_j / A_i) for outflow
 - **Use Case**: Economic disparities (GDP, unemployment, education)
 - **Direction**: outflow (target/source) or inflow (source/target)
-- **Subnets**: none. An attribute describes the node, so `type(attribute)` takes `subnet(single)` only; levels recorded for groups within a node are reduced to the node before the call
+- **Subnets**: with `subnet(multi)`, `value` holds the level of each subnet at its node and `size` what the subnet weighs there. Inside a subnet X the value is ln(A_jX / A_iX), zero where one of the two nodes does not hold the subnet. The single-subnet network is built from the node levels, A_i = Σ_X S_iX A_iX / Σ_X S_iX, as ln(A_j / A_i)
 
 ## Installation
 
@@ -125,6 +125,7 @@ rows are listed. It also refuses a missing value, a self-loop, an edge
 that appears twice in a period, a figure that describes a node and
 differs between the rows that repeat it (under `interaction` the size and
 the value of a subnet at its node, under `attribute` the level of the
+node or, with subnets, the size and the level of each subnet at its
 node), and a source and target of different kinds, one a string and the
 other numeric. A total of zero is not refused: the weights read over it
 are written as zero, and the command says how many totals came to zero
@@ -205,7 +206,7 @@ network_calc, type(interaction|flow|attribute) subnet(single|multi) name(network
 
 The values of `type()`, `subnet()` and `direction()` may be typed in any
 case and shortened to an unambiguous leading part, as in `type(Flow)`,
-`type(f)` or `direction(IN)`. `type(attribute)` takes `subnet(single)` only.
+`type(f)` or `direction(IN)`.
 
 ## Output Frames
 

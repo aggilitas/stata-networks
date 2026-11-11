@@ -95,7 +95,10 @@ of its own alternatives; on an edge that appears more than once in a
 period, or in a subnet; on a figure that describes a node and differs
 between the rows that repeat it, under {cmd:interaction} the size and
 the value of a subnet at its node and under {cmd:attribute} the level
-of the node; and on a {cmd:source} and a {cmd:target} of different
+of the node or, with {cmd:subnet(multi)}, the size and the level of
+each of its subnets; on a node whose sizes are all zero under a
+multi-subnet {cmd:attribute} call, which holds none of its subnets and
+so has no level; and on a {cmd:source} and a {cmd:target} of different
 kinds, one a string and the other numeric. It also stops, before either
 output frame is written, on a join the frames cannot take: a network
 whose rows are not those of the frame it joins, a multi-subnet network
@@ -107,7 +110,12 @@ refused. A node out of which nothing travels and a subnet whose value
 is zero at every node but the source come to zero, and their weights
 are written as zero; a subnet whose size at the node is zero keeps its
 weights and has a ratio of zero there. The command says how many
-totals came to zero and returns the counts in {cmd:r()}.
+totals came to zero and returns the counts in {cmd:r()}. Under a
+multi-subnet {cmd:attribute} call, a subnet that a node does not hold,
+one whose size there is zero, has no level at that node: the cell is
+not read and may be empty, the value of the subnet is written as zero
+on every edge that has the node at either end, and the command says how
+many rows these are and returns the count in {cmd:r(n_absent)}.
 
 {pstd}
 Dropping the offending edge instead would take it out of its own
@@ -130,9 +138,10 @@ typed in any case and shortened to any unambiguous leading part, as in
 edge and period from single-subnet data. {cmd:multi} computes one
 weight per edge, period and level of {cmd:feature()}, and a
 single-subnet copy; see {help network_calc##output:Output frames}.
-{cmd:multi} is for {cmd:interaction} and {cmd:flow}. An
-{cmd:attribute} describes the node and has no subnets, so
-{cmd:type(attribute)} takes {cmd:subnet(single)} only.
+Under {cmd:attribute}, {cmd:multi} takes the level of each subnet of a
+node with its size, computes one value inside each subnet, and builds
+the single-subnet network from the levels of the nodes; see
+{help network_calc##templates:Templates}.
 
 {phang}
 {opt n:ame(newvar)} is required and names the network. The name
@@ -237,6 +246,8 @@ value of the feature. Under {cmd:interaction} and {cmd:attribute} each
 node carries one value, and under {cmd:flow} each edge carries its
 own. A flow or an interaction that did not happen is a row with value
 zero, which the data supply: the command fills in no row and no value.
+An attribute is never zero and never absent; with {cmd:subnet(multi)},
+a subnet that a node does not hold is a row whose size is zero.
 Data with a row
 missing are refused, and the command lists the missing rows and their
 number in each period.
@@ -274,7 +285,9 @@ node, as {cmd:source_}{it:...} on the rows the node leaves and as
 {cmd:target_}{it:...} on the rows it enters, and the rows must agree:
 under {cmd:interaction} the size and the value of a subnet at its node,
 the template reading the size once for each subnet, and under
-{cmd:attribute} the level of the node. The command checks it. Data in
+{cmd:attribute} the level of the node or, with {cmd:subnet(multi)}, the
+size and the level of each subnet at its node. The command checks it.
+Data in
 which the figure differs between the rows of a node, or between the rows
 that name the node as source and those that name it as target, by more
 than floating-point error, a relative difference of 1e-12, are refused,
@@ -356,17 +369,45 @@ capital.
 {dlgtab:attribute}
 
 {pstd}
-{cmd:type(attribute)} takes {cmd:subnet(single)}: an attribute
-describes the node and has no subnets. The value is the log ratio of
-the two node values:
+An attribute describes the node. The value is the log ratio of the two
+node values:
 
 {p 8 8 2}
 w(ij) = ln[A(j) / A(i)]     under {cmd:direction(outflow)}
 
 {pstd}
-Where the levels are recorded for groups within a node, reduce them to
-the node before the call, for instance as a mean weighted by the size
-of each group, and pass the node level.
+Where the levels are recorded for groups within a node, pass them with
+{cmd:subnet(multi)}: {cmd:value} holds the level of each subnet at its
+node and {cmd:size} what the subnet weighs there. Inside a subnet X the
+value is the log ratio of the two levels of that subnet,
+
+{p 8 8 2}
+w(ij,X) = ln[A(j,X) / A(i,X)]
+
+{pstd}
+written to {cmd:networks_multi} with the ratio of the subnet at its
+node beside it. The single-subnet network is not added up from these
+values. The levels are reduced to the node first, each weighted by its
+size,
+
+{p 8 8 2}
+A(i) = sum over X of S(i,X) A(i,X) / sum over X of S(i,X)
+
+{pstd}
+and the network in {cmd:networks_single} is the log ratio of the two
+node levels, so it changes sign with the edge like any attribute
+value. With three subnets whose levels are 10, 20 and 30 at both nodes,
+held in the ratios 0.2, 0.3 and 0.5 at i and 0.1, 0.4 and 0.5 at j,
+the node levels are 23 and 24, and the value is ln(24/23) from i to j
+and ln(23/24) from j to i.
+
+{pstd}
+A subnet that a node does not hold, one whose size there is zero, has
+no level at that node, and adds nothing to the level of the node. The
+attribute then pushes and pulls nothing along the edges that have the
+node at either end: the value of the subnet on those edges is zero. A
+flow along such an edge can arise from a hidden network. A node whose
+sizes are all zero holds none of its subnets and is refused.
 
 {pstd}
 Use it for levels that describe nodes rather than travel between them:
@@ -409,6 +450,7 @@ into {cmd:networks_multi}: the network and, beside it,
 {p2col :{cmd:subnet(single)}}{cmd:networks_single}{p_end}
 {p2col :{cmd:interaction}, {cmd:subnet(multi)}}both{p_end}
 {p2col :{cmd:flow}, {cmd:subnet(multi)}}both{p_end}
+{p2col :{cmd:attribute}, {cmd:subnet(multi)}}both{p_end}
 {p2colreset}{...}
 
 {pstd}
@@ -550,6 +592,9 @@ were written as zero for want of a total{p_end}
 {synopt:{cmd:r(n_zero_sizes)}}number of nodes and periods whose sizes
 add up to zero, so that the ratios of their subnets were written as
 zero; under {cmd:subnet(multi)}{p_end}
+{synopt:{cmd:r(n_absent)}}number of rows whose value was written as
+zero because one of the two nodes does not hold the subnet; under a
+multi-subnet {cmd:attribute} call{p_end}
 
 {p2col 5 24 28 2: Macros}{p_end}
 {synopt:{cmd:r(network_name)}}name given in {cmd:name()}{p_end}

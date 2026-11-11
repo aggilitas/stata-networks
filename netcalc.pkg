@@ -8,8 +8,8 @@ d Distribution-Date: 20261111
 d
 d Turns a long panel of ordered node pairs and periods into a
 d panel of directed edge variables, ready for a fixed-effects
-d estimator. Three templates: interaction, flow and attribute;
-d interaction and flow split into subnets by a feature.
+d estimator. Three templates: interaction, flow and attribute,
+d each of which can be split into subnets by a feature.
 d
 d Requires: Stata version 16 or higher (for frame support)
 d

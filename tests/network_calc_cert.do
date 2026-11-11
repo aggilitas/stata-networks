@@ -198,21 +198,47 @@ di as res "1f interaction: size read once per subnet, the ratios sum to one"
 * 2. Attribute values cancel along a reversed edge
 *
 * w_ij is a log ratio, so w_ij + w_ji is zero on a complete
-* directed mesh. An attribute describes the node and has no
-* subnets: the node level is passed with subnet(single), and a
-* multi-subnet attribute call is refused.
+* directed mesh. Under subnet(multi) the same holds inside each
+* subnet, whose value is the log ratio of its own two levels, and
+* the ratio the subnet holds at its node stands beside it. The
+* single-subnet network of such a call is not put together from
+* the subnet values: the levels are reduced to the node first,
+* each weighted by its size, so it is the network a single-subnet
+* call gives on the node levels.
 *==============================================================
 
+tempfile nodenet
 frames reset
 use `attrdat', clear
-capture network_calc, type(attribute) subnet(multi) feature(feature) ///
+network_calc, type(attribute) subnet(multi) feature(feature) ///
     name(w)
-assert _rc == 198
-capture frame networks_multi: describe
-assert _rc != 0
-capture frame networks_single: describe
-assert _rc != 0
-di as res "2a attribute: subnet(multi) is refused and nothing is written"
+frame networks_single: qui save "`nodenet'", replace
+frame networks_multi {
+    * inside a subnet, the log ratio of its two levels
+    split edge_id, parse("_") gen(node)
+    gen int i = real(substr(node1, 2, .))
+    gen int j = real(substr(node2, 2, .))
+    gen int f = real(substr(feature, 2, .))
+    gen double direct = ///
+        ln((6 + 0.4*j + 0.9*f + 0.3*(year - 2017)) ///
+         / (6 + 0.4*i + 0.9*f + 0.3*(year - 2017)))
+    assert reldif(w, direct) < 1e-12
+
+    * the ratios of a node add up to one
+    assert w_fratio > 0 & w_fratio < 1
+    preserve
+        bysort year feature node1: keep if _n == 1
+        collapse (sum) w_fratio, by(year node1)
+        assert reldif(w_fratio, 1) < 1e-12
+    restore
+
+    * and the value cancels along the reversed edge
+    gen str12 pair = cond(node1 < node2, node1 + "|" + node2, ///
+                                     node2 + "|" + node1)
+    collapse (sum) w, by(year feature pair)
+    assert abs(w) < 1e-12
+}
+di as res "2a attribute multi: each subnet is the log ratio of its levels"
 
 frames reset
 use `attrsgl', clear
@@ -225,6 +251,19 @@ frame networks_single {
     assert abs(w) < 1e-12
 }
 di as res "2b attribute: cancels along the reversed edge"
+
+* the single-subnet network of the multi-subnet call, kept above,
+* against the network of the node levels: attrsgl holds the levels
+* of each node weighted by its sizes
+frames reset
+use `attrsgl', clear
+network_calc, type(attribute) subnet(single) name(w_node)
+frame networks_single {
+    qui merge 1:1 year source target using "`nodenet'", nogenerate ///
+        assert(match)
+    assert reldif(w, w_node) < 1e-12
+}
+di as res "2c attribute multi: the single network is that of the node levels"
 
 *==============================================================
 * 3. Scaling the input leaves every weight alone
@@ -240,7 +279,8 @@ di as res "2b attribute: cancels along the reversed edge"
 foreach c in 1000 0.001 period {
     foreach spec in "flow single flowsgl" "flow multi flowdat" ///
                     "interaction multi intdat" ///
-                    "attribute single attrsgl" {
+                    "attribute single attrsgl" ///
+                    "attribute multi attrdat" {
         local typ : word 1 of `spec'
         local sub : word 2 of `spec'
         local src : word 3 of `spec'
@@ -248,6 +288,7 @@ foreach c in 1000 0.001 period {
         if "`src'" == "flowdat" local dat "`flowdat'"
         if "`src'" == "intdat"  local dat "`intdat'"
         if "`src'" == "attrsgl" local dat "`attrsgl'"
+        if "`src'" == "attrdat" local dat "`attrdat'"
         local opt = cond("`sub'" == "multi", "feature(feature)", "")
 
         tempfile base basem
@@ -429,6 +470,27 @@ frame networks_single {
     assert reldif(w, 1) < 1e-12
 }
 di as res "4g inflow interaction: the ratios and the copy sum at the target"
+
+* a multi-subnet attribute call changes sign at both resolutions,
+* and its ratio is read at the node the edge enters
+frames reset
+use `attrdat', clear
+network_calc, type(attribute) subnet(multi) feature(feature) ///
+    name(out)
+use `attrdat', clear
+network_calc, type(attribute) subnet(multi) feature(feature) ///
+    direction(inflow) name(inw)
+frame networks_single {
+    assert reldif(inw, -out) < 1e-12
+}
+frame networks_multi {
+    assert reldif(inw, -out) < 1e-12
+    split edge_id, parse("_") gen(node)
+    bysort year feature node2: keep if _n == 1
+    collapse (sum) inw_fratio, by(year node2)
+    assert reldif(inw_fratio, 1) < 1e-12
+}
+di as res "4h inflow attribute multi: the sign changes at both resolutions"
 
 *==============================================================
 * 5. Joining a second network into a frame
@@ -1230,6 +1292,88 @@ foreach nm in rows_missing _netcalc_in {
 }
 di as res "6x lists the rows a panel lacks whatever the feature is called"
 
+* under a multi-subnet attribute call a subnet that a node does not
+* hold, one whose size there is zero, pushes and pulls nothing: the
+* value is zero on every edge that has the node at either end, the
+* rows are counted, and the level of the subnet at that node is not
+* read, whether the cell is empty or holds a number. Here n1 does not
+* hold f1: five edges leave it and five enter it in each of the three
+* periods. Its level is then that of its other two subnets; in 2018
+* these have the sizes 1310 and 1380 and the levels 8.5 and 9.4
+foreach gap in . -5 {
+    frames reset
+    use `attrdat', clear
+    qui replace source_size = 0 if source == "n1" & feature == "f1"
+    qui replace target_size = 0 if target == "n1" & feature == "f1"
+    qui replace source_value = `gap' if source == "n1" & feature == "f1"
+    qui replace target_value = `gap' if target == "n1" & feature == "f1"
+    network_calc, type(attribute) subnet(multi) feature(feature) ///
+        name(w)
+    assert r(n_absent) == 30
+    assert r(n_edges) == 270
+    frame networks_multi {
+        assert w == 0 if feature == "f1" & ///
+            (source == "n1" | target == "n1")
+        assert w_fratio == 0 if feature == "f1" & source == "n1"
+        qui sum w_fratio if year == 2018 & feature == "f2" & ///
+            edge_id == "n1_n2"
+        assert reldif(r(mean), 1310 / 2690) < 1e-12
+        * an edge between two nodes that hold the subnet is untouched
+        qui sum w if year == 2018 & feature == "f1" & edge_id == "n2_n3"
+        assert reldif(r(mean), ln(8.4 / 8.0)) < 1e-12
+    }
+    frame networks_single {
+        qui sum w if year == 2018 & edge_id == "n1_n2"
+        assert r(N) == 1
+        assert reldif(r(mean),                                     ///
+            ln(((1370 * 8.0 + 1440 * 8.9 + 1510 * 9.8) / 4320) /   ///
+               ((1310 * 8.5 + 1380 * 9.4) / 2690))) < 1e-12
+    }
+}
+di as res "6y attribute multi: a subnet a node does not hold gives zero"
+
+* what a multi-subnet attribute call refuses: a level at or below
+* zero, or an empty level, for a subnet the node holds; a level or a
+* size that differs between the rows of a node; and a node whose
+* sizes are all zero, which holds none of its subnets and so has no
+* level. Nothing is written in any of these cases
+foreach case in zero empty level size nosize {
+    frames reset
+    use `attrdat', clear
+    if "`case'" == "zero" {
+        qui replace source_value = 0 if source == "n1" & feature == "f1"
+        qui replace target_value = 0 if target == "n1" & feature == "f1"
+        local rc 411
+    }
+    if "`case'" == "empty" {
+        qui replace source_value = . if source == "n1" & feature == "f1"
+        qui replace target_value = . if target == "n1" & feature == "f1"
+        local rc 416
+    }
+    if "`case'" == "level" {
+        qui replace source_value = source_value + 1 in 1
+        local rc 459
+    }
+    if "`case'" == "size" {
+        qui replace source_size = source_size + 1 in 1
+        local rc 459
+    }
+    if "`case'" == "nosize" {
+        qui replace source_size = 0 if source == "n1"
+        qui replace target_size = 0 if target == "n1"
+        local rc 459
+    }
+    capture network_calc, type(attribute) subnet(multi) ///
+        feature(feature) name(w)
+    assert _rc == `rc'
+    capture frame networks_single: describe
+    assert _rc != 0
+    capture frame networks_multi: describe
+    assert _rc != 0
+}
+di as res "6z attribute multi: refuses a bad level, rows that differ, " ///
+    "a node without sizes"
+
 *==============================================================
 * 7. Known answers
 *
@@ -1333,6 +1477,43 @@ frame networks_single {
 }
 di as res "7d flow inflow: the weight of the source in what the target receives"
 
+* a multi-subnet attribute call by hand, on two nodes with three
+* subnets whose levels are 10, 20 and 30 at both. n1 holds them in
+* the ratios 0.2, 0.3 and 0.5, so its level is 0.2 x 10 + 0.3 x 20
+* + 0.5 x 30 = 23; n2 holds them in the ratios 0.1, 0.4 and 0.5, so
+* its level is 24. Inside each subnet the two levels are equal and
+* the value is zero; between the nodes it is ln(24 / 23) one way and
+* ln(23 / 24) the other
+frames reset
+clear
+input int year str2 feature str2(source target) ///
+    double(source_size source_value target_size target_value)
+2020 "f1" "n1" "n2" 20 10 10 10
+2020 "f2" "n1" "n2" 30 20 40 20
+2020 "f3" "n1" "n2" 50 30 50 30
+2020 "f1" "n2" "n1" 10 10 20 10
+2020 "f2" "n2" "n1" 40 20 30 20
+2020 "f3" "n2" "n1" 50 30 50 30
+end
+network_calc, type(attribute) subnet(multi) feature(feature) name(w)
+assert r(n_absent) == 0
+frame networks_multi {
+    assert w == 0
+    qui sum w_fratio if feature == "f1" & source == "n1"
+    assert reldif(r(mean), 0.2) < 1e-12
+    qui sum w_fratio if feature == "f2" & source == "n2"
+    assert reldif(r(mean), 0.4) < 1e-12
+}
+frame networks_single {
+    qui count
+    assert r(N) == 2
+    qui sum w if source == "n1" & target == "n2"
+    assert reldif(r(mean), ln(24 / 23)) < 1e-12
+    qui sum w if source == "n2" & target == "n1"
+    assert reldif(r(mean), ln(23 / 24)) < 1e-12
+}
+di as res "7e attribute multi: the node levels 23 and 24 by hand"
+
 *==============================================================
 * 8. What a call leaves behind
 *
@@ -1361,9 +1542,21 @@ assert r(n_pairs) == 90
 assert abs(r(mean_weight)) < 1e-12
 assert r(n_zero_totals) == 0
 assert r(n_zero_sizes) == 0
+assert r(n_absent) == 0
 assert "`r(network_name)'" == "a"
 assert "`r(network_type)'" == "attribute"
 assert "`r(subnet_type)'" == "single"
+frames reset
+use `attrdat', clear
+network_calc, type(attribute) subnet(multi) feature(feature) name(a)
+assert r(n_edges) == 270
+assert r(n_pairs) == 90
+assert abs(r(mean_weight)) < 1e-12
+assert r(n_zero_totals) == 0
+assert r(n_zero_sizes) == 0
+assert r(n_absent) == 0
+assert "`r(network_type)'" == "attribute"
+assert "`r(subnet_type)'" == "multi"
 di as res "8a r() holds the call, the number of edges and their mean"
 
 * a total of zero is not refused, but it is counted and returned:

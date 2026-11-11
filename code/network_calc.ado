@@ -71,15 +71,6 @@ program define network_calc, rclass
         exit 198
     }
 
-    * An attribute describes the node, so it has no subnets: the node
-    * level is computed before the call and passed with subnet(single).
-    if "`type'" == "attribute" & "`subnet'" == "multi" {
-        di as error "Attribute networks have no subnets"
-        di as error "An attribute describes the node; pass the node" ///
-                    " level with subnet(single)"
-        exit 198
-    }
-
     * Multi-subnet requires feature
     if "`subnet'" == "multi" & "`feature'" == "" {
         di as error "Multi-subnet networks require feature() option"
@@ -306,15 +297,37 @@ program define network_calc, rclass
     * weight that the reduction to a single subnet would then sum
     * around. Neither is a network, so the command refuses the data
     * and lists the rows.
+    *
+    * One figure is not read at all: under a multi-subnet attribute
+    * call, the level of a subnet at a node that does not hold it, one
+    * whose size there is zero. A group that is not there has no level,
+    * so the cell may be left empty.
     foreach var of local required_vars {
-        qui count if missing(`var')
+        local isgap missing(`var')
+        if "`type'" == "attribute" & "`subnet'" == "multi" {
+            if "`var'" == "source_value" {
+                local isgap missing(`var') & source_size != 0
+            }
+            if "`var'" == "target_value" {
+                local isgap missing(`var') & target_size != 0
+            }
+        }
+        qui count if `isgap'
         if r(N) > 0 {
             di as error "`var' has " r(N) " missing values, in these rows:"
             local show : list key | var
-            _netcalc_show if missing(`var'), vars(`show')
+            _netcalc_show if `isgap', vars(`show')
             di as error "Nothing has been written"
             exit 416
         }
+    }
+
+    * Whatever stands in a level that is not read, it is set to one in
+    * the working copy, so that the checks below pass over it; the
+    * attribute routine writes the value of such an edge as zero.
+    if "`type'" == "attribute" & "`subnet'" == "multi" {
+        qui replace source_value = 1 if source_size == 0
+        qui replace target_value = 1 if target_size == 0
     }
 
     * The two ends of an edge name nodes of one kind: both string or
@@ -370,20 +383,25 @@ program define network_calc, rclass
     * value. A row the data lack therefore stops it, and the rows are
     * listed.
     if "`feature'" != "" {
-        _netcalc_mesh, feature(`feature')
+        _netcalc_mesh, type(`type') feature(`feature')
     }
     else {
-        _netcalc_mesh
+        _netcalc_mesh, type(`type')
     }
 
     * A figure that describes a node is repeated on every row that
     * names the node, and the rows must agree: under interaction the
     * size and the value of a subnet at its node, under attribute the
-    * level of the node. A row that carries another figure is a slip
-    * in the layout, which the weights would carry without a word, so
-    * the data are refused and the nodes listed. Under flow the values
+    * level of the node, or the size and the level of each of its
+    * subnets. A row that carries another figure is a slip in the
+    * layout, which the weights would carry without a word, so the
+    * data are refused and the nodes listed. Under flow the values
     * describe the edge and the sizes may, so nothing is repeated.
     if "`type'" == "interaction" {
+        _netcalc_constant, stem(size) feature(`feature')
+        _netcalc_constant, stem(value) feature(`feature')
+    }
+    else if "`type'" == "attribute" & "`subnet'" == "multi" {
         _netcalc_constant, stem(size) feature(`feature')
         _netcalc_constant, stem(value) feature(`feature')
     }
@@ -454,6 +472,34 @@ program define network_calc, rclass
         }
     }
 
+    * Under a multi-subnet attribute call the sizes say how much of
+    * the node each subnet is, and the level of the node is put
+    * together from them. A node whose sizes are all zero holds none
+    * of its subnets: it has no level, and it is not a node of the
+    * panel, so the data are refused and the node-periods listed.
+    if "`type'" == "attribute" & "`subnet'" == "multi" {
+        tempname ZS
+        capture frame drop `ZS'
+        frame put year `feature' source source_size, into(`ZS')
+        frame `ZS' {
+            qui collapse (first) source_size, by(year `feature' source)
+            qui collapse (sum) source_size, by(year source)
+            qui keep if source_size == 0
+            local n_bad = _N
+            sort year source
+        }
+        if `n_bad' > 0 {
+            di as error "the sizes of a node are all zero in " `n_bad' ///
+                        " node-periods:"
+            frame `ZS': _netcalc_show, vars(year source)
+            di as error "a node that holds none of its subnets has no" ///
+                        " level. Nothing has been written"
+            capture frame drop `ZS'
+            exit 459
+        }
+        capture frame drop `ZS'
+    }
+
     * The label of the ordered pair, carried into the frames beside
     * the two node columns: the values of source and target joined by
     * an underscore. The frames are keyed on the node columns, so the
@@ -486,7 +532,16 @@ program define network_calc, rclass
         }
     }
     else if "`type'" == "attribute" {
-        _netcalc_attribute, direction(`direction') `debug'
+        if "`subnet'" == "multi" {
+            * the routine leaves the single-subnet network in this file
+            tempfile nodenet
+            _netcalc_attribute, subnet(multi) feature(`feature') ///
+                direction(`direction') singlefile(`nodenet') `debug'
+        }
+        else {
+            _netcalc_attribute, subnet(single) ///
+                direction(`direction') `debug'
+        }
     }
 
     * Store calculation results
@@ -494,6 +549,10 @@ program define network_calc, rclass
     local calc_mean_weight = r(mean_weight)
     local calc_zero_totals = r(n_zero_totals)
     local calc_zero_sizes = r(n_zero_sizes)
+    local calc_n_absent = 0
+    if "`type'" == "attribute" {
+        local calc_n_absent = r(n_absent)
+    }
 
     * Under subnet(multi) a row is an edge of one subnet, so the rows
     * outnumber the ordered pairs; both counts are reported. The pairs
@@ -535,6 +594,15 @@ program define network_calc, rclass
         di as text "  Note: " as result `calc_zero_sizes' as text ///
            " node-period size totals are zero; the ratios of those" ///
            " nodes are written as zero"
+    }
+
+    * Under a multi-subnet attribute call, a subnet that one of the
+    * two nodes of an edge does not hold pushes and pulls nothing
+    * along it: the value is written as zero, and the rows are counted.
+    if `calc_n_absent' > 0 {
+        di as text "  Note: " as result `calc_n_absent' as text ///
+           " subnet-edge rows have a subnet that one of their nodes" ///
+           " does not hold; their values are written as zero"
     }
 
     *===========================================================================
@@ -719,34 +787,53 @@ program define network_calc, rclass
             featurename(`feature') ///
             `debug'
 
-        * The single-subnet copy adds the subnet weights up after
-        * each has been scaled by the ratio its subnet holds at the
-        * node. A subnet weight is a part of what leaves the node, in
-        * flow and interaction alike, and the ratios of a node add up
-        * to one, so the copy is a weight again.
-        di as text "  Aggregating to single-subnet..."
-        use `calcdata', clear
-        rename edge_value `name'
-
-        capture confirm variable netcalc_fratio
-        if _rc == 0 {
-            qui replace `name' = `name' * netcalc_fratio
-            qui drop netcalc_fratio
+        if "`type'" == "attribute" {
+            * An attribute network is not put together from its
+            * subnets. The levels of the subnets are reduced to the
+            * level of the node first, each weighted by its size, and
+            * the value of the edge is the log-ratio of the two node
+            * levels. The routine has left it in a file, one row for
+            * each edge.
+            di as text "  Reducing the levels to the node..."
+            di as text "  Adding node-level values to frame: networks_single"
+            use `"`nodenet'"', clear
+            _netcalc_join, ///
+                framename(networks_single) ///
+                networkname(`name') ///
+                subnet(single) ///
+                type(`type') ///
+                `debug'
         }
+        else {
+            * The single-subnet copy adds the subnet weights up after
+            * each has been scaled by the ratio its subnet holds at
+            * the node. A subnet weight is a part of what leaves the
+            * node, in flow and interaction alike, and the ratios of a
+            * node add up to one, so the copy is a weight again.
+            di as text "  Aggregating to single-subnet..."
+            use `calcdata', clear
+            rename edge_value `name'
 
-        _netcalc_aggregate, ///
-            networkname(`name') `debug'
+            capture confirm variable netcalc_fratio
+            if _rc == 0 {
+                qui replace `name' = `name' * netcalc_fratio
+                qui drop netcalc_fratio
+            }
 
-        tempfile aggdata
-        qui save `aggdata'
-        di as text "  Adding aggregated to frame: networks_single"
-        use `aggdata', clear
-        _netcalc_join, ///
-            framename(networks_single) ///
-            networkname(`name') ///
-            subnet(single) ///
-            type(`type') ///
-            `debug'
+            _netcalc_aggregate, ///
+                networkname(`name') `debug'
+
+            tempfile aggdata
+            qui save `aggdata'
+            di as text "  Adding aggregated to frame: networks_single"
+            use `aggdata', clear
+            _netcalc_join, ///
+                framename(networks_single) ///
+                networkname(`name') ///
+                subnet(single) ///
+                type(`type') ///
+                `debug'
+        }
     }
     else {
         * Single-subnet: just add to single frame
@@ -787,9 +874,11 @@ program define network_calc, rclass
             qui describe, short
             local n_vars = r(k)
         }
+        local how = cond("`type'" == "attribute", "node levels", ///
+                                                  "aggregated")
         di as text "  - Frame 'networks_single': " ///
            as result %8.0f `n_single' as text " obs, " ///
-           as result `n_vars' as text " variables (aggregated)"
+           as result `n_vars' as text " variables (`how')"
     }
     else {
         frame networks_single {
@@ -819,6 +908,7 @@ program define network_calc, rclass
     return scalar mean_weight = `calc_mean_weight'
     return scalar n_zero_totals = `calc_zero_totals'
     return scalar n_zero_sizes = `calc_zero_sizes'
+    return scalar n_absent = `calc_n_absent'
     return local network_name "`name'"
     return local network_type "`type'"
     return local subnet_type "`subnet'"
@@ -985,7 +1075,7 @@ end
 * short is the full set built, to list the rows they lack.
 program define _netcalc_mesh
     version 16.0
-    syntax [, Feature(string)]
+    syntax [, Feature(string) Type(string)]
 
     local cur = c(frame)
     qui count
@@ -1084,8 +1174,25 @@ program define _netcalc_mesh
         di as error "Every period needs a row for each ordered pair of" ///
                     " the `n_nodes' nodes;"
     }
-    di as error "enter zero where nothing was recorded." ///
-                " Nothing has been written"
+    * What a missing row stands for depends on the template. A flow
+    * or an interaction that did not happen is a row with zero. An
+    * attribute describes the node and is never zero, so no row can be
+    * left out; under subnet(multi) a subnet that a node does not hold
+    * is a row whose size is zero.
+    if "`type'" == "attribute" & "`feature'" != "" {
+        di as error "an attribute describes the node, so no row can be" ///
+                    " left out: a subnet that a node does not hold is a" ///
+                    " row with a size of zero. Nothing has been written"
+    }
+    else if "`type'" == "attribute" {
+        di as error "an attribute describes the node, so no row can be" ///
+                    " left out: give each row the levels of its two" ///
+                    " nodes. Nothing has been written"
+    }
+    else {
+        di as error "enter zero where nothing was recorded." ///
+                    " Nothing has been written"
+    }
     exit 459
 end
 
