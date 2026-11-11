@@ -3,7 +3,7 @@
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\examp
 > le_session.log
   log type:  text
- opened on:  11 Nov 2026, 05:16:44
+ opened on:  11 Nov 2026, 19:13:43
 
 . 
 . * the release of Stata that runs this file
@@ -119,6 +119,7 @@ To view the networks:
 . return list
 
 scalars:
+           r(n_absent) =  0
        r(n_zero_sizes) =  0
       r(n_zero_totals) =  0
         r(mean_weight) =  .0125
@@ -320,9 +321,9 @@ To view the networks:
 
 . describe, short
 
-Contains data from C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000004.tmp
+Contains data from C:\Users\ntnta\AppData\Local\Temp\ST_f3c_000004.tmp
  Observations:        38,880                  
-    Variables:             9                  11 Nov 2026 05:17
+    Variables:             9                  11 Nov 2026 19:14
 Sorted by: year  source  target
      Note: Dataset has changed since last saved.
 
@@ -371,7 +372,7 @@ Sorted by: year  source  target
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
-      mig_in |        486           1    2.21e-16          1          1
+      mig_in |        486           1    2.28e-16          1          1
 
 . restore
 
@@ -415,9 +416,9 @@ Sorted by: year  source  target
 
 . describe, short
 
-Contains data from C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000003.tmp
+Contains data from C:\Users\ntnta\AppData\Local\Temp\ST_f3c_000003.tmp
  Observations:     3,149,280                  
-    Variables:            11                  11 Nov 2026 05:17
+    Variables:            11                  11 Nov 2026 19:14
 Sorted by: year  feature  source  target
      Note: Dataset has changed since last saved.
 
@@ -785,5 +786,5 @@ Files written to C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples:
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\examp
 > le_session.log
   log type:  text
- closed on:  11 Nov 2026, 05:21:45
+ closed on:  11 Nov 2026, 19:18:41
 -------------------------------------------------------------------------------

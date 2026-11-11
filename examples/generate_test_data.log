@@ -3,7 +3,7 @@
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\gener
 > ate_test_data.log
   log type:  text
- opened on:  11 Nov 2026, 05:16:17
+ opened on:  11 Nov 2026, 19:13:11
 
 . set seed 20260912
 
@@ -43,8 +43,7 @@ Number of observations (_N) was 0, now 81.
 . tempfile nodes
 
 . save `nodes'
-file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000001.tmp saved as .dta
-    format
+file C:\Users\ntnta\AppData\Local\Temp\ST_f3c_000001.tmp saved as .dta format
 
 . 
 . *--------------------------------------------------------------
@@ -103,8 +102,7 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000001.tmp saved as .dta
 . tempfile nodelevel
 
 . save `nodelevel'
-file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000002.tmp saved as .dta
-    format
+file C:\Users\ntnta\AppData\Local\Temp\ST_f3c_000002.tmp saved as .dta format
 
 . 
 . *--------------------------------------------------------------
@@ -118,8 +116,7 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000002.tmp saved as .dta
 . tempfile src
 
 . save `src'
-file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000003.tmp saved as .dta
-    format
+file C:\Users\ntnta\AppData\Local\Temp\ST_f3c_000003.tmp saved as .dta format
 
 . 
 . use `nodelevel', clear
@@ -153,8 +150,7 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000003.tmp saved as .dta
 . tempfile edges
 
 . save `edges'
-file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000004.tmp saved as .dta
-    format
+file C:\Users\ntnta\AppData\Local\Temp\ST_f3c_000004.tmp saved as .dta format
 
 . 
 . local multi year feature source target ///
@@ -214,9 +210,10 @@ file test_flow_single.csv saved
 
 . 
 . *--------------------------------------------------------------
-. * Attribute: years of schooling at the node. An attribute
-. * describes the node and has no subnets, so the levels of the
-. * groups are reduced to the node first, weighted by population.
+. * Attribute: years of schooling at the node. The file holds the
+. * node level: the levels of the groups reduced to the node, each
+. * weighted by its population, as a multi-subnet attribute call
+. * would reduce them itself.
 . *--------------------------------------------------------------
 . 
 . use `nodelevel', clear
@@ -232,8 +229,7 @@ file test_flow_single.csv saved
 . tempfile level
 
 . save `level'
-file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000005.tmp saved as .dta
-    format
+file C:\Users\ntnta\AppData\Local\Temp\ST_f3c_000005.tmp saved as .dta format
 
 . 
 . rename (node norder level) (source sorder source_value)
@@ -241,8 +237,7 @@ file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000005.tmp saved as .dta
 . tempfile slevel
 
 . save `slevel'
-file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000006.tmp saved as .dta
-    format
+file C:\Users\ntnta\AppData\Local\Temp\ST_f3c_000006.tmp saved as .dta format
 
 . use `level', clear
 
@@ -283,8 +278,7 @@ file test_attribute_single.csv saved
 . tempfile pop
 
 . save `pop'
-file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000007.tmp saved as .dta
-    format
+file C:\Users\ntnta\AppData\Local\Temp\ST_f3c_000007.tmp saved as .dta format
 
 . 
 . * the copy adds up the subnet weights, each scaled by the
@@ -407,23 +401,19 @@ file test_outcome.csv saved
  10. }
 (8 vars, 1 obs)
 (0 observations deleted)
-(file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000008.tmp not found)
-file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000008.tmp saved as .dta
-    format
+(file C:\Users\ntnta\AppData\Local\Temp\ST_f3c_000008.tmp not found)
+file C:\Users\ntnta\AppData\Local\Temp\ST_f3c_000008.tmp saved as .dta format
 (8 vars, 1 obs)
 (0 observations deleted)
 (variable source_value was str3, now str5 to accommodate using data's values)
-file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000008.tmp saved as .dta
-    format
+file C:\Users\ntnta\AppData\Local\Temp\ST_f3c_000008.tmp saved as .dta format
 (5 vars, 1 obs)
 (0 observations deleted)
 (variable source_value was str3, now str5 to accommodate using data's values)
-file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000008.tmp saved as .dta
-    format
+file C:\Users\ntnta\AppData\Local\Temp\ST_f3c_000008.tmp saved as .dta format
 (5 vars, 1 obs)
 (0 observations deleted)
-file C:\Users\ntnta\AppData\Local\Temp\ST_4d74_000008.tmp saved as .dta
-    format
+file C:\Users\ntnta\AppData\Local\Temp\ST_f3c_000008.tmp saved as .dta format
 
 . use `t2', clear
 
@@ -510,5 +500,5 @@ Files written to C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples:
        log:  C:\Users\ntnta\gm\StataJournal\networks-ado-project\examples\gener
 > ate_test_data.log
   log type:  text
- closed on:  11 Nov 2026, 05:16:44
+ closed on:  11 Nov 2026, 19:13:43
 -------------------------------------------------------------------------------
